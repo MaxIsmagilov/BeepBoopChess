@@ -32,4 +32,6 @@
 *.app
 
 # IDE extensions
+.vscode/
 *.vscode
+vscode/
