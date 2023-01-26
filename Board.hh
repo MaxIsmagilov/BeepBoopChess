@@ -7,6 +7,7 @@
 #include <sstream>
 #include "Moves.hh"
 #include "Eval.hh"
+#include "Tools.hh"
 
 class Board
 { 

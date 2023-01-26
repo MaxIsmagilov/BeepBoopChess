@@ -4,39 +4,61 @@
 #include <string>
 #include <sstream>
 #include "Board.hh"
+#include "Tools.hh"
 
+// pawn attack mask
+uint64_t pawn_attacks[2][64];
+uint64_t knight_attacks[64];
 
-
-class MoveManager
+uint64_t pawn_mask(int square, int side) // side is 1 for white, -1 for black
 {
-    // encoding guide (using uint32_t)
-        // 0000 0000 0000 0111 1111  start square 
-        // 0000 0011 1111 1000 0000  end square
-        // 0011 1100 0000 0000 0000  promotion piece (0 for none)
-        // 0100 0000 0000 0000 0000  capture flag
-        // 1000 0000 0000 0000 0000  castling flag
-
-private: 
-    MoveManager() {} // static class
-public:
-    static uint32_t pack_move(uint32_t start_square, uint32_t end_square, uint32_t promotion_piece, uint32_t capture, uint32_t castle)
+    uint64_t att = 0ULL;            // attacks
+    uint64_t bitboard = 0ULL;       // pawn square
+    push_bit(&bitboard, square); 
+    if (side == 1)                  // white's attacks
     {
-        return 
-            (start_square & 0x7F)|
-            ((end_square << 7) & 0x7F)|
-            ((promotion_piece << 14) & 0xF)|
-            ((capture << 18) & 0x1)|
-            ((castle << 19) & 0x1);
+        att |= 
+                ((bitboard & A_FILE) ? 0ULL : (bitboard >> 9))| 
+                ((bitboard & H_FILE) ? 0ULL : (bitboard >> 7));
     }
-    static uint32_t start_square(uint32_t move) {return (move) & 0x7F;}
-    static uint32_t end_square(uint32_t move) {return (move >> 7) & 0x7F;}
-    static uint32_t promotion_piece(uint32_t move) {return (move >> 14) & 0xF;}
-    static uint32_t capture(uint32_t move) {return (move >> 18) & 0x1;}
-    static uint32_t castle(uint32_t move) {return (move >> 19) & 0x1;}
-};
+    else                            // black's attacks
+    {
+        att |= 
+                ((bitboard & A_FILE) ? 0ULL : (bitboard << 7))| 
+                ((bitboard & H_FILE) ? 0ULL : (bitboard << 9));
+    }
+    return att;
+}
+uint64_t knight_mask(int square) 
+{
+    uint64_t att = 0ULL;            // attacks
+    uint64_t bitboard = 0ULL;       // knight square
+    push_bit(&bitboard, square);
+    att |= bitboard; 
+    //generate 17 and -15 attacks
+    if (!(bitboard & A_FILE))
+    {att |= (bitboard >> 17) | (bitboard << 15);}
+    //generate -17 and 15 attacks
+    if (!(bitboard & H_FILE))
+    {att |= (bitboard << 17) | (bitboard >> 15);}
+    //generate 10 and -6 attacks
+    if (!((bitboard & A_FILE) || (bitboard & B_FILE)))
+    {att |= (bitboard >> 10) | (bitboard << 6);}
+    //generate -10 and 6 attacks
+    if (!((bitboard & H_FILE) || (bitboard & G_FILE)))
+    {att |= (bitboard << 10) | (bitboard >> 6);}
+    return att;
+}
 
 
-
-
+void initialize_non_sliders() 
+{
+    for (int i = 0; i < 64; i++)
+    {
+        pawn_attacks[0][i] == pawn_mask(i,-1);
+        pawn_attacks[1][i] == pawn_mask(i,1);
+        knight_attacks[i] == knight_mask(i);
+    }
+}
 
 #endif
