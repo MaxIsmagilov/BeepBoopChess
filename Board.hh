@@ -1,12 +1,14 @@
 #ifndef ChessBoard
 #define ChessBoard
+#define U16 uint16_t
+#define U32 unsigned long
 #define U64 unsigned long long
 #include <bits/stdc++.h>
 #include <string>
 #include <sstream>
 
 class Board
-{
+{ 
 public:
     U64* white = new U64[6];        // represents white's bitboards (P,N,B,R,Q,K)
     U64* black = new U64[6];        // represents black's bitboards (p,n,b,r,q,k)
