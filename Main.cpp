@@ -2,6 +2,10 @@
 #include <fstream>
 #include <bits/stdc++.h>
 #include "Board.hh"
+#include "Moves.hh"
+#include "Eval.hh"
+
+
 
 int main(int argc, char const *argv[])
 {

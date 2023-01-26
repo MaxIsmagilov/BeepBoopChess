@@ -1,24 +1,25 @@
 #ifndef ChessBoard
 #define ChessBoard
-#define U16 uint16_t
-#define U32 unsigned long
-#define U64 unsigned long long
+
+
 #include <bits/stdc++.h>
 #include <string>
 #include <sstream>
+#include "Moves.hh"
+#include "Eval.hh"
 
 class Board
 { 
 public:
-    U64* white = new U64[6];        // represents white's bitboards (P,N,B,R,Q,K)
-    U64* black = new U64[6];        // represents black's bitboards (p,n,b,r,q,k)
-    uint8_t castles = 0x00000000;   // represents castling ability in 0x0000KQkq
-    int8_t side = 1;                // side to move, 1 for white, -1 for black
-    int8_t enpassant = -1;          // enpassant square (-1 for none)
-    uint8_t halfmoves;              // halfmoves
-    uint8_t fullmoves;              // fullmoves
-    int8_t heuristic = 0;           // heuristic used for optimization
-    Board()                         // Board Constructor
+    uint64_t* white = new uint64_t[6];  // represents white's bitboards (P,N,B,R,Q,K)
+    uint64_t* black = new uint64_t[6];  // represents black's bitboards (p,n,b,r,q,k)
+    uint8_t castles = 0x00000000;       // represents castling ability in 0x0000KQkq
+    int8_t side = 1;                    // side to move, 1 for white, -1 for black
+    int8_t enpassant = -1;              // enpassant square (-1 for none)
+    uint8_t halfmoves;                  // halfmoves
+    uint8_t fullmoves;                  // fullmoves
+    int8_t heuristic = 0;               // heuristic used for optimization
+    Board()                             // Board Constructor
     {
         fullmoves = 0;
         halfmoves = 0;
@@ -28,7 +29,7 @@ public:
             *(black+i) = 0ULL;
         }
     }
-    ~Board()                        // Board Destructor
+    ~Board()                            // Board Destructor
     {
         delete[] this->black, this->white;  // delete heap-allocated arrays
     }
@@ -61,7 +62,7 @@ void Board::import_FEN(std::string FEN)
     }
     for (int pos = 0; pos < 64; pos++)
     {
-        U64 itr = pow(2,pos);
+        uint64_t itr = pow(2,pos);
         switch (arr[pos])
         {
             case 'P': *(white + 0) |= itr; break;
@@ -111,7 +112,7 @@ std::string Board::to_string()
     char bp[6] = {'p','n','b','r','q','k'};
     for (int pos = 0; pos < 64; pos++)
     {
-        U64 itr = std::pow(2,pos);
+        uint64_t itr = std::pow(2,pos);
         int piece;
         for (piece = 0; piece < 6; piece++)
         {
