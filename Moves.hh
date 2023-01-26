@@ -34,7 +34,6 @@ uint64_t knight_mask(int square)
     uint64_t att = 0ULL;            // attacks
     uint64_t bitboard = 0ULL;       // knight square
     push_bit(&bitboard, square);
-    att |= bitboard; 
     //generate 17 and -15 attacks
     if (!(bitboard & A_FILE))
     {att |= (bitboard >> 17) | (bitboard << 15);}
