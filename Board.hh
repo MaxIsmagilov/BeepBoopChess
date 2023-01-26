@@ -8,15 +8,15 @@
 class Board
 {
 public:
-    U64* white = new U64[6];
-    U64* black = new U64[6];
-    uint8_t castles = 0x00000000; // in 0x0000KQkq
-    int8_t side = 1;
-    int8_t enpassant = -1;
-    uint8_t halfmoves;
-    uint8_t fullmoves;
-    int8_t heuristic = 0;
-    Board() 
+    U64* white = new U64[6];        // represents white's bitboards (P,N,B,R,Q,K)
+    U64* black = new U64[6];        // represents black's bitboards (p,n,b,r,q,k)
+    uint8_t castles = 0x00000000;   // represents castling ability in 0x0000KQkq
+    int8_t side = 1;                // side to move, 1 for white, -1 for black
+    int8_t enpassant = -1;          // enpassant square (-1 for none)
+    uint8_t halfmoves;              // halfmoves
+    uint8_t fullmoves;              // fullmoves
+    int8_t heuristic = 0;           // heuristic used for optimization
+    Board()                         // Board Constructor
     {
         fullmoves = 0;
         halfmoves = 0;
@@ -26,35 +26,35 @@ public:
             *(black+i) = 0ULL;
         }
     }
-    ~Board() 
+    ~Board()                        // Board Destructor
     {
-        delete[] this->black, this->white;
+        delete[] this->black, this->white;  // delete heap-allocated arrays
     }
-    void import_FEN(std::string FEN);
-    std::string to_string();
+    void import_FEN(std::string FEN);       // declaration for void Board::import_FEN(), takes a string parameter
+    std::string to_string();                // declaration for std::string Board::to_string()
     
 };
 
 void Board::import_FEN(std::string FEN)
 {
     char arr[64];  
-    int index;
+    int index = 0;
     int feni = 0;
-    for (index = 0; FEN[index] != ' '; index++)
+    for (feni; FEN[feni] != ' '; feni++)
     {
-        if (FEN[index] == '/') {continue;}
-        else if (std::isdigit(FEN[index])) 
+        if (FEN[feni] == '/') {continue;}
+        else if (std::isdigit(FEN[feni])) 
         {
-            for (int i = 0; i <= (FEN[index] - '1'); i++)
+            for (int i = 0; i <= (FEN[feni] - '1'); i++)
             {
-                arr[feni] = '\0';
-                feni++;
+                arr[index] = '\0';
+                index++;
             }
         }
         else 
         {
-            arr[feni] = FEN[index];
-            feni++;
+            arr[index] = FEN[feni];
+            index++;
         }
     }
     for (int pos = 0; pos < 64; pos++)
@@ -117,7 +117,7 @@ std::string Board::to_string()
             else if (*(white+piece) & itr) {bd += wp[piece]; break;}
         }
         if (piece != 6) {;}
-        else if ((pos + (pos / 8)) % 2 == 1) {bd += '@';}
+        else if ((pos + (pos / 8)) % 2 == 1) {bd += '#';}
         else {bd += ' ';}
         if (pos % 8 == 7) {bd += '\n';}
     }
