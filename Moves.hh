@@ -9,7 +9,9 @@
 // pawn attack mask
 uint64_t pawn_attacks[2][64];
 uint64_t knight_attacks[64];
+uint64_t king_attacks[64];
 
+// it's what the mask is
 uint64_t pawn_mask(int square, int side) // side is 1 for white, -1 for black
 {
     uint64_t att = 0ULL;            // attacks
@@ -48,15 +50,37 @@ uint64_t knight_mask(int square)
     {att |= (bitboard << 10) | (bitboard >> 6);}
     return att;
 }
-
+uint64_t king_mask(int square)
+{
+    uint64_t att = 0ULL;            // attacks
+    uint64_t bitboard = 0ULL;       // king square
+    push_bit(&bitboard, square);
+    if(!(bitboard & H_FILE))
+    {
+        att |= 
+            (bitboard << 9)|
+            (bitboard << 1)|
+            (bitboard >> 7);
+    }
+    if(!(bitboard & A_FILE))
+    {
+        att |= 
+            (bitboard >> 9)|
+            (bitboard >> 1)|
+            (bitboard << 7);
+    }
+    att |= (bitboard << 8) | (bitboard >> 8);
+    return att;
+}
 
 void initialize_non_sliders() 
 {
     for (int i = 0; i < 64; i++)
     {
-        pawn_attacks[0][i] == pawn_mask(i,-1);
-        pawn_attacks[1][i] == pawn_mask(i,1);
-        knight_attacks[i] == knight_mask(i);
+        pawn_attacks[0][i] = pawn_mask(i,-1);
+        pawn_attacks[1][i] = pawn_mask(i,1);
+        knight_attacks[i] = knight_mask(i);
+        king_attacks[i] = king_mask(i);
     }
 }
 
