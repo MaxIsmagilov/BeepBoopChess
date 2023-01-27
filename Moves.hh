@@ -73,6 +73,105 @@ uint64_t king_mask(int square)
     return att;
 }
 
+uint64_t bishop_mask(int square)
+{
+    int rank, file;
+    int t_rank = square / 8;
+    int t_file = square % 8;
+    uint64_t att = 0ULL;
+    for (rank = t_rank + 1, file = t_file + 1; rank <= 6 && file <= 6; rank++, file++) 
+        att |= 1ULL << (rank * 8 + file);
+    for (rank = t_rank - 1, file = t_file + 1; rank >= 1 && file <= 6; rank--, file++)
+        att |= 1ULL << (rank * 8 + file);
+    for (rank = t_rank + 1, file = t_file - 1; rank <= 6 && file >= 1; rank++, file--) 
+        att |= 1ULL << (rank * 8 + file);
+    for (rank = t_rank - 1, file = t_file - 1; rank >= 1 && file >= 1; rank--, file--) 
+        att |= 1ULL << (rank * 8 + file);
+    return att;
+}
+uint64_t rook_mask(int square)
+{
+    int rank, file;
+    int t_rank = square / 8;
+    int t_file = square % 8;
+    uint64_t att = 0ULL;
+    for (rank = t_rank + 1; rank <= 6; rank++) 
+        att |= 1ULL << (rank * 8 + t_file);
+    for (rank = t_rank - 1; rank >= 1; rank--) 
+        att |= 1ULL << (rank * 8 + t_file);
+    for (file = t_file + 1; file <= 6; file++) 
+        att |= 1ULL << (t_rank * 8 + file);
+    for (file = t_file - 1; file >= 1; file--) 
+        att |= 1ULL << (t_rank * 8 + file);
+    return att;
+}
+
+uint64_t otf_bishop_attacks(int square, uint64_t soft_blockers, uint64_t hard_blockers)
+{
+    int rank, file;
+    int t_rank = square / 8;
+    int t_file = square % 8;
+    uint64_t att = 0ULL;
+    for (rank = t_rank + 1, file = t_file + 1; rank <= 7 && file <= 7; rank++, file++) 
+    {
+        if ((1ULL << (rank * 8 + file)) & hard_blockers) break; 
+        att |= 1ULL << (rank * 8 + file);
+        if ((1ULL << (rank * 8 + file)) & soft_blockers) break;
+    }
+    for (rank = t_rank - 1, file = t_file + 1; rank >= 0 && file <= 7; rank--, file++)
+    {
+        if ((1ULL << (rank * 8 + file)) & hard_blockers) break; 
+        att |= 1ULL << (rank * 8 + file);
+        if ((1ULL << (rank * 8 + file)) & soft_blockers) break;
+    }
+    for (rank = t_rank + 1, file = t_file - 1; rank <= 7 && file >= 0; rank++, file--) 
+    {
+        if ((1ULL << (rank * 8 + file)) & hard_blockers) break; 
+        att |= 1ULL << (rank * 8 + file);
+        if ((1ULL << (rank * 8 + file)) & soft_blockers) break;
+    }
+    for (rank = t_rank - 1, file = t_file - 1; rank >= 0 && file >= 0; rank--, file--) 
+    {
+        if ((1ULL << (rank * 8 + file)) & hard_blockers) break; 
+        att |= 1ULL << (rank * 8 + file);
+        if ((1ULL << (rank * 8 + file)) & soft_blockers) break;
+    }
+    return att;
+}
+
+uint64_t otf_rook_attacks(int square, uint64_t soft_blockers, uint64_t hard_blockers)
+{
+    int rank, file;
+    int t_rank = square / 8;
+    int t_file = square % 8;
+    uint64_t att = 0ULL;
+    for (rank = t_rank + 1, file = t_file; rank <= 7; rank++) 
+    {
+        if ((1ULL << (rank * 8 + file)) & hard_blockers) break; 
+        att |= 1ULL << (rank * 8 + file);
+        if ((1ULL << (rank * 8 + file)) & soft_blockers) break;
+    }
+    for (rank = t_rank - 1, file = t_file; rank >= 0; rank--)
+    {
+        if ((1ULL << (rank * 8 + file)) & hard_blockers) break; 
+        att |= 1ULL << (rank * 8 + file);
+        if ((1ULL << (rank * 8 + file)) & soft_blockers) break;
+    }
+    for (rank = t_rank, file = t_file + 1; file <= 7; file++) 
+    {
+        if ((1ULL << (rank * 8 + file)) & hard_blockers) break; 
+        att |= 1ULL << (rank * 8 + file);
+        if ((1ULL << (rank * 8 + file)) & soft_blockers) break;
+    }
+    for (rank = t_rank, file = t_file - 1; file >= 0; file--) 
+    {
+        if ((1ULL << (rank * 8 + file)) & hard_blockers) break; 
+        att |= 1ULL << (rank * 8 + file);
+        if ((1ULL << (rank * 8 + file)) & soft_blockers) break;
+    }
+    return att;
+}
+
 void initialize_non_sliders() 
 {
     for (int i = 0; i < 64; i++)
