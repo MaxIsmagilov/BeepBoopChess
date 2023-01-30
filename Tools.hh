@@ -24,21 +24,25 @@ enum square {
 };
 
 // move encoding guide (using uint32_t)
-    // 0000 0000 0000 0111 1111  start square 
-    // 0000 0011 1111 1000 0000  end square
-    // 0011 1100 0000 0000 0000  promotion piece (0 for none)
-    // 0100 0000 0000 0000 0000  capture flag
-    // 1000 0000 0000 0000 0000  castling flag
+    // 0000 0000 0000 0000 0000 0000 0111 1111  start square 
+    // 0000 0000 0000 0000 0011 1111 1000 0000  end square
+    // 0000 0000 0000 0011 1100 0000 0000 0000  promotion piece (0 for none)
+    // 0000 0000 0000 0100 0000 0000 0000 0000  capture flag
+    // 0000 0000 0000 1000 0000 0000 0000 0000  castling flag
+    // 0000 0000 0001 0000 0000 0000 0000 0000  enpassant flag
+    // 0000 0001 1110 0000 0000 0000 0000 0000  castle overrides (1111 by default, 0 where no longer available)
 
 
-static inline uint32_t pack_move(uint32_t start_square, uint32_t end_square, uint32_t promotion_piece, uint32_t capture, uint32_t castle)
+static inline uint32_t pack_move(uint32_t start_square, uint32_t end_square, uint32_t promotion_piece, uint32_t capture, uint32_t castle, uint32_t enpassant, uint32_t castle_ov)
 {
     return 
         (start_square & 0x7FUL)|
         ((end_square & 0x7FUL) << 7)|
         ((promotion_piece & 0xFUL) << 14) |
         ((capture & 0x1UL) << 18)|
-        ((castle & 0x1UL) << 19);
+        ((castle & 0x1UL) << 19)|
+        ((enpassant & 0x1UL) << 20)|
+        ((castle_ov & 0xFUL) << 21);
 }
 
 static inline uint32_t start_square(uint32_t move) {return (move) & 0x7FUL;}
@@ -47,9 +51,13 @@ static inline uint32_t end_square(uint32_t move) {return (move >> 7) & 0x7FUL;}
 
 static inline uint32_t promotion_piece(uint32_t move) {return (move >> 14) & 0xFUL;}
 
-static inline uint32_t capture(uint32_t move) {return (move >> 18) & 0x1UL;}
+static inline uint32_t capture_flag(uint32_t move) {return (move >> 18) & 0x1UL;}
 
-static inline uint32_t castle(uint32_t move) {return (move >> 19) & 0x1UL;}
+static inline uint32_t castle_flag(uint32_t move) {return (move >> 19) & 0x1UL;}
+
+static inline uint32_t enpassant_flag(uint32_t move) {return (move >> 20) & 0x1UL;}
+
+static inline uint32_t castle_overrides(uint32_t move) {return (move >> 21) & 0xFUL;}
 
 static inline bool get_bit(uint64_t board, int square) {return board & (1ULL << square);}
 

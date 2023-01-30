@@ -5,7 +5,6 @@
 #include <bits/stdc++.h>
 #include <string>
 #include <sstream>
-#include "Moves.hh"
 #include "Eval.hh"
 #include "Tools.hh"
 
@@ -32,11 +31,15 @@ public:
     }
     ~Board()                            // Board Destructor
     {
-        delete[] this->black, this->white;  // delete heap-allocated arrays
+        //delete[] this->black, this->white;  // delete heap-allocated arrays
     }
     void import_FEN(std::string FEN);       // declaration for void Board::import_FEN(), takes a string parameter
     std::string to_string();                // declaration for std::string Board::to_string()
-    
+    inline uint64_t whites() {return this->white[0] | this->white[1] | this->white[2] | this->white[3] | this->white[4] | this->white[5];}
+    inline uint64_t blacks() {return this->black[0] | this->black[1] | this->black[2] | this->black[3] | this->black[4] | this->black[5];}
+    inline uint64_t all() {return whites() | blacks();}
+    void copy_from(Board bd);
+    void move(uint32_t move);
 };
 
 void Board::import_FEN(std::string FEN)
@@ -125,8 +128,71 @@ std::string Board::to_string()
         else {bd += ' ';}
         if (pos % 8 == 7) {bd += '\n';}
     }
+    bd += "side to move: ";
+    if (side == 1) bd += "white"; else bd += "black";
+    bd += "\n";
+
     return bd;
 }
 
+void Board::copy_from(Board bd)
+{
+    for (int i = 0; i < 6; i++)
+    {
+        black[i] = bd.black[i];
+        white[i] = bd.white[i];
+    }
+    castles = bd.castles;
+    side = bd.side;
+    enpassant = bd.enpassant;
+    halfmoves = bd.halfmoves;
+    fullmoves = bd.fullmoves;
+    heuristic = bd.heuristic;
+}
+
+void Board::move(uint32_t move)
+{
+    int end = end_square(move);
+    int start = start_square(move);
+    int moving_side = 0;
+    for (int i = 0; i < 6; i++)
+    {
+        
+        white[i] &= ~(1ULL << end);
+        black[i] &= ~(1ULL << end);
+        if (white[i] & (1ULL << start)) 
+        {
+            white[    (promotion_piece(move) ? promotion_piece(move) : i)     ] |= (1ULL << end);
+            moving_side = 1;
+        }
+        
+        if (black[i] & (1ULL << start)) 
+        {
+            black[    (promotion_piece(move) ? promotion_piece(move) : i)     ]  |= (1ULL << end);
+        }
+        white[i] &= ~(1ULL << start);
+        black[i] &= ~(1ULL << start);
+    }
+    side = -side;
+    if (side == 1) fullmoves++;
+    castles &= castle_overrides(move);
+    if (castle_flag(move)) 
+    {
+        if (moving_side)    
+        {
+            push_bit(&white[3], ((end + start) / 2));
+            pop_bit(&white[3], ((end > start) ? _H1 : _A1));
+        }
+        else                
+        {
+            push_bit(&white[3], ((end + start) / 2));
+            pop_bit(&white[3], ((end > start) ? _H8 : _A8));
+        }
+    }
+    if (enpassant_flag(move)) 
+    {
+        int enpsquare = end + ((moving_side) ? 8 : -8);
+    }
+}
 
 #endif
