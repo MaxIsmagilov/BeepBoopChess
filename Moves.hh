@@ -6,153 +6,26 @@
 #include <vector>
 #include "Board.hh"
 #include "Tools.hh"
+#include "Eval.hh"
 #include "Random.hh"
+#include "MagicNumbers.hh"
 #include <cstring>
+#include <algorithm>
 
 
 enum rook_or_bishop {ROOK, BISHOP};
-
 
 // non-slider attack masks
 uint64_t pawn_attacks[2][64]; // 0 is black
 uint64_t knight_attacks[64];
 uint64_t king_attacks[64];
 
+// pawn silent moves
+uint64_t silent_pawn_moves[2][64]; // 0 is black
+
 uint64_t bishop_attack_masks[64];
 uint64_t rook_attack_masks[64];
-// magic numbers
-uint64_t bishop_magics[64] = {
-    0x120605409102020ULL,
-    0xc004100200411009ULL,
-    0x426022401040310ULL,
-    0x6008258104203009ULL,
-    0x61104020005080ULL,
-    0x1001100210048200ULL,
-    0xa0042c0928081004ULL,
-    0x802940405241044ULL,
-    0x21264504044c0408ULL,
-    0x8000202801490024ULL,
-    0x81022108402800aULL,
-    0x8a082000240ULL,
-    0x50b1491140080000ULL,
-    0x1008110121500106ULL,
-    0x120950221000ULL,
-    0x2180030368020820ULL,
-    0x10802082020800ULL,
-    0x20100288020080ULL,
-    0x2e10080210801100ULL,
-    0x88000222064060ULL,
-    0x8104001211204000ULL,
-    0x1001201010100ULL,
-    0x41844206112001ULL,
-    0x18024b6011008ULL,
-    0x1040a210840182ULL,
-    0x1002202082040404ULL,
-    0x6004091030010a60ULL,
-    0x40c00480c010110ULL,
-    0x30030001200802ULL,
-    0x1490010040240100ULL,
-    0x4204008100480440ULL,
-    0x8008434382010440ULL,
-    0x100a122000402810ULL,
-    0x101118800305008ULL,
-    0xa1420240008180aULL,
-    0x480400808008200ULL,
-    0x40020220020080ULL,
-    0x20004100888084ULL,
-    0x12080a00800c0880ULL,
-    0x220401000020a0ULL,
-    0x2a20880441801000ULL,
-    0x1041002000400ULL,
-    0x80202028131001ULL,
-    0x214200800810ULL,
-    0x20640408200400ULL,
-    0x1111005000082ULL,
-    0x4044840400404410ULL,
-    0x309852204810201ULL,
-    0x3030090104a4000ULL,
-    0x9818444404202800ULL,
-    0xc00420722881034ULL,
-    0x81080084044012ULL,
-    0x883040008ULL,
-    0x4408901010020ULL,
-    0x210041000b21280ULL,
-    0x2884148410420302ULL,
-    0x2010421042208ULL,
-    0x8112002108080440ULL,
-    0x2030084908411000ULL,
-    0x3000400100420200ULL,
-    0x2010404110420880ULL,
-    0x4010182004100098ULL,
-    0x404048822480201ULL,
-    0xd1110140100c1ULL
-};
-uint64_t rook_magics[64] = {
-    0x80008810204000ULL,
-    0x540029000c2e001ULL,
-    0x12002010400a0080ULL,
-    0x100210008041000ULL,
-    0x200020010040820ULL,
-    0x8300140001000a08ULL,
-    0x80008002000100ULL,
-    0x10006002c804100ULL,
-    0x800800080204000ULL,
-    0x340402000401000ULL,
-    0xc008808010002000ULL,
-    0x80801000800803ULL,
-    0xc480800800040080ULL,
-    0x2000200900508ULL,
-    0x1009000100140200ULL,
-    0x4302001081204204ULL,
-    0x40088020408000ULL,
-    0x8888040002004ULL,
-    0x20010040201102ULL,
-    0x205010008100020ULL,
-    0x1010008001004ULL,
-    0x803808004008200ULL,
-    0x4000400020110c8ULL,
-    0xa02020000804104ULL,
-    0x4220401080008021ULL,
-    0x9040400080802000ULL,
-    0x4800204200108a00ULL,
-    0xb0020aa00320040ULL,
-    0x2008020040400400ULL,
-    0xc0040080020080ULL,
-    0x5021c400100208ULL,
-    0x4840200004081ULL,
-    0x4401004202002080ULL,
-    0x400080400c802001ULL,
-    0x28801008802000ULL,
-    0x20a002192000840ULL,
-    0x8800400800800ULL,
-    0x2800040080800200ULL,
-    0x4600025014001118ULL,
-    0x520106082000104ULL,
-    0x540004424848000ULL,
-    0x200050004002ULL,
-    0x400820010420020ULL,
-    0x2e11001050008ULL,
-    0x20010208a0004ULL,
-    0x180040002008080ULL,
-    0xd001005200210014ULL,
-    0x8011680c2000cULL,
-    0x11002080004100ULL,
-    0x200401000200040ULL,
-    0x2002200100144500ULL,
-    0x2100088210300ULL,
-    0x104008008000480ULL,
-    0xb040080820080ULL,
-    0x1080020108100400ULL,
-    0x6002142100804200ULL,
-    0x408441281022202ULL,
-    0x2040408201002012ULL,
-    0x20002009124101ULL,
-    0x4201020820041001ULL,
-    0x802002110040802ULL,
-    0x3002000408811002ULL,
-    0x100010208209044ULL,
-    0x1000300440a2086ULL
-};
+
 // rook and bishop attack arrays
 uint64_t magic_rook_attacks   [64][4096];
 uint64_t magic_bishop_attacks [64][512];
@@ -243,6 +116,7 @@ uint64_t king_mask(int square)
     return att;
 }
 
+// masks for magic generation
 uint64_t bishop_mask(int square)
 {
     int rank, file;
@@ -267,6 +141,25 @@ uint64_t rook_mask(int square)
     for (file = t_file + 1; file <= 6; file++) att |= (1ULL << (t_rank * 8 + file));
     for (file = t_file - 1; file >= 1; file--) att |= (1ULL << (t_rank * 8 + file));
     return att;
+}
+
+// silent pawn moves
+uint64_t silent_pawn_mask(int square, int side)
+{
+    uint64_t mv = 0ULL;
+    uint64_t bitboard = 0ULL;       // pawn square
+    push_bit(&bitboard, square); 
+    if (side == 1)
+    {
+        mv |= (bitboard >> 8);
+        if (square / 8 == 6) mv |=  (bitboard >> 16);
+    }
+    else
+    {
+        mv |= (bitboard << 8);
+        if (square / 8 == 1) mv |=  (bitboard << 16);
+    }
+    return mv;
 }
 
 // on the fly attacks
@@ -347,7 +240,7 @@ uint64_t get_occupancy(int index, int bit_count, uint64_t mask)
 }
 
 
-
+// find magic
 uint64_t find_magic(int square, int occupancy, int piece)
 {
     uint64_t occupancies[4096];
@@ -389,6 +282,7 @@ uint64_t find_magic(int square, int occupancy, int piece)
     return 0;
 }
 
+// init routines
 void initialize_magic_numbers()
 {
     for (int i = 0; i < 64; i++)
@@ -409,6 +303,8 @@ void initialize_non_sliders()
         pawn_attacks[1][i] = pawn_mask(i,1);
         knight_attacks[i] = knight_mask(i);
         king_attacks[i] = king_mask(i);
+        silent_pawn_moves[0][i] = silent_pawn_mask(i, -1);
+        silent_pawn_moves[1][i] = silent_pawn_mask(i, 1);
     }
 }
 
@@ -448,6 +344,7 @@ void initialize_sliders()
     }
 }
 
+// magic attack calculator
 static inline uint64_t get_bishop_attacks(int square, uint64_t occupancy)
 {
     occupancy &= bishop_attack_masks[square];
@@ -469,6 +366,7 @@ static inline uint64_t get_queen_attacks(int square, uint64_t occupancy)
     return get_bishop_attacks(square, occupancy) | get_rook_attacks(square, occupancy);
 }
 
+// is attacked routine
 static bool is_attacked(int square, Board bd, int by_side)
 {
     if (by_side == 1)
@@ -489,5 +387,159 @@ static bool is_attacked(int square, Board bd, int by_side)
     }
     return false;
 }
+
+// in check routine
+static bool in_check(Board bd, int side)
+{
+    if (side == 1)
+    {
+        return is_attacked(LSB_index(bd.white[5]), bd, -side);
+    }
+    else
+    {
+        return is_attacked(LSB_index(bd.black[5]), bd, -side);
+    }
+    return false;
+}
+
+// generate legal moves
+void get_moves(Board bd, int side, std::vector<unsigned int>* vec)
+{
+    // clear vector
+    vec->clear();
+    // initiallize constants
+    uint64_t all_pieces = bd.all();
+    int binary_side = (side == 1) ? 1 : 0;
+    uint64_t attacking_occ = (side == 1) ? bd.whites() : bd.blacks();
+    uint64_t defending_occ = (side == 1) ? bd.blacks() : bd.whites();
+    uint64_t* attacking_pieces = (side == 1) ? bd.white : bd.black;
+    uint64_t* defending_pieces = (side == 1) ? bd.black : bd.white;
+    for (unsigned int i = 0; i < 64; i++)
+    {
+        // populate attack bitboard
+        uint64_t bitboard = 1ULL << i;
+        uint64_t att = 0ULL;
+        char castle = 0b11;
+        int piece = -1;
+        if (bitboard & attacking_pieces[0]) 
+        {
+            att |= (pawn_attacks[binary_side][i] & (defending_occ | (1ULL << bd.enpassant))) | (silent_pawn_moves[binary_side][i] & ~all_pieces); 
+            piece = 1;
+        }
+        else if (bitboard & attacking_pieces[1]) att |= knight_attacks[i];
+        else if (bitboard & attacking_pieces[2]) att |= get_bishop_attacks(i , all_pieces);
+        else if (bitboard & attacking_pieces[3]) 
+        {
+            att |= get_rook_attacks(i , all_pieces);
+            if ((i % 8) == 0) castle &= 0b01;
+            else if ((i % 8) == 0) castle &= 0b10;
+        }
+        else if (bitboard & attacking_pieces[4]) att |= get_queen_attacks(i , all_pieces);
+        else if (bitboard & attacking_pieces[5]) 
+        {
+            att |= king_attacks[i];
+            castle = 0b00;
+        }
+        else continue;
+
+        // remove self-captures
+        att &= ~attacking_occ;
+
+        // convert attack bitboard to a vector of moves
+        while (att)
+        {
+            unsigned int castles_ov = (binary_side) ? (0b11 | (castle << 2)) : (0b1100 | castle);
+            unsigned int j = LSB_index(att);
+            pop_bit(&att, j);
+            unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
+            unsigned int enpassantflg = (j == bd.enpassant) ? 0b1 : 0;
+            uint32_t move = pack_move(i , j, 0UL, captureflg, 0UL, enpassantflg, castles_ov);
+
+
+            // verify checks
+            Board test_checks = Board();
+            test_checks.copy_from(bd);
+            if (in_check(test_checks, -side)) {test_checks.close(); continue;}
+            test_checks.close();
+
+            // calculate heristics
+            unsigned int heuristic_value = 10;
+
+            // check for promotions
+            if (piece == 1 && (j / 8 == 0 || j / 8 == 7))
+            {
+                for (unsigned int promotee = 1; promotee < 5; promotee++)
+                {
+                    move = pack_move(i , j, promotee, captureflg, 0UL, enpassantflg, castles_ov);
+                    move = set_heuristic(move, (heuristic_value + (captureflg * 5) + (promotee * 2)));
+                    vec->push_back(move);
+                }
+            }
+
+            // add non-promotion moves
+            else 
+            {
+                if (is_attacked(LSB_index(attacking_pieces[4]), bd, -side));
+                move = set_heuristic(move, (heuristic_value + (enpassantflg) + (captureflg * 5)));
+                vec->push_back(move);
+            }
+        }
+    }
+
+    // castling routine
+    if (side == 1)
+    {
+        if (bd.castles & 0b1000)
+        {
+            if (!(is_attacked(_E1,bd,-1) || is_attacked(_F1,bd,-1) || is_attacked(_G1,bd,-1)) && !(all_pieces & (_F1 | _G1)))
+            {
+                vec->push_back(pack_move(_E1,_G1, 0U, 0U, 1U, 0U, 0b0011));
+            }
+        }
+        if (bd.castles & 0b0100)
+        {
+            if (!(is_attacked(_E1,bd,-1) || is_attacked(_D1,bd,-1) || is_attacked(_C1,bd,-1)) && !(all_pieces & (_D1 | _C1 | _B1)))
+            {
+                vec->push_back(pack_move(_E1,_C1, 0U, 0U, 1U, 0U, 0b0011));
+            }
+        }
+    }
+    else
+    {
+        if (bd.castles & 0b0010)
+        {
+            if (!(is_attacked(_E8,bd,1) || is_attacked(_F8,bd,1) || is_attacked(_G8,bd,1)) && !(all_pieces & (_F8 | _G8)))
+            {
+                vec->push_back(pack_move(_E8,_G8, 0U, 0U, 1U, 0U, 0b1100));
+            }
+        }
+        if (bd.castles & 0b0001)
+        {
+            if (!(is_attacked(_E8,bd,1) || is_attacked(_D8,bd,1) || is_attacked(_C1,bd,1)) && !(all_pieces & (_D8 | _C8 | _B8)))
+            {
+                vec->push_back(pack_move(_E8,_C8, 0U, 0U, 1U, 0U, 0b1100));
+            }
+        }
+    }
+    
+    int vector_size = vec->size();
+
+    // exit if empty
+    if (vec->size() == 0) return;
+
+    // sort and finalize heuristics
+    int num_best = (3 > vector_size / 3) ? vector_size / 3 : 3;
+    int num_killer = (3 > vector_size - num_best) ? vector_size - num_best : 3;
+
+    std::sort(vec->begin(), vec->end(), std::greater<>());
+    for (int i = 0; i < num_best; i++)
+        vec->at(i) |= (1UL << 31);
+    std::sort(vec->begin(), vec->end());
+    for (int i = 0; i < num_killer; i++)
+        vec->at(i) |= (1UL << 30);
+    std::sort(vec->begin(), vec->end(), std::greater<>());
+    
+}
+
 
 #endif

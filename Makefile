@@ -1,0 +1,1 @@
+all: g++ -o Main.o NegaMax.o Eval.o Moves.o Board.o MagicNumbers.o Tools.o

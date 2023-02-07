@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <bits/stdc++.h>
+#include "NegaMax.hh"
 #include "Board.hh"
 #include "Moves.hh"
 #include "Eval.hh"
@@ -25,10 +26,15 @@ int main(int argc, char const *argv[])
     setup();
     Board start = Board();
     start.import_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    uint32_t move = pack_move(_E2, _E4, 0, 0, 0, 0, 0);
-    //std::cout << move;
-    start.move(move);
-    std::cout << start.to_string() << is_attacked(_E1, start, 1);
+    std::vector<unsigned int> moves = std::vector<unsigned int>();
+    int i = 0;
+    while (i < 50)
+    {
+        start.move((get_best_move(start, 2)));
+        std::cout << start.print_board() << "\n";
+        i++;
+    }
+    start.close();
 }
 
 

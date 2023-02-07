@@ -6,9 +6,9 @@
 
 const uint64_t A_FILE = 72340172838076673ULL;
 
-const uint64_t B_FILE = 144680345676153346;
+const uint64_t B_FILE = 144680345676153346ULL;
 
-const uint64_t G_FILE = 4629771061636907072;
+const uint64_t G_FILE = 4629771061636907072ULL;
 
 const uint64_t H_FILE = 9259542123273814144ULL;
 
@@ -31,7 +31,7 @@ enum square {
     // 0000 0000 0000 1000 0000 0000 0000 0000  castling flag
     // 0000 0000 0001 0000 0000 0000 0000 0000  enpassant flag
     // 0000 0001 1110 0000 0000 0000 0000 0000  castle overrides (1111 by default, 0 where no longer available)
-
+    // 1111 1110 0000 0000 0000 0000 0000 0000  ordering priority (1000 000 = best, 0100 000 = killer, rest are other info)
 
 static inline uint32_t pack_move(uint32_t start_square, uint32_t end_square, uint32_t promotion_piece, uint32_t capture, uint32_t castle, uint32_t enpassant, uint32_t castle_ov)
 {
@@ -44,6 +44,8 @@ static inline uint32_t pack_move(uint32_t start_square, uint32_t end_square, uin
         ((enpassant & 0x1UL) << 20)|
         ((castle_ov & 0xFUL) << 21);
 }
+
+static inline uint32_t set_heuristic(uint32_t move, uint32_t new_heristic) {return (move & 0x1FFFFFFUL) | ((new_heristic & 0x7FUL) << 25);}
 
 static inline uint32_t start_square(uint32_t move) {return (move) & 0x7FUL;}
 
@@ -76,7 +78,7 @@ std::string print_bitboard(uint64_t bb)
     return str;
 }
 
-static inline int count_bits(uint64_t test)
+static inline unsigned int count_bits(uint64_t test)
 {
     int bitnumber = 0;
     while (test)
@@ -87,7 +89,7 @@ static inline int count_bits(uint64_t test)
     return bitnumber;
 }
 
-static inline int LSB_index(uint64_t test)
+static inline unsigned int LSB_index(uint64_t test)
 {
     return (test) ? count_bits((test &  -test) - 1) : -1;
 }

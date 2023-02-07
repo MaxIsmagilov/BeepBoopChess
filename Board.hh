@@ -1,11 +1,10 @@
 #ifndef ChessBoard
 #define ChessBoard
 
+class Board;
 
 #include <bits/stdc++.h>
-#include <string>
 #include <sstream>
-#include "Eval.hh"
 #include "Tools.hh"
 
 class Board
@@ -29,17 +28,20 @@ public:
             *(black+i) = 0ULL;
         }
     }
-    ~Board()                            // Board Destructor
+    void close()                            // Board Closer
     {
-        //delete[] this->black, this->white;  // delete heap-allocated arrays
+        delete[] this->black, this->white;  // delete heap-allocated arrays
     }
+    ~Board() {}
     void import_FEN(std::string FEN);       // declaration for void Board::import_FEN(), takes a string parameter
     std::string to_string();                // declaration for std::string Board::to_string()
+    std::string print_board();
     inline uint64_t whites() {return this->white[0] | this->white[1] | this->white[2] | this->white[3] | this->white[4] | this->white[5];}
     inline uint64_t blacks() {return this->black[0] | this->black[1] | this->black[2] | this->black[3] | this->black[4] | this->black[5];}
     inline uint64_t all() {return whites() | blacks();}
     void copy_from(Board bd);
     void move(uint32_t move);
+
 };
 
 void Board::import_FEN(std::string FEN)
@@ -109,9 +111,9 @@ void Board::import_FEN(std::string FEN)
     feni += 2;
 }
 
-std::string Board::to_string()
+std::string Board::print_board()
 {
-    std::string bd = "";
+    std::string bd = "--|---|---|---|---|---|---|--\n";
     char wp[6] = {'P','N','B','R','Q','K'};
     char bp[6] = {'p','n','b','r','q','k'};
     for (int pos = 0; pos < 64; pos++)
@@ -124,13 +126,16 @@ std::string Board::to_string()
             else if (*(white+piece) & itr) {bd += wp[piece]; break;}
         }
         if (piece != 6) {;}
-        else if ((pos + (pos / 8)) % 2 == 1) {bd += '#';}
+        else if ((pos + (pos / 8)) % 2 == 1) {bd += '.';}
         else {bd += ' ';}
-        if (pos % 8 == 7) {bd += '\n';}
+        
+        if (pos % 8 == 7) bd += "\n--|---|---|---|---|---|---|--\n";
+        else bd += " | ";
+        
     }
-    bd += "side to move: ";
-    if (side == 1) bd += "white"; else bd += "black";
-    bd += "\n";
+    //bd += "side to move: ";
+    //if (side == 1) bd += "white"; else bd += "black";
+    //bd += "\n";
 
     return bd;
 }
@@ -193,6 +198,35 @@ void Board::move(uint32_t move)
     {
         int enpsquare = end + ((moving_side) ? 8 : -8);
     }
+}
+
+std::string Board::to_string()
+{
+    std::string bd = "";
+    char wp[6] = {'P','N','B','R','Q','K'};
+    char bp[6] = {'p','n','b','r','q','k'};
+    for (int pos = 0; pos < 64; pos++)
+    {
+        uint64_t itr = std::pow(2,pos);
+        int piece;
+        for (piece = 0; piece < 6; piece++)
+        {
+            if (*(black+piece) & itr) {bd += bp[piece]; break;}
+            else if (*(white+piece) & itr) {bd += wp[piece]; break;}
+        }
+        if (piece != 6) {;}
+        else if ((pos + (pos / 8)) % 2 == 1) {bd += '.';}
+        else {bd += ' ';}
+        
+        if (pos % 8 == 7) bd += "\n";
+        else bd += " ";
+        
+    }
+    bd += "side to move: ";
+    if (side == 1) bd += "white"; else bd += "black";
+    bd += "\n";
+
+    return bd;
 }
 
 #endif
