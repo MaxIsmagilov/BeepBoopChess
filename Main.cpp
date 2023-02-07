@@ -27,10 +27,13 @@ int main(int argc, char const *argv[])
     Board start = Board();
     start.import_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     std::vector<unsigned int> moves = std::vector<unsigned int>();
+    int depth = 0;
+    std::cout << "enter depth:";
+    std::cin >> depth;
     int i = 0;
-    while (i < 50)
+    while (i < 1)
     {
-        start.move((get_best_move(start, 2)));
+        start.move((get_best_move(start, depth)));
         std::cout << start.print_board() << "\n";
         i++;
     }

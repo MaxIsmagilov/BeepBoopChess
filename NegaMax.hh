@@ -12,12 +12,12 @@
 
 int negamax(Board bd, int depth, int alpha, int beta, int side)
 {
-    if (depth == 0) {return eval(bd) * bd.side;}
+    if (depth == 0) {return eval(bd) * -bd.side;}
     std::vector<unsigned int> vec = std::vector<unsigned int>();
     get_moves(bd, side, &vec);
     if (vec.size() == 0) 
     {
-        if (in_check(bd,side)) return 1000000;
+        if (in_check(bd,side)) return 1000000 - depth;
         else return 0;
     }
     int value = -1000000;
@@ -25,10 +25,11 @@ int negamax(Board bd, int depth, int alpha, int beta, int side)
     {
         Board check = Board();
         check.copy_from(bd);
+        check.move(i);
         value = std::max(value, -negamax(check, depth -1, -beta, -alpha, -side));
         alpha = std::max(alpha, value);
         check.close();
-        if (alpha >= beta) return beta-1;;
+        if (alpha >= beta) return alpha+1;
     }
     return value;
 }
@@ -48,7 +49,7 @@ unsigned int get_best_move(Board bd, int depth)
         pr.copy_from(bd);
         pr.move(vec[i]);
         int value = negamax(pr, depth, -1000000, 1000000, 1);
-        //printf("0x%lx, %i\n", vec[i] , value);
+        printf("0x%lx, %i\n", vec[i] , value);
         if (value > best_move_value)
         {
             max_index = i;
@@ -56,6 +57,7 @@ unsigned int get_best_move(Board bd, int depth)
         }
         pr.close();
     }
+    printf("\tused: 0x%lx, %i\n", vec[max_index] , best_move_value);
     return vec[max_index];
 }
 

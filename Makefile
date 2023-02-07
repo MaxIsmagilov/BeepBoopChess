@@ -1,1 +1,6 @@
-all: g++ -o Main.o NegaMax.o Eval.o Moves.o Board.o MagicNumbers.o Tools.o
+all: 
+	g++ -oFast Main.cpp NegaMax.hh Eval.hh Moves.hh Board.hh Tools.hh MagicNumbers.hh -o Main
+
+
+	
+	
