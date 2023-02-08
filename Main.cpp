@@ -27,17 +27,20 @@ int main(int argc, char const *argv[])
     Board start = Board();
     start.import_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     std::vector<unsigned int> moves = std::vector<unsigned int>();
-    int depth = 0;
-    std::cout << "enter depth:";
-    std::cin >> depth;
+    std::cout << start.print_board() << "\n";
+    int depth;
+    int plies;
+    std::cout << "enter depth and plies:";
+    std::cin >> depth >> plies;
     int i = 0;
-    while (i < 1)
+    while (i < plies)
     {
-        start.move((get_best_move(start, depth)));
+        unsigned int move = get_best_move(&start, depth);
+        if (!move) {std::cout << "endpoint reached\n"; break;}
+        start.move((get_best_move(&start, depth)));
         std::cout << start.print_board() << "\n";
         i++;
     }
-    start.close();
 }
 
 

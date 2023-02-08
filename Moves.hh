@@ -367,53 +367,53 @@ static inline uint64_t get_queen_attacks(int square, uint64_t occupancy)
 }
 
 // is attacked routine
-static bool is_attacked(int square, Board bd, int by_side)
+static bool is_attacked(int square, Board* bd, int by_side)
 {
     if (by_side == 1)
     {
-        if (get_bishop_attacks(square, bd.all()) & ((bd.white[2]) | bd.white[4])) return true;
-        if (get_rook_attacks(square, bd.all()) & ((bd.white[3]) | bd.white[4])) return true;
-        if (pawn_attacks[0][square] & bd.white[0]) return true;
-        if (knight_attacks[square] & bd.white[1]) return true;
-        if (king_attacks[square] & bd.white[5]) return true;
+        if (get_bishop_attacks(square, bd->all()) & ((bd->white[2]) | bd->white[4])) return true;
+        if (get_rook_attacks(square, bd->all()) & ((bd->white[3]) | bd->white[4])) return true;
+        if (pawn_attacks[0][square] & bd->white[0]) return true;
+        if (knight_attacks[square] & bd->white[1]) return true;
+        if (king_attacks[square] & bd->white[5]) return true;
     }
     else 
     {
-        if (get_bishop_attacks(square, bd.all()) & (bd.black[2] | bd.black[4])) return true;
-        if (get_rook_attacks(square, bd.all()) & (bd.black[3] | bd.black[4])) return true;
-        if (pawn_attacks[1][square] & bd.black[0]) return true;
-        if (knight_attacks[square] & bd.black[1]) return true;
-        if (king_attacks[square] & bd.black[5]) return true;
+        if (get_bishop_attacks(square, bd->all()) & (bd->black[2] | bd->black[4])) return true;
+        if (get_rook_attacks(square, bd->all()) & (bd->black[3] | bd->black[4])) return true;
+        if (pawn_attacks[1][square] & bd->black[0]) return true;
+        if (knight_attacks[square] & bd->black[1]) return true;
+        if (king_attacks[square] & bd->black[5]) return true;
     }
     return false;
 }
 
 // in check routine
-static bool in_check(Board bd, int side)
+static bool in_check(Board* bd, int side)
 {
     if (side == 1)
     {
-        return is_attacked(LSB_index(bd.white[5]), bd, -side);
+        return is_attacked(LSB_index(bd->white[5]), bd, -side);
     }
     else
     {
-        return is_attacked(LSB_index(bd.black[5]), bd, -side);
+        return is_attacked(LSB_index(bd->black[5]), bd, -side);
     }
     return false;
 }
 
 // generate legal moves
-void get_moves(Board bd, int side, std::vector<unsigned int>* vec)
+void get_moves(Board* bd, int side, std::vector<unsigned int>* vec)
 {
     // clear vector
     vec->clear();
     // initiallize constants
-    uint64_t all_pieces = bd.all();
+    uint64_t all_pieces = bd->all();
     int binary_side = (side == 1) ? 1 : 0;
-    uint64_t attacking_occ = (side == 1) ? bd.whites() : bd.blacks();
-    uint64_t defending_occ = (side == 1) ? bd.blacks() : bd.whites();
-    uint64_t* attacking_pieces = (side == 1) ? bd.white : bd.black;
-    uint64_t* defending_pieces = (side == 1) ? bd.black : bd.white;
+    uint64_t attacking_occ = (side == 1) ? bd->whites() : bd->blacks();
+    uint64_t defending_occ = (side == 1) ? bd->blacks() : bd->whites();
+    uint64_t* attacking_pieces = (side == 1) ? bd->white : bd->black;
+    uint64_t* defending_pieces = (side == 1) ? bd->black : bd->white;
     for (unsigned int i = 0; i < 64; i++)
     {
         // populate attack bitboard
@@ -423,7 +423,7 @@ void get_moves(Board bd, int side, std::vector<unsigned int>* vec)
         int piece = -1;
         if (bitboard & attacking_pieces[0]) 
         {
-            att |= (pawn_attacks[binary_side][i] & (defending_occ | (1ULL << bd.enpassant))) | (silent_pawn_moves[binary_side][i] & ~all_pieces); 
+            att |= (pawn_attacks[binary_side][i] & (defending_occ | (1ULL << bd->enpassant))) | (silent_pawn_moves[binary_side][i] & ~all_pieces); 
             piece = 1;
         }
         else if (bitboard & attacking_pieces[1]) att |= knight_attacks[i];
@@ -452,15 +452,14 @@ void get_moves(Board bd, int side, std::vector<unsigned int>* vec)
             unsigned int j = LSB_index(att);
             pop_bit(&att, j);
             unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            unsigned int enpassantflg = (j == bd.enpassant) ? 0b1 : 0;
+            unsigned int enpassantflg = (j == bd->enpassant) ? 0b1 : 0;
             uint32_t move = pack_move(i , j, 0UL, captureflg, 0UL, enpassantflg, castles_ov);
 
 
             // verify checks
             Board test_checks = Board();
             test_checks.copy_from(bd);
-            if (in_check(test_checks, -side)) {test_checks.close(); continue;}
-            test_checks.close();
+            if (in_check(&test_checks, -side)) {continue;}
 
             // calculate heristics
             unsigned int heuristic_value = 10;
@@ -489,14 +488,14 @@ void get_moves(Board bd, int side, std::vector<unsigned int>* vec)
     // castling routine
     if (side == 1)
     {
-        if (bd.castles & 0b1000)
+        if (bd->castles & 0b1000)
         {
             if (!(is_attacked(_E1,bd,-1) || is_attacked(_F1,bd,-1) || is_attacked(_G1,bd,-1)) && !(all_pieces & (_F1 | _G1)))
             {
                 vec->push_back(pack_move(_E1,_G1, 0U, 0U, 1U, 0U, 0b0011));
             }
         }
-        if (bd.castles & 0b0100)
+        if (bd->castles & 0b0100)
         {
             if (!(is_attacked(_E1,bd,-1) || is_attacked(_D1,bd,-1) || is_attacked(_C1,bd,-1)) && !(all_pieces & (_D1 | _C1 | _B1)))
             {
@@ -506,14 +505,14 @@ void get_moves(Board bd, int side, std::vector<unsigned int>* vec)
     }
     else
     {
-        if (bd.castles & 0b0010)
+        if (bd->castles & 0b0010)
         {
             if (!(is_attacked(_E8,bd,1) || is_attacked(_F8,bd,1) || is_attacked(_G8,bd,1)) && !(all_pieces & (_F8 | _G8)))
             {
                 vec->push_back(pack_move(_E8,_G8, 0U, 0U, 1U, 0U, 0b1100));
             }
         }
-        if (bd.castles & 0b0001)
+        if (bd->castles & 0b0001)
         {
             if (!(is_attacked(_E8,bd,1) || is_attacked(_D8,bd,1) || is_attacked(_C1,bd,1)) && !(all_pieces & (_D8 | _C8 | _B8)))
             {

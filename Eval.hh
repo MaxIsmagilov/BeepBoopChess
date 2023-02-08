@@ -82,7 +82,7 @@ unsigned int gamestate(Board bd) // Gamestate calculator (0 is start, higher is 
     return 0;
 }
 
-int eval(Board bd)
+int eval(Board* bd)
 {
     int total = 0;
     for (int i = 0; i < 64; i++)
@@ -90,9 +90,9 @@ int eval(Board bd)
         uint64_t pos = 1ULL << i;
         for (int pc = 0; pc < 6; pc++)
         {
-            if (pos & bd.white[pc]) {total += piece_value[pc] + piece_square_value[pc][i];}
+            if (pos & bd->white[pc]) {total += piece_value[pc] + piece_square_value[pc][i];}
 
-            else if (pos & bd.black[pc]) {total -= piece_value[pc] + piece_square_value[pc][63-i];}
+            else if (pos & bd->black[pc]) {total -= piece_value[pc] + piece_square_value[pc][63-i];}
 
         }
     }
