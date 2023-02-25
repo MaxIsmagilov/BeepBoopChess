@@ -12,6 +12,8 @@ const uint64_t G_FILE = 4629771061636907072ULL;
 
 const uint64_t H_FILE = 9259542123273814144ULL;
 
+enum GAMESTATE {RUNNING, BLACK_CHECKMATE, STALEMATE, WHITE_CHECKMATE};
+
 enum square {
     _A8, _B8, _C8, _D8, _E8, _F8, _G8, _H8, 
     _A7, _B7, _C7, _D7, _E7, _F7, _G7, _H7,

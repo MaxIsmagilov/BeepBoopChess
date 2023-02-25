@@ -9,32 +9,43 @@
 #include "Board.hh"
 #include "Tools.hh"
 
+static int total_nodes;
 
-int negamax(Board* bd, int depth, int alpha, int beta, int side)
+static inline int quescence_search(int alpha, int beta)
 {
-    if (depth == 0) {return eval(bd) * -bd->side;}
+    return 0;
+}
+
+static inline int negamax(Board* bd, int depth, int alpha, int beta, int side)
+{
+    total_nodes++;
+    if (depth == 0) { return eval(bd);}
+    if (bd->halfmoves >= 50) return 0;
+
     std::vector<unsigned int> vec = std::vector<unsigned int>();
     get_moves(bd, side, &vec);
     if (vec.size() == 0) 
     {
-        if (in_check(bd,side)) return -100000 + depth;
+        if (in_check(bd,side)) return (100000 + depth);
         else return 0;
     }
     int value = -1000000;
+    Board* check = new Board();
     for (unsigned int i : vec)
     {
-        Board check = Board();
-        check.copy_from(bd);
-        check.move(i);
-        value = std::max(value, -negamax(&check, depth - 1, -beta, -alpha, -side));
+        check->copy_from(bd);
+        check->move(i);
+        value = std::max(value, -negamax(check, depth - 1, -beta, -alpha, -side));
         alpha = std::max(alpha, value);
-        if (alpha >= beta) return alpha;
+        if (alpha >= beta) break;
     }
+    check->~Board();
     return value;
 }
 
-unsigned int get_best_move(Board* bd, int depth)
+static inline unsigned int get_best_move(Board* bd, int depth)
 {
+    total_nodes = 0;
     std::vector<unsigned int> vec = std::vector<unsigned int>();
     vec.resize(120);
     get_moves(bd, bd->side, &vec);
@@ -47,15 +58,15 @@ unsigned int get_best_move(Board* bd, int depth)
         Board pr = Board();
         pr.copy_from(bd);
         pr.move(vec[i]);
-        int value = negamax(&pr, depth, -1000000, 1000000, 1);
-        printf("0x%lx, %i\n", vec[i] , value);
+        int value = negamax(&pr, depth, -1000000, 1000000, bd->side);
+        //printf("0x%lx, %+4.2f\n", vec[i] , ((float) value * bd->side/ 100.0));
         if (value > best_move_value)
         {
             max_index = i;
             best_move_value = value;
         }
     }
-    printf("\tused: 0x%lx, %i\n", vec[max_index] , best_move_value);
+    printf("\tused: 0x%lx, value: %+4.2f, %i nodes evaluated\n", vec[max_index] , ((float) best_move_value * bd->side/ 100.0), total_nodes);
     return vec[max_index];
 }
 

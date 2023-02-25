@@ -1,8 +1,8 @@
 all: 
-	gcc -oFast Main.cpp NegaMax.hh Eval.hh Moves.hh Board.hh Tools.hh MagicNumbers.hh -o Main -lstdc++
+	gcc -oFast Main.cpp Uciapi.hh NegaMax.hh Eval.hh Moves.hh Board.hh Tools.hh MagicNumbers.hh -o Main -lstdc++
 
 debug: 
-	gcc -o Main.cpp NegaMax.hh Eval.hh Moves.hh Board.hh Tools.hh MagicNumbers.hh -o Main
+	gcc -o Main.cpp Uciapi.hh NegaMax.hh Eval.hh Moves.hh Board.hh Tools.hh MagicNumbers.hh -o Main
 
 clean:
 	rm -f *.o

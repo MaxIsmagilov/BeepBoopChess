@@ -13,7 +13,7 @@
 #include <algorithm>
 
 
-enum rook_or_bishop {ROOK, BISHOP};
+enum rook_or_bishop {mROOK, mBISHOP};
 
 // non-slider attack masks
 uint64_t pawn_attacks[2][64]; // 0 is black
@@ -287,11 +287,11 @@ void initialize_magic_numbers()
 {
     for (int i = 0; i < 64; i++)
     {
-        rook_magics[i] = find_magic(i, rook_occupancy_bits[i], ROOK);
+        rook_magics[i] = find_magic(i, rook_occupancy_bits[i], mROOK);
     }
     for (int i = 0; i < 64; i++)
     {
-       bishop_magics[i] = find_magic(i, bishop_occupancy_bits[i], BISHOP);
+       bishop_magics[i] = find_magic(i, bishop_occupancy_bits[i], mBISHOP);
     }
 }
 
@@ -459,13 +459,14 @@ void get_moves(Board* bd, int side, std::vector<unsigned int>* vec)
             // verify checks
             Board test_checks = Board();
             test_checks.copy_from(bd);
-            if (in_check(&test_checks, -side)) {continue;}
+            test_checks.move(move);
+            if (in_check(&test_checks, side)) {continue;}
 
             // calculate heristics
             unsigned int heuristic_value = 10;
 
             // check for promotions
-            if (piece == 1 && (j / 8 == 0 || j / 8 == 7))
+            if (piece == 1 && ((j / 8 == 0) || (j / 8 == 7)))
             {
                 for (unsigned int promotee = 1; promotee < 5; promotee++)
                 {

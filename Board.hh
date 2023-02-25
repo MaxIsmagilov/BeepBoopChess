@@ -7,12 +7,13 @@ class Board;
 #include <sstream>
 #include "Tools.hh"
 
+
 class Board
 { 
 public:
     uint64_t* white = new uint64_t[6];  // represents white's bitboards (P,N,B,R,Q,K)
     uint64_t* black = new uint64_t[6];  // represents black's bitboards (p,n,b,r,q,k)
-    uint8_t castles = 0x00000000;       // represents castling ability in 0x0000KQkq
+    uint8_t castles = 0b00000000;       // represents castling ability in 0b0000KQkq
     int8_t side = 1;                    // side to move, 1 for white, -1 for black
     int8_t enpassant = -1;              // enpassant square (-1 for none)
     uint8_t halfmoves;                  // halfmoves
@@ -89,14 +90,15 @@ void Board::import_FEN(std::string FEN)
     feni++;
     if (FEN[feni] == 'w') {side = 1;} else {side = -1;}
     feni += 2;
+    castles = 0;
     for (feni; FEN[feni] != ' '; feni++)
     {
         switch (FEN[feni])
         {
-            case 'K': castles |= 0x00001000; break;
-            case 'Q': castles |= 0x00000100; break;
-            case 'k': castles |= 0x00000010; break;
-            case 'q': castles |= 0x00000001; break;
+            case 'K': castles |= 0b00001000; break;
+            case 'Q': castles |= 0b00000100; break;
+            case 'k': castles |= 0b00000010; break;
+            case 'q': castles |= 0b00000001; break;
         }
     }
     feni++;
@@ -157,9 +159,23 @@ void Board::copy_from(Board* bd)
 
 void Board::move(uint32_t move)
 {
+    
+    halfmoves++;
     int end = end_square(move);
     int start = start_square(move);
     int moving_side = 0;
+    enpassant = -1;
+    if ((1ULL << start) & white[0])
+    {
+        if (end - start == -16) enpassant = start - 8;
+        halfmoves = 0;
+    }
+    else if ((1ULL << start) & black[0])
+    {
+        if (end - start == 16)  enpassant = start + 8;
+        halfmoves = 0;
+    }
+    if (capture_flag(move)) halfmoves = 0;
     for (int i = 0; i < 6; i++)
     {
         
@@ -167,13 +183,13 @@ void Board::move(uint32_t move)
         black[i] &= ~(1ULL << end);
         if (white[i] & (1ULL << start)) 
         {
-            white[    (promotion_piece(move) ? promotion_piece(move) : i)     ] |= (1ULL << end);
+            white[    ((promotion_piece(move) != 0) ? promotion_piece(move) : i)    ] |= (1ULL << end);
             moving_side = 1;
         }
         
         if (black[i] & (1ULL << start)) 
         {
-            black[    (promotion_piece(move) ? promotion_piece(move) : i)     ]  |= (1ULL << end);
+            black[    ((promotion_piece(move) != 0) ? promotion_piece(move) : i)    ]  |= (1ULL << end);
         }
         white[i] &= ~(1ULL << start);
         black[i] &= ~(1ULL << start);
@@ -196,7 +212,8 @@ void Board::move(uint32_t move)
     }
     if (enpassant_flag(move)) 
     {
-        int enpsquare = end + ((moving_side) ? 8 : -8);
+        white[0] &= ~(1ULL << (end + ((moving_side) ? 8 : -8)));
+        black[0] &= ~(1ULL << (end + ((moving_side) ? 8 : -8)));
     }
 }
 
@@ -224,7 +241,16 @@ std::string Board::to_string()
     }
     bd += "side to move: ";
     if (side == 1) bd += "white"; else bd += "black";
+    bd += "\ncastling ability: ";
+    if (castles & 0b00001000) bd += "K";
+    if (castles & 0b00000100) bd += "Q";
+    if (castles & 0b00000010) bd += "k";
+    if (castles & 0b00000001) bd += "q";
+    bd += "\nenpassant ability: " + std::to_string(enpassant);
+    bd += "\nmove #" + std::to_string(fullmoves);
+    bd += "\nhalfmoves: " + std::to_string(halfmoves);
     bd += "\n";
+
 
     return bd;
 }
