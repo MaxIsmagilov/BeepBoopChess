@@ -24,12 +24,24 @@ void setup()
     std::cout << "setup complete\n\n";
 }
 
+void print_moves(Board* bd)
+{
+    std::vector<unsigned int>* vec = new std::vector<unsigned int>();
+    get_moves(bd, vec);
+    for (unsigned int j : *vec)
+    {
+        print_move(j);
+        printf(", ");
+    }
+    printf("\n\t");
+}
+
 int main(int argc, char const *argv[])
 {
     setup();
     Board start = Board();
     start.import_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    start.move(pull_move("e4e6", &start));
+    //start.import_FEN("r1b2rk1/p1b1qppp/2pp4/4n3/NP1QP3/P4B2/1B3PPP/R4RK1 w - - 5 17");
     std::vector<unsigned int> moves = std::vector<unsigned int>();
     std::cout << start.to_string() << "\n";
     int depth;
@@ -39,7 +51,11 @@ int main(int argc, char const *argv[])
     int i = 0;
     while (i < plies)
     {
+        
         unsigned int move = get_best_move(&start, depth);
+        printf("\tused: ");
+        print_move(move);
+        printf("\n");
         if (!move)
         {
             std::cout << "endpoint reached\n";

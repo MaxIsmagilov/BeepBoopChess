@@ -183,13 +183,13 @@ void Board::move(uint32_t move)
         black[i] &= ~(1ULL << end);
         if (white[i] & (1ULL << start)) 
         {
-            white[    ((promotion_piece(move) != 0) ? promotion_piece(move) : i)    ] |= (1ULL << end);
+            white[    ((promotion_piece(move) == 0UL) ? i : promotion_piece(move) )    ] |= (1ULL << end);
             moving_side = 1;
         }
         
         if (black[i] & (1ULL << start)) 
         {
-            black[    ((promotion_piece(move) != 0) ? promotion_piece(move) : i)    ]  |= (1ULL << end);
+            black[    ((promotion_piece(move) == 0UL) ? i : promotion_piece(move) )    ]  |= (1ULL << end);
         }
         white[i] &= ~(1ULL << start);
         black[i] &= ~(1ULL << start);

@@ -403,12 +403,13 @@ static bool in_check(Board* bd, int side)
 }
 
 // generate legal moves
-void get_moves(Board* bd, int side, std::vector<unsigned int>* vec)
+void get_moves(Board* bd, std::vector<unsigned int>* vec)
 {
     // clear vector
     vec->clear();
     // initiallize constants
     uint64_t all_pieces = bd->all();
+    int side = bd->side;
     int binary_side = (side == 1) ? 1 : 0;
     uint64_t attacking_occ = (side == 1) ? bd->whites() : bd->blacks();
     uint64_t defending_occ = (side == 1) ? bd->blacks() : bd->whites();
