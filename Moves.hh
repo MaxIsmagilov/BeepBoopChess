@@ -472,7 +472,7 @@ void get_moves(Board* bd, std::vector<unsigned int>* vec)
                 for (unsigned int promotee = 1; promotee < 5; promotee++)
                 {
                     move = pack_move(i , j, promotee, captureflg, 0UL, enpassantflg, castles_ov);
-                    move = set_heuristic(move, (heuristic_value + (captureflg * 5) + (promotee * 2)));
+                    move = set_heuristic(move, (heuristic_value + (captureflg * 2) + (promotee * 4)));
                     vec->push_back(move);
                 }
             }
@@ -481,7 +481,7 @@ void get_moves(Board* bd, std::vector<unsigned int>* vec)
             else 
             {
                 if (is_attacked(LSB_index(attacking_pieces[4]), bd, -side));
-                move = set_heuristic(move, (heuristic_value + (enpassantflg) + (captureflg * 5)));
+                move = set_heuristic(move, (heuristic_value + (enpassantflg) + (captureflg * 5) ));
                 vec->push_back(move);
             }
         }

@@ -9,7 +9,7 @@
 #include "Board.hh"
 #include "Tools.hh"
 
-static int total_nodes;
+static long long int total_nodes;
 
 static inline int quescence_search(int alpha, int beta)
 {
@@ -60,10 +60,10 @@ static inline unsigned int get_best_move(Board* bd, int depth)
     for (i = 0; i < vec.size(); i++)
     {
         if (!vec[i]) continue;
-        Board pr = Board();
-        pr.copy_from(bd);
-        pr.move(vec[i]);
-        int value = negamax(&pr, depth, -1000000, 1000000, pr.side);
+        Board* pr = new Board();
+        pr->copy_from(bd);
+        pr->move(vec[i]);
+        int value = negamax(pr, depth, -1000000, 1000000, pr->side);
         //printf("0x%lx, %+4.2f\n", vec[i] , ((float) value * bd->side/ 100.0));
         if (value > best_move_value)
         {
@@ -75,8 +75,9 @@ static inline unsigned int get_best_move(Board* bd, int depth)
             progress++;
             printf("*");
         }
+        pr->~Board();
     }
-    printf("\n\tvalue: %+4.2f, %i nodes evaluated\n\t", ((float) best_move_value * bd->side/ 100.0), total_nodes);
+    printf("\n\tvalue: %+4.2f, %lli nodes evaluated\n\t", ((float) best_move_value * bd->side/ 100.0), total_nodes);
     return vec[max_index];
 }
 
