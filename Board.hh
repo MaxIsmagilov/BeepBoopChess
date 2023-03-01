@@ -33,7 +33,7 @@ public:
     {
         delete[] this->black, this->white;  // delete heap-allocated arrays
     }
-    ~Board() {delete[] this->black, this->white, this;}
+    ~Board() {delete[] this->black, this->white; delete this;}
     void import_FEN(std::string FEN);       // declaration for void Board::import_FEN(), takes a string parameter
     std::string to_string();                // declaration for std::string Board::to_string()
     std::string print_board();

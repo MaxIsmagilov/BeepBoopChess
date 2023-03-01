@@ -165,8 +165,11 @@ int* eg_pesto_table[6] =
     eg_king_table
 };
 
-int mg_value[6] = { 82, 337, 365, 477, 1025,  100000};
-int eg_value[6] = { 94, 281, 297, 512,  936,  100000};
+int mg_value[6] = { 100, 300, 330, 500, 1000,  100000};
+int eg_value[6] = { 100, 300, 330, 500, 1000,  100000};
+
+int mg[2];
+int eg[2];
 
 int mg_table[12][64];
 int eg_table[12][64];
@@ -191,10 +194,6 @@ void initialize_evaluation()
 
 int eval(Board* bd)
 {
-    int side_to_move = (bd->side == 1) ? 1 : 0;
-    
-    int mg[2];
-    int eg[2];
     int game_phase = 0;
 
     mg[WHITE] = 0;
@@ -226,8 +225,8 @@ int eval(Board* bd)
     }
 
     // tapered evaluation
-    int mg_score = mg[side_to_move] - mg[OTHER_SIDE(side_to_move)];
-    int eg_score = eg[side_to_move] - eg[OTHER_SIDE(side_to_move)];
+    int mg_score = mg[WHITE] - mg[BLACK];
+    int eg_score = eg[WHITE] - eg[BLACK];
     int mg_phase = (game_phase > 24) ? 24 : game_phase;
     int eg_phase = 24 - mg_phase;
     return ((mg_score * mg_phase) + (eg_score * eg_phase)) / 24;

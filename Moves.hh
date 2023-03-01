@@ -407,12 +407,15 @@ void get_moves(Board* bd, std::vector<unsigned int>* vec)
 {
     // clear vector
     vec->clear();
+
     // initiallize constants
     uint64_t all_pieces = bd->all();
     int side = bd->side;
     int binary_side = (side == 1) ? 1 : 0;
     uint64_t attacking_occ = (side == 1) ? bd->whites() : bd->blacks();
     uint64_t defending_occ = (side == 1) ? bd->blacks() : bd->whites();
+
+    // set pointers for attacking and defending pieces
     uint64_t* attacking_pieces = (side == 1) ? bd->white : bd->black;
     uint64_t* defending_pieces = (side == 1) ? bd->black : bd->white;
     for (unsigned int i = 0; i < 64; i++)

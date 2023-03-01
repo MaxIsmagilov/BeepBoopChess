@@ -46,14 +46,14 @@ int main(int argc, char const *argv[])
     std::vector<unsigned int> moves = std::vector<unsigned int>();
     std::cout << start.to_string() << "\n";
     int depth;
-    int plies = 1000;
+    int plies = 1;
     std::cout << "enter depth: ";
     std::cin >> depth;
     int i = 0;
     while (i < plies)
     {
         unsigned int move;
-        if (i%2 == 0)
+        if (i%2 == 2)
         {
             std::string movestring;
             std::cout << "enter your move: ";
