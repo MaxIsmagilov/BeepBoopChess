@@ -46,20 +46,31 @@ int main(int argc, char const *argv[])
     std::vector<unsigned int> moves = std::vector<unsigned int>();
     std::cout << start.to_string() << "\n";
     int depth;
-    int plies;
-    std::cout << "enter depth and plies:";
-    std::cin >> depth >> plies;
+    int plies = 1000;
+    std::cout << "enter depth: ";
+    std::cin >> depth;
     int i = 0;
     while (i < plies)
     {
-        
-        unsigned int move = get_best_move(&start, depth);
-        printf("\tused: ");
-        print_move(move);
-        printf("\n");
+        unsigned int move;
+        if (i%2 == 0)
+        {
+            std::string movestring;
+            std::cout << "enter your move: ";
+            std::cin >> movestring;
+            move = pull_move(movestring, &start);
+        }
+        else
+        {
+            move = get_best_move(&start, depth);
+            printf("\tused: ");
+            print_move(move);
+            printf("\n");
+            
+        }
         if (!move)
         {
-            std::cout << "endpoint reached\n";
+            std::cout << "endpoint reached or illegal move\n";
             break;
         }
         start.move(move);

@@ -19,7 +19,7 @@ static inline int quescence_search(int alpha, int beta)
 static inline int negamax(Board* bd, int depth, int alpha, int beta, int side)
 {
     total_nodes++;
-    if (depth == 0) {return eval(bd);}
+    if (depth == 0) {return eval(bd) * side;}
     if (bd->halfmoves >= 50) return 0;
 
     std::vector<unsigned int>* vec = new std::vector<unsigned int>();
@@ -57,6 +57,7 @@ static inline unsigned int get_best_move(Board* bd, int depth)
     int best_move_value = -1000000;
     int progress = 0;
     int i;
+    printf("|------------------|\n");
     for (i = 0; i < vec.size(); i++)
     {
         if (!vec[i]) continue;
@@ -70,7 +71,7 @@ static inline unsigned int get_best_move(Board* bd, int depth)
             max_index = i;
             best_move_value = value;
         }
-        if (((i * 25)/vec.size()) >= progress)
+        if (((i * 20)/vec.size()) >= progress)
         {
             progress++;
             printf("*");
