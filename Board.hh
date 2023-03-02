@@ -5,6 +5,7 @@ class Board;
 
 #include <bits/stdc++.h>
 #include <sstream>
+
 #include "Tools.hh"
 
 
@@ -33,15 +34,15 @@ public:
     {
         delete[] this->black, this->white;  // delete heap-allocated arrays
     }
-    ~Board() {delete[] this->black, this->white; delete this;}
+    ~Board() {delete[] this->black, this->white, this;}
     void import_FEN(std::string FEN);       // declaration for void Board::import_FEN(), takes a string parameter
     std::string to_string();                // declaration for std::string Board::to_string()
     std::string print_board();
     inline uint64_t whites() {return this->white[0] | this->white[1] | this->white[2] | this->white[3] | this->white[4] | this->white[5];}
     inline uint64_t blacks() {return this->black[0] | this->black[1] | this->black[2] | this->black[3] | this->black[4] | this->black[5];}
     inline uint64_t all() {return whites() | blacks();}
-    void copy_from(Board* bd);
-    void move(uint32_t move);
+    inline void copy_from(Board* bd);
+    inline void move(uint32_t move);
 
 };
 
@@ -142,7 +143,7 @@ std::string Board::print_board()
     return bd;
 }
 
-void Board::copy_from(Board* bd)
+inline void Board::copy_from(Board* bd)
 {
     for (int i = 0; i < 6; i++)
     {
@@ -157,7 +158,7 @@ void Board::copy_from(Board* bd)
     heuristic = bd->heuristic;
 }
 
-void Board::move(uint32_t move)
+inline void Board::move(uint32_t move)
 {
     
     halfmoves++;

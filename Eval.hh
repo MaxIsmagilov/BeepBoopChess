@@ -2,6 +2,7 @@
 #define Evaluation
 
 #include <bits/stdc++.h>
+
 #include "Tools.hh"
 #include "Board.hh"
 

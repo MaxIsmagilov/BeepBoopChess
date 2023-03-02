@@ -22,7 +22,7 @@ static inline int negamax(Board* bd, int depth, int alpha, int beta, int side)
     total_nodes++;
 
     // return if done or draw
-    if (depth == 0) {return side * -eval(bd);}
+    if (depth == 0) {return side * eval(bd);}
     if (bd->halfmoves >= 50) return 0;
 
     // create and check moves

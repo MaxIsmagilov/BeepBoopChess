@@ -1,16 +1,18 @@
 #ifndef Moves
 #define Moves
+
 #include <bits/stdc++.h>
 #include <string>
 #include <sstream>
 #include <vector>
+#include <cstring>
+#include <algorithm>
+
 #include "Board.hh"
 #include "Tools.hh"
 #include "Eval.hh"
 #include "Random.hh"
 #include "MagicNumbers.hh"
-#include <cstring>
-#include <algorithm>
 
 
 enum rook_or_bishop {mROOK, mBISHOP};
@@ -367,7 +369,7 @@ static inline uint64_t get_queen_attacks(int square, uint64_t occupancy)
 }
 
 // is attacked routine
-static bool is_attacked(int square, Board* bd, int by_side)
+static inline bool is_attacked(int square, Board* bd, int by_side)
 {
     if (by_side == 1)
     {
@@ -389,7 +391,7 @@ static bool is_attacked(int square, Board* bd, int by_side)
 }
 
 // in check routine
-static bool in_check(Board* bd, int side)
+static inline bool in_check(Board* bd, int side)
 {
     if (side == 1)
     {
@@ -403,9 +405,9 @@ static bool in_check(Board* bd, int side)
 }
 
 // generate legal moves
-void get_moves(Board* bd, std::vector<unsigned int>* vec)
+static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
 {
-    // clear vector
+    // clear vector,
     vec->clear();
 
     // initiallize constants
@@ -414,81 +416,219 @@ void get_moves(Board* bd, std::vector<unsigned int>* vec)
     int binary_side = (side == 1) ? 1 : 0;
     uint64_t attacking_occ = (side == 1) ? bd->whites() : bd->blacks();
     uint64_t defending_occ = (side == 1) ? bd->blacks() : bd->whites();
+    Board* test_checks = new Board();
 
     // set pointers for attacking and defending pieces
     uint64_t* attacking_pieces = (side == 1) ? bd->white : bd->black;
     uint64_t* defending_pieces = (side == 1) ? bd->black : bd->white;
-    for (unsigned int i = 0; i < 64; i++)
+
+    // generate pawn moves
+    uint64_t piece_board = attacking_pieces[PAWN];
+    uint64_t att = 0ULL;
+    while (piece_board)
     {
-        // populate attack bitboard
-        uint64_t bitboard = 1ULL << i;
-        uint64_t att = 0ULL;
-        char castle = 0b11;
-        int piece = -1;
-        if (bitboard & attacking_pieces[0]) 
-        {
-            att |= (pawn_attacks[binary_side][i] & (defending_occ | (1ULL << bd->enpassant))) | (silent_pawn_moves[binary_side][i] & ~all_pieces); 
-            piece = 1;
-        }
-        else if (bitboard & attacking_pieces[1]) att |= knight_attacks[i];
-        else if (bitboard & attacking_pieces[2]) att |= get_bishop_attacks(i , all_pieces);
-        else if (bitboard & attacking_pieces[3]) 
-        {
-            att |= get_rook_attacks(i , all_pieces);
-            if ((i % 8) == 0) castle &= 0b01;
-            else if ((i % 8) == 0) castle &= 0b10;
-        }
-        else if (bitboard & attacking_pieces[4]) att |= get_queen_attacks(i , all_pieces);
-        else if (bitboard & attacking_pieces[5]) 
-        {
-            att |= king_attacks[i];
-            castle = 0b00;
-        }
-        else continue;
-
-        // remove self-captures
+        int square = LSB_index(piece_board);
+        pop_bit(&piece_board, square);
+        att |= (pawn_attacks[binary_side][square] & (defending_occ | (1ULL << bd->enpassant))) | (silent_pawn_moves[binary_side][square] & ~all_pieces);
         att &= ~attacking_occ;
-
-        // convert attack bitboard to a vector of moves
         while (att)
         {
-            unsigned int castles_ov = (binary_side) ? (0b11 | (castle << 2)) : (0b1100 | castle);
             unsigned int j = LSB_index(att);
             pop_bit(&att, j);
             unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             unsigned int enpassantflg = (j == bd->enpassant) ? 0b1 : 0;
-            uint32_t move = pack_move(i , j, 0UL, captureflg, 0UL, enpassantflg, castles_ov);
+            uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, enpassantflg, 0b1111);
 
 
             // verify checks
-            Board test_checks = Board();
-            test_checks.copy_from(bd);
-            test_checks.move(move);
-            if (in_check(&test_checks, side)) {continue;}
+            test_checks->copy_from(bd);
+            test_checks->move(move);
+            if (in_check(test_checks, side)) {continue;}
 
             // calculate heristics
             unsigned int heuristic_value = 10;
 
             // check for promotions
-            if (piece == 1 && ((j / 8 == 0) || (j / 8 == 7)))
+            if ((j / 8 == 0) || (j / 8 == 7))
             {
                 for (unsigned int promotee = 1; promotee < 5; promotee++)
                 {
-                    move = pack_move(i , j, promotee, captureflg, 0UL, enpassantflg, castles_ov);
+                    move = pack_move(square , j, promotee, captureflg, 0UL, enpassantflg, 0b1111);
                     move = set_heuristic(move, (heuristic_value + (captureflg * 2) + (promotee * 4)));
                     vec->push_back(move);
                 }
             }
-
-            // add non-promotion moves
             else 
             {
-                if (is_attacked(LSB_index(attacking_pieces[4]), bd, -side));
                 move = set_heuristic(move, (heuristic_value + (enpassantflg) + (captureflg * 5) ));
                 vec->push_back(move);
             }
         }
     }
+            
+    // generate knight moves
+    piece_board = attacking_pieces[KNIGHT];
+    att = 0ULL;
+    while (piece_board)
+    {
+        int square = LSB_index(piece_board);
+        pop_bit(&piece_board, square);
+        att |= knight_attacks[square];
+        att &= ~attacking_occ;
+        while (att)
+        {
+            unsigned int j = LSB_index(att);
+            pop_bit(&att, j);
+            unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
+            uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, 0b1111);
+
+
+            // verify checks
+            test_checks->copy_from(bd);
+            test_checks->move(move);
+            if (in_check(test_checks, side)) {continue;}
+
+            // calculate heristics
+            unsigned int heuristic_value = 10;
+
+            
+            move = set_heuristic(move, (heuristic_value + (captureflg * 5) ));
+            vec->push_back(move);
+        }
+    }
+
+    // generate bishop moves
+    piece_board = attacking_pieces[BISHOP];
+    att = 0ULL;
+    while (piece_board)
+    {
+        int square = LSB_index(piece_board);
+        pop_bit(&piece_board, square);
+        att |= get_bishop_attacks(square, all_pieces);
+        att &= ~attacking_occ;
+        while (att)
+        {
+            unsigned int j = LSB_index(att);
+            pop_bit(&att, j);
+            unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
+            uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, 0b1111);
+
+
+            // verify checks
+            test_checks->copy_from(bd);
+            test_checks->move(move);
+            if (in_check(test_checks, side)) {continue;}
+
+            // calculate heristics
+            unsigned int heuristic_value = 10;
+
+            
+            move = set_heuristic(move, (heuristic_value + (captureflg * 5) ));
+            vec->push_back(move);
+        }
+    }
+
+    // generate rook moves
+    piece_board = attacking_pieces[ROOK];
+    att = 0ULL;
+    while (piece_board)
+    {
+        int square = LSB_index(piece_board);
+        pop_bit(&piece_board, square);
+        att |= get_rook_attacks(square, all_pieces);
+        att &= ~attacking_occ;
+
+        // get castling rights
+        int castle = 0b11;
+        if ((square % 8) == 0) castle &= 0b01;
+        else if ((square % 8) == 0) castle &= 0b10;
+        unsigned int castles_ov = (binary_side) ? (0b11 | (castle << 2)) : (0b1100 | castle);
+
+        while (att)
+        {
+            unsigned int j = LSB_index(att);
+            pop_bit(&att, j);
+            unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
+            uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, castles_ov);
+
+            // verify checks
+            test_checks->copy_from(bd);
+            test_checks->move(move);
+            if (in_check(test_checks, side)) {continue;}
+
+            // calculate heristics
+            unsigned int heuristic_value = 10;
+
+            
+            move = set_heuristic(move, (heuristic_value + (captureflg * 5) ));
+            vec->push_back(move);
+        }
+    }
+
+    // generate queen moves
+    piece_board = attacking_pieces[QUEEN];
+    att = 0ULL;
+    while (piece_board)
+    {
+        int square = LSB_index(piece_board);
+        pop_bit(&piece_board, square);
+        att |= get_queen_attacks(square, all_pieces);
+        att &= ~attacking_occ;
+        while (att)
+        {
+            unsigned int j = LSB_index(att);
+            pop_bit(&att, j);
+            unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
+            uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, 0b1111);
+
+            // verify checks
+            test_checks->copy_from(bd);
+            test_checks->move(move);
+            if (in_check(test_checks, side)) {continue;}
+
+            // calculate heristics
+            unsigned int heuristic_value = 10;
+
+            
+            move = set_heuristic(move, (heuristic_value + (captureflg * 5) ));
+            vec->push_back(move);
+        }
+    }
+
+    // generate king moves
+    piece_board = attacking_pieces[KING];
+    att = 0ULL;
+    while (piece_board)
+    {
+        int square = LSB_index(piece_board);
+        pop_bit(&piece_board, square);
+        att |= king_attacks[square];
+        att &= ~attacking_occ;
+
+        // get castling rights
+        unsigned int castles_ov = (binary_side) ? (0b0011) : (0b1100);
+
+        while (att)
+        {
+            unsigned int j = LSB_index(att);
+            pop_bit(&att, j);
+            unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
+            uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, castles_ov);
+
+            // verify checks
+            test_checks->copy_from(bd);
+            test_checks->move(move);
+            if (in_check(test_checks, side)) {continue;}
+
+            // calculate heristics
+            unsigned int heuristic_value = 10;
+
+            
+            move = set_heuristic(move, (heuristic_value + (captureflg * 5) ));
+            vec->push_back(move);
+        }
+    }
+
 
     // castling routine
     if (side == 1)
@@ -526,15 +666,20 @@ void get_moves(Board* bd, std::vector<unsigned int>* vec)
         }
     }
     
+
+    // close test board
+    test_checks->~Board();
+
     int vector_size = vec->size();
 
     // exit if empty
-    if (vec->size() == 0) return;
+    if (vector_size == 0) return;
 
     // sort and finalize heuristics
     int num_best = (3 > vector_size / 3) ? vector_size / 3 : 3;
     int num_killer = (3 > vector_size - num_best) ? vector_size - num_best : 3;
 
+    // sort moves
     std::sort(vec->begin(), vec->end(), std::greater<>());
     for (int i = 0; i < num_best; i++)
         vec->at(i) |= (1UL << 31);
@@ -542,7 +687,6 @@ void get_moves(Board* bd, std::vector<unsigned int>* vec)
     for (int i = 0; i < num_killer; i++)
         vec->at(i) |= (1UL << 30);
     std::sort(vec->begin(), vec->end(), std::greater<>());
-    
 }
 
 

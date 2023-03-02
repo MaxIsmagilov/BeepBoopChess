@@ -1,5 +1,6 @@
 #ifndef BitTools
 #define BitTools
+
 #include <bits/stdc++.h>
 #include <string>
 #include <sstream>
