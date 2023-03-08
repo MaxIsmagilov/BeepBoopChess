@@ -59,7 +59,7 @@ uint64_t pawn_mask(int square, int side) // side is 1 for white, -1 for black
 {
     uint64_t att = 0ULL;            // attacks
     uint64_t bitboard = 0ULL;       // pawn square
-    push_bit(&bitboard, square); 
+    bitboard = push_bit(bitboard, square); 
     if (side == 1)                  // white's attacks
     {
         att |= 
@@ -79,7 +79,7 @@ uint64_t knight_mask(int square)
 {
     uint64_t att = 0ULL;            // attacks
     uint64_t bitboard = 0ULL;       // knight square
-    push_bit(&bitboard, square);
+    bitboard = push_bit(bitboard, square);
     //generate 17 and -15 attacks
     if (!(bitboard & A_FILE))
     {att |= (bitboard >> 17) | (bitboard << 15);}
@@ -99,7 +99,7 @@ uint64_t king_mask(int square)
 {
     uint64_t att = 0ULL;            // attacks
     uint64_t bitboard = 0ULL;       // king square
-    push_bit(&bitboard, square);
+    bitboard = push_bit(bitboard, square);
     if(!(bitboard & H_FILE))
     {
         att |= 
@@ -150,7 +150,7 @@ uint64_t silent_pawn_mask(int square, int side)
 {
     uint64_t mv = 0ULL;
     uint64_t bitboard = 0ULL;       // pawn square
-    push_bit(&bitboard, square); 
+    bitboard = push_bit(bitboard, square); 
     if (side == 1)
     {
         mv |= (bitboard >> 8);
@@ -231,7 +231,7 @@ uint64_t get_occupancy(int index, int bit_count, uint64_t mask)
     for (int i = 0; i < bit_count; i++)
     {
         int square = LSB_index(mask);
-        pop_bit(&mask, square);
+        mask = pop_bit(mask, square);
         if (index & (1ULL << i))
         {
             occupancy |= (1ULL << square);
@@ -428,13 +428,13 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
     while (piece_board)
     {
         int square = LSB_index(piece_board);
-        pop_bit(&piece_board, square);
+        piece_board = pop_bit(piece_board, square);
         att |= (pawn_attacks[binary_side][square] & (defending_occ | (1ULL << bd->enpassant))) | (silent_pawn_moves[binary_side][square] & ~all_pieces);
         att &= ~attacking_occ;
         while (att)
         {
             unsigned int j = LSB_index(att);
-            pop_bit(&att, j);
+            att = pop_bit(att, j);
             unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             unsigned int enpassantflg = (j == bd->enpassant) ? 0b1 : 0;
             uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, enpassantflg, 0b1111);
@@ -472,13 +472,13 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
     while (piece_board)
     {
         int square = LSB_index(piece_board);
-        pop_bit(&piece_board, square);
+        piece_board = pop_bit(piece_board, square);
         att |= knight_attacks[square];
         att &= ~attacking_occ;
         while (att)
         {
             unsigned int j = LSB_index(att);
-            pop_bit(&att, j);
+            att = pop_bit(att, j);
             unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, 0b1111);
 
@@ -503,13 +503,13 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
     while (piece_board)
     {
         int square = LSB_index(piece_board);
-        pop_bit(&piece_board, square);
+        piece_board = pop_bit(piece_board, square);
         att |= get_bishop_attacks(square, all_pieces);
         att &= ~attacking_occ;
         while (att)
         {
             unsigned int j = LSB_index(att);
-            pop_bit(&att, j);
+            att = pop_bit(att, j);
             unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, 0b1111);
 
@@ -534,7 +534,7 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
     while (piece_board)
     {
         int square = LSB_index(piece_board);
-        pop_bit(&piece_board, square);
+        piece_board = pop_bit(piece_board, square);
         att |= get_rook_attacks(square, all_pieces);
         att &= ~attacking_occ;
 
@@ -547,7 +547,7 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
         while (att)
         {
             unsigned int j = LSB_index(att);
-            pop_bit(&att, j);
+            att = pop_bit(att, j);
             unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, castles_ov);
 
@@ -571,13 +571,13 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
     while (piece_board)
     {
         int square = LSB_index(piece_board);
-        pop_bit(&piece_board, square);
+        piece_board = pop_bit(piece_board, square);
         att |= get_queen_attacks(square, all_pieces);
         att &= ~attacking_occ;
         while (att)
         {
             unsigned int j = LSB_index(att);
-            pop_bit(&att, j);
+            att = pop_bit(att, j);
             unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, 0b1111);
 
@@ -601,7 +601,7 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
     while (piece_board)
     {
         int square = LSB_index(piece_board);
-        pop_bit(&piece_board, square);
+        piece_board = pop_bit(piece_board, square);
         att |= king_attacks[square];
         att &= ~attacking_occ;
 
@@ -611,7 +611,7 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
         while (att)
         {
             unsigned int j = LSB_index(att);
-            pop_bit(&att, j);
+            att = pop_bit(att, j);
             unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, castles_ov);
 

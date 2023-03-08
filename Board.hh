@@ -202,13 +202,13 @@ inline void Board::move(uint32_t move)
     {
         if (moving_side)    
         {
-            push_bit(&white[3], ((end + start) / 2));
-            pop_bit(&white[3], ((end > start) ? _H1 : _A1));
+            white[3] = push_bit(white[3], ((end + start) / 2));
+            white[3] = pop_bit(white[3], ((end > start) ? _H1 : _A1));
         }
         else                
         {
-            push_bit(&white[3], ((end + start) / 2));
-            pop_bit(&white[3], ((end > start) ? _H8 : _A8));
+            white[3] = push_bit(white[3], ((end + start) / 2));
+            white[3] = pop_bit(white[3], ((end > start) ? _H8 : _A8));
         }
     }
     if (enpassant_flag(move)) 
