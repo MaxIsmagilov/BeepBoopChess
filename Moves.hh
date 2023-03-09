@@ -373,16 +373,16 @@ static inline bool is_attacked(int square, Board* bd, int by_side)
 {
     if (by_side == 1)
     {
-        if (get_bishop_attacks(square, bd->all()) & ((bd->white[2]) | bd->white[4])) return true;
-        if (get_rook_attacks(square, bd->all()) & ((bd->white[3]) | bd->white[4])) return true;
+        if (get_bishop_attacks(square, all(bd)) & ((bd->white[2]) | bd->white[4])) return true;
+        if (get_rook_attacks(square, all(bd)) & ((bd->white[3]) | bd->white[4])) return true;
         if (pawn_attacks[0][square] & bd->white[0]) return true;
         if (knight_attacks[square] & bd->white[1]) return true;
         if (king_attacks[square] & bd->white[5]) return true;
     }
     else 
     {
-        if (get_bishop_attacks(square, bd->all()) & (bd->black[2] | bd->black[4])) return true;
-        if (get_rook_attacks(square, bd->all()) & (bd->black[3] | bd->black[4])) return true;
+        if (get_bishop_attacks(square, all(bd)) & (bd->black[2] | bd->black[4])) return true;
+        if (get_rook_attacks(square, all(bd)) & (bd->black[3] | bd->black[4])) return true;
         if (pawn_attacks[1][square] & bd->black[0]) return true;
         if (knight_attacks[square] & bd->black[1]) return true;
         if (king_attacks[square] & bd->black[5]) return true;
@@ -404,6 +404,14 @@ static inline bool in_check(Board* bd, int side)
     return false;
 }
 
+static inline bool check_check(Board* bd, unsigned int move)
+{
+    Board* tst = new Board[1];
+    memcpy(tst, bd, sizeof(*tst));
+    movef(tst, move);
+    return in_check(tst, bd->side);
+}
+
 // generate legal moves
 static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
 {
@@ -411,11 +419,11 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
     vec->clear();
 
     // initiallize constants
-    uint64_t all_pieces = bd->all();
+    uint64_t all_pieces = all(bd);
     int side = bd->side;
     int binary_side = (side == 1) ? 1 : 0;
-    uint64_t attacking_occ = (side == 1) ? bd->whites() : bd->blacks();
-    uint64_t defending_occ = (side == 1) ? bd->blacks() : bd->whites();
+    uint64_t attacking_occ = (side == 1) ? whites(bd) : blacks(bd);
+    uint64_t defending_occ = (side == 1) ? blacks(bd) : whites(bd);
     Board* test_checks = new Board();
 
     // set pointers for attacking and defending pieces
@@ -441,9 +449,7 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
 
 
             // verify checks
-            test_checks->copy_from(bd);
-            test_checks->move(move);
-            if (in_check(test_checks, side)) {continue;}
+            if (check_check(bd, move)) {continue;}
 
             // calculate heristics
             unsigned int heuristic_value = 10;
@@ -484,8 +490,8 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
 
 
             // verify checks
-            test_checks->copy_from(bd);
-            test_checks->move(move);
+            copy_from(test_checks,bd);
+            movef(test_checks,move);
             if (in_check(test_checks, side)) {continue;}
 
             // calculate heristics
@@ -515,8 +521,8 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
 
 
             // verify checks
-            test_checks->copy_from(bd);
-            test_checks->move(move);
+            copy_from(test_checks,bd);
+            movef(test_checks,move);
             if (in_check(test_checks, side)) {continue;}
 
             // calculate heristics
@@ -552,8 +558,8 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
             uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, castles_ov);
 
             // verify checks
-            test_checks->copy_from(bd);
-            test_checks->move(move);
+            copy_from(test_checks,bd);
+            movef(test_checks,move);
             if (in_check(test_checks, side)) {continue;}
 
             // calculate heristics
@@ -582,8 +588,8 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
             uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, 0b1111);
 
             // verify checks
-            test_checks->copy_from(bd);
-            test_checks->move(move);
+            copy_from(test_checks,bd);
+            movef(test_checks,move);
             if (in_check(test_checks, side)) {continue;}
 
             // calculate heristics
@@ -616,8 +622,8 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
             uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, castles_ov);
 
             // verify checks
-            test_checks->copy_from(bd);
-            test_checks->move(move);
+            copy_from(test_checks,bd);
+            movef(test_checks,move);
             if (in_check(test_checks, side)) {continue;}
 
             // calculate heristics

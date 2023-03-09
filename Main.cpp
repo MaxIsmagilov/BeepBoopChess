@@ -41,10 +41,10 @@ int main(int argc, char const *argv[])
 {
     setup();
     Board start = Board();
-    start.import_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    //start.import_FEN("r1b2rk1/p1b1qppp/2pp4/4n3/NP1QP3/P4B2/1B3PPP/R4RK1 w - - 5 17");
+    //import_FEN(&start,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    import_FEN(&start,"r1b2rk1/p1b1qppp/2pp4/4n3/NP1QP3/P4B2/1B3PPP/R4RK1 w - - 5 17");
     std::vector<unsigned int> moves = std::vector<unsigned int>();
-    std::cout << start.to_string() << "\n";
+    std::cout << to_string(&start) << "\n";
     int depth;
     int plies = 100;
     std::cout << "enter depth: ";
@@ -53,7 +53,7 @@ int main(int argc, char const *argv[])
     while (i < plies)
     {
         unsigned int move;
-        if (i%2 == 0)
+        if (i%2 == 2)
         {
             std::string movestring;
             std::cout << "enter your move: ";
@@ -73,8 +73,8 @@ int main(int argc, char const *argv[])
             std::cout << "endpoint reached or illegal move\n";
             break;
         }
-        start.move(move);
-        std::cout << start.to_string() << "\n";
+        movef(&start, move);
+        std::cout << to_string(&start) << "\n";
         i++;
     }
 }

@@ -18,11 +18,9 @@ static inline int quescence_search(int alpha, int beta)
 
 static inline int negamax(Board* bd, int depth, int alpha, int beta, int side)
 {
-    // increment total nodes visited
-    total_nodes++;
 
     // return if done or draw
-    if (depth == 0) {return side * eval(bd);}
+    if (depth == 0) {total_nodes++; return side * eval(bd);}
     if (bd->halfmoves >= 50) return 0;
 
     // create and check moves
@@ -45,8 +43,8 @@ static inline int negamax(Board* bd, int depth, int alpha, int beta, int side)
     for (unsigned int i : *vec)
     {
         // move the check board
-        check->copy_from(bd);
-        check->move(i);
+        copy_from(check, bd);
+        movef(check, i);
 
         // recursively evaluate next node
         int check_value = -negamax(check, depth - 1, -beta, -alpha, -side);
@@ -86,8 +84,8 @@ static inline unsigned int get_best_move(Board* bd, int depth)
     {
         if (!vec[i]) continue;
         Board* pr = new Board();
-        pr->copy_from(bd);
-        pr->move(vec[i]);
+        copy_from(pr, bd);
+        movef(pr, vec[i]);
         int value = negamax(pr, depth, -1000000, 1000000, pr->side);
         //printf("0x%lx, %+4.2f\n", vec[i] , ((float) value * bd->side/ 100.0));
         if (value > best_move_value)
