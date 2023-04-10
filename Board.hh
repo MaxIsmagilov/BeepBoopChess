@@ -1,25 +1,21 @@
 #ifndef ChessBoard
 #define ChessBoard
 
-class Board;
+struct Board;
 
 #include <bits/stdc++.h>
 #include <sstream>
-#include <cstring>
 
 #include "Tools.hh"
 
 
 
-Board* history = new Board[256];
-int ply = 0;
-
 struct Board
 { 
 public:
-    uint64_t* board = new uint64_t[12];
-    uint64_t* white = board;  // represents white's bitboards (P,N,B,R,Q,K)
-    uint64_t* black = board + 6;  // represents black's bitboards (p,n,b,r,q,k)
+    uint64_t board[12];
+    uint64_t* white = &board[0];  // represents white's bitboards (P,N,B,R,Q,K)
+    uint64_t* black = &board[6];  // represents black's bitboards (p,n,b,r,q,k)
     uint8_t castles = 0b00000000;       // represents castling ability in 0b0000KQkq
     int8_t side = 1;                    // side to move, 1 for white, -1 for black
     int8_t enpassant = -1;              // enpassant square (-1 for none)
@@ -34,12 +30,12 @@ public:
             *(board+i) = 0ULL;
         }
     }
-    ~Board() {delete[] this->board, this;}
+    ~Board() {}
 };
 
-inline uint64_t whites(Board* bd) {return bd->white[0] | bd->white[1] | bd->white[2] | bd->white[3] | bd->white[4] | bd->white[5];}
-inline uint64_t blacks(Board* bd) {return bd->black[0] | bd->black[1] | bd->black[2] | bd->black[3] | bd->black[4] | bd->black[5];}
-inline uint64_t all(Board* bd) {return whites(bd) | blacks(bd);}
+inline uint64_t whites(const Board& bd) {return bd.board[0] | bd.board[1] | bd.board[2] | bd.board[3] | bd.board[4]  | bd.board[5] ;}
+inline uint64_t blacks(const Board& bd) {return bd.board[6] | bd.board[7] | bd.board[8] | bd.board[9] | bd.board[10] | bd.board[11];}
+inline uint64_t all(const Board& bd) {return whites(bd) | blacks(bd);}
 
 void import_FEN(Board* bd, std::string FEN)
 {
@@ -147,17 +143,18 @@ std::string print_board(Board* bd)
     return boardstr;
 }
 
-static inline void copy_from(Board* target, Board* origin)
+static inline void copy_from(Board* target, const Board& origin)
 {
-    for (int i = 0; i < 12; i++)
-    {
-        target->board[i] = origin->board[i];
-    }
-    target->castles = origin->castles;
-    target->side = origin->side;
-    target->enpassant = origin->enpassant;
-    target->halfmoves = origin->halfmoves;
-    target->fullmoves = origin->fullmoves;
+    memcpy(&(target->board[0]), &(origin.board[0]), 96);
+        /*for (int i = 0; i < 12; i++)
+        {
+            target->board[i] = origin->board[i];
+        }*/
+    target->castles = origin.castles;
+    target->side = origin.side;
+    target->enpassant = origin.enpassant;
+    target->halfmoves = origin.halfmoves;
+    target->fullmoves = origin.fullmoves;
 }
 
 static inline void movef(Board* bd, uint32_t move)
@@ -186,13 +183,13 @@ static inline void movef(Board* bd, uint32_t move)
         bd->black[i] &= ~(1ULL << end);
         if (bd->white[i] & (1ULL << start)) 
         {
-            bd->white[    ((promotion_piece(move) == 0UL) ? i : promotion_piece(move) )    ] |= (1ULL << end);
+            bd->white[promotion_piece(move)] |= (1ULL << end);
             moving_side = 1;
         }
         
         if (bd->black[i] & (1ULL << start)) 
         {
-            bd->black[    ((promotion_piece(move) == 0UL) ? i : promotion_piece(move) )    ]  |= (1ULL << end);
+            bd->black[promotion_piece(move)]  |= (1ULL << end);
         }
         bd->white[i] &= ~(1ULL << start);
         bd->black[i] &= ~(1ULL << start);
@@ -256,10 +253,5 @@ std::string to_string(Board* bd)
     return bdstr;
 }
 
-static inline bool check_check(Board* bd, unsigned int move)
-{
-    Board* tst = new Board[1];
-    memcpy(tst, bd, sizeof(*tst));
-}
 
 #endif

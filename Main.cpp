@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <bits/stdc++.h>
+#include <chrono>
 
 #include "NegaMax.hh"
 #include "Board.hh"
@@ -9,6 +10,8 @@
 #include "Tools.hh"
 #include "Random.hh"
 #include "Uciapi.hh"
+
+using namespace std::chrono;
 
 void setup()
 {
@@ -25,12 +28,13 @@ void setup()
     std::cout << "setup complete\n\n";
 }
 
-void print_moves(Board* bd)
+void print_moves(const Board& bd)
 {
-    std::vector<unsigned int>* vec = new std::vector<unsigned int>();
-    get_moves(bd, vec);
-    for (unsigned int j : *vec)
+    std::array<unsigned int, 120> arr = std::array<unsigned int, 120>();
+    get_moves(bd, arr.begin());
+    for (unsigned int j : arr)
     {
+        if (j == 0) break;
         print_move(j);
         printf(", ");
     }
@@ -41,39 +45,34 @@ int main(int argc, char const *argv[])
 {
     setup();
     Board start = Board();
-    //import_FEN(&start,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    import_FEN(&start,"r1b2rk1/p1b1qppp/2pp4/4n3/NP1QP3/P4B2/1B3PPP/R4RK1 w - - 5 17");
-    std::vector<unsigned int> moves = std::vector<unsigned int>();
+    import_FEN(&start,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    //import_FEN(&start,"r1b2rk1/p1b1qppp/2pp4/4n3/NP1QP3/P4B2/1B3PPP/R4RK1 w - - 5 17");
+    std::array<unsigned int, 120> arr = std::array<unsigned int, 120>();
     std::cout << to_string(&start) << "\n";
     int depth;
-    int plies = 100;
+    int plies = 1;
     std::cout << "enter depth: ";
     std::cin >> depth;
     int i = 0;
     while (i < plies)
     {
-        unsigned int move;
-        if (i%2 == 2)
-        {
-            std::string movestring;
-            std::cout << "enter your move: ";
-            std::cin >> movestring;
-            move = pull_move(movestring, &start);
-        }
-        else
-        {
-            move = get_best_move(&start, depth);
-            printf("\tused: ");
-            print_move(move);
-            printf("\n");
-            
-        }
-        if (!move)
+        auto begin = high_resolution_clock::now();
+        moveinfo move = get_best_move(&start, depth);
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast<milliseconds>(end - begin);
+        float speed =  ((float) move.total_nodes) / duration.count();
+
+        printf("\n\tvalue: %+4.2f, %lli nodes evaluated @ %4.1fk node/s\n\t", move.eval, move.total_nodes, speed);
+        printf("\tused: ");
+        print_move(move.move);
+        printf("\n");
+
+        if (!move.move)
         {
             std::cout << "endpoint reached or illegal move\n";
             break;
         }
-        movef(&start, move);
+        movef(&start, move.move);
         std::cout << to_string(&start) << "\n";
         i++;
     }

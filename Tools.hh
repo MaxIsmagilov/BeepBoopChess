@@ -15,6 +15,10 @@ const uint64_t H_FILE = 9259542123273814144ULL;
 
 enum GAMESTATE {RUNNING, BLACK_CHECKMATE, STALEMATE, WHITE_CHECKMATE};
 
+enum piece_numbers {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING};
+
+enum colors {WHITE, BLACK};
+
 enum square {
     _A8, _B8, _C8, _D8, _E8, _F8, _G8, _H8, 
     _A7, _B7, _C7, _D7, _E7, _F7, _G7, _H7,
@@ -25,6 +29,8 @@ enum square {
     _A2, _B2, _C2, _D2, _E2, _F2, _G2, _H2,
     _A1, _B1, _C1, _D1, _E1, _F1, _G1, _H1,
 };
+
+
 
 // move encoding guide (using uint32_t)
     // 0000 0000 0000 0000 0000 0000 0111 1111  start square 
@@ -82,7 +88,7 @@ static inline unsigned int count_bits(uint64_t test)
     return bitnumber;
 }
 
-static inline unsigned int LSB_index(uint64_t test)
+static inline int LSB_index(uint64_t test)
 {
     return (test) ? count_bits((test &  -test) - 1) : -1;
 }

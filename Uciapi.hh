@@ -14,9 +14,8 @@
 
 unsigned int pull_move(std::string mv, Board* bd)
 {
-    std::vector<unsigned int> vec = std::vector<unsigned int>();
-    vec.resize(120);
-    get_moves(bd, &vec);
+    std::array<unsigned int, 120> arr = std::array<unsigned int, 120>();
+    get_moves(*bd, arr.begin());
 
     unsigned int source = (mv[0] - 'a') + (8 - (mv[1] - '0')) * 8;
     unsigned int end = (mv[2] - 'a') + (8 - (mv[3] - '0')) * 8;
@@ -33,7 +32,7 @@ unsigned int pull_move(std::string mv, Board* bd)
         if (pc == 'K' || pc == 'k')
             promotion = 1UL; 
     }
-    for (unsigned int i : vec)
+    for (unsigned int i : arr)
     {
         if (start_square(i) == source && end_square(i) == end && promotion == promotion_piece(i))
             return i;

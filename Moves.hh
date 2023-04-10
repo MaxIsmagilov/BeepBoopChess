@@ -14,6 +14,7 @@
 #include "Random.hh"
 #include "MagicNumbers.hh"
 
+#define arradd(a, b, c) a[b] = c; b++;
 
 enum rook_or_bishop {mROOK, mBISHOP};
 
@@ -369,82 +370,93 @@ static inline uint64_t get_queen_attacks(int square, uint64_t occupancy)
 }
 
 // is attacked routine
-static inline bool is_attacked(int square, Board* bd, int by_side)
+static inline bool is_attacked(int square, const Board& bd, int by_side)
 {
+    if (square == -1) return false;
     if (by_side == 1)
     {
-        if (get_bishop_attacks(square, all(bd)) & ((bd->white[2]) | bd->white[4])) return true;
-        if (get_rook_attacks(square, all(bd)) & ((bd->white[3]) | bd->white[4])) return true;
-        if (pawn_attacks[0][square] & bd->white[0]) return true;
-        if (knight_attacks[square] & bd->white[1]) return true;
-        if (king_attacks[square] & bd->white[5]) return true;
+        if (pawn_attacks[0][square] & bd.board[0]) return true;
+        if (knight_attacks[square] & bd.board[1]) return true;
+        if (get_bishop_attacks(square, all(bd)) & ((bd.board[2]) | bd.board[4])) return true;
+        if (get_rook_attacks(square, all(bd)) & ((bd.board[3]) | bd.board[4])) return true;
+        if (king_attacks[square] & bd.board[5]) return true;
     }
     else 
     {
-        if (get_bishop_attacks(square, all(bd)) & (bd->black[2] | bd->black[4])) return true;
-        if (get_rook_attacks(square, all(bd)) & (bd->black[3] | bd->black[4])) return true;
-        if (pawn_attacks[1][square] & bd->black[0]) return true;
-        if (knight_attacks[square] & bd->black[1]) return true;
-        if (king_attacks[square] & bd->black[5]) return true;
+        if (pawn_attacks[1][square] & bd.board[6]) return true;
+        if (knight_attacks[square] & bd.board[7]) return true;
+        if (get_bishop_attacks(square, all(bd)) & ((bd.board[8]) | bd.board[10])) return true;
+        if (get_rook_attacks(square, all(bd)) & ((bd.board[9]) | bd.board[10])) return true;
+        if (king_attacks[square] & bd.board[11]) return true;
     }
     return false;
+}
+
+Board tst = Board();
+int attacks[6];
+
+static inline int MMDLVA_score(const Board& bd, unsigned int move)
+{
+    copy_from(&tst, bd);
+    movef(&tst, move);
+    uint64_t* attacking_set = tst.board + (tst.side == 1) * 6;
+    uint64_t defending_occ = (tst.side == -1) ? blacks(tst) : whites(tst);
+    int LVA = -1;
+    return 0;
 }
 
 // in check routine
-static inline bool in_check(Board* bd, int side)
+static inline bool in_check(const Board& bd, int side)
 {
     if (side == 1)
     {
-        return is_attacked(LSB_index(bd->white[5]), bd, -side);
+        return is_attacked(LSB_index(bd.board[5]), bd, -side);
     }
     else
     {
-        return is_attacked(LSB_index(bd->black[5]), bd, -side);
+        return is_attacked(LSB_index(bd.board[11]), bd, -side);
     }
     return false;
 }
 
-static inline bool check_check(Board* bd, unsigned int move)
+static inline bool check_check(const Board& bd, unsigned int move)
 {
-    Board* tst = new Board[1];
-    memcpy(tst, bd, sizeof(*tst));
-    movef(tst, move);
-    return in_check(tst, bd->side);
+    copy_from(&tst,bd);
+    movef(&tst, move);
+    return in_check(tst, tst.side);
 }
 
 // generate legal moves
-static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
+static inline void get_moves(const Board& bd, unsigned int* start_pointer)
 {
-    // clear vector,
-    vec->clear();
+    unsigned int size = 0;
 
     // initiallize constants
     uint64_t all_pieces = all(bd);
-    int side = bd->side;
+    int side = bd.side;
     int binary_side = (side == 1) ? 1 : 0;
     uint64_t attacking_occ = (side == 1) ? whites(bd) : blacks(bd);
     uint64_t defending_occ = (side == 1) ? blacks(bd) : whites(bd);
-    Board* test_checks = new Board();
 
     // set pointers for attacking and defending pieces
-    uint64_t* attacking_pieces = (side == 1) ? bd->white : bd->black;
-    uint64_t* defending_pieces = (side == 1) ? bd->black : bd->white;
+    const uint64_t* attacking_pieces = &(bd.board[0]) + (side == -1) * 6;
+    const uint64_t* defending_pieces = &(bd.board[0]) + (side ==  1) * 6;
 
     // generate pawn moves
     uint64_t piece_board = attacking_pieces[PAWN];
     uint64_t att = 0ULL;
     while (piece_board)
     {
-        int square = LSB_index(piece_board);
+        unsigned int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
-        att |= (pawn_attacks[binary_side][square] & (defending_occ | (1ULL << bd->enpassant))) | (silent_pawn_moves[binary_side][square] & ~all_pieces);
+        att |= (pawn_attacks[binary_side][square] & (defending_occ | (1ULL << bd.enpassant))) | (silent_pawn_moves[binary_side][square] & ~all_pieces);
         att &= ~attacking_occ;
         while (att)
         {
-            unsigned int j = LSB_index(att);
+            int j = LSB_index(att);
             att = pop_bit(att, j);
             unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            unsigned int enpassantflg = (j == bd->enpassant) ? 0b1 : 0;
+            unsigned int enpassantflg = (j == bd.enpassant) ? 0b1 : 0;
             uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, enpassantflg, 0b1111);
 
 
@@ -461,13 +473,13 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
                 {
                     move = pack_move(square , j, promotee, captureflg, 0UL, enpassantflg, 0b1111);
                     move = set_heuristic(move, (heuristic_value + (captureflg * 2) + (promotee * 4)));
-                    vec->push_back(move);
+                    arradd(start_pointer, size, move);
                 }
             }
             else 
             {
                 move = set_heuristic(move, (heuristic_value + (enpassantflg) + (captureflg * 5) ));
-                vec->push_back(move);
+                arradd(start_pointer, size, move);
             }
         }
     }
@@ -477,29 +489,27 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
     att = 0ULL;
     while (piece_board)
     {
-        int square = LSB_index(piece_board);
+        unsigned int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= knight_attacks[square];
         att &= ~attacking_occ;
         while (att)
         {
-            unsigned int j = LSB_index(att);
+            int j = LSB_index(att);
             att = pop_bit(att, j);
             unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, 0b1111);
+            uint32_t move = pack_move(square , j, KNIGHT, captureflg, 0UL, 0UL, 0b1111);
 
 
             // verify checks
-            copy_from(test_checks,bd);
-            movef(test_checks,move);
-            if (in_check(test_checks, side)) {continue;}
+            if (check_check(bd, move)) {continue;}
 
             // calculate heristics
             unsigned int heuristic_value = 10;
 
             
             move = set_heuristic(move, (heuristic_value + (captureflg * 5) ));
-            vec->push_back(move);
+            arradd(start_pointer, size, move);
         }
     }
 
@@ -508,29 +518,27 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
     att = 0ULL;
     while (piece_board)
     {
-        int square = LSB_index(piece_board);
+        unsigned int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= get_bishop_attacks(square, all_pieces);
         att &= ~attacking_occ;
         while (att)
         {
-            unsigned int j = LSB_index(att);
+            int j = LSB_index(att);
             att = pop_bit(att, j);
             unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, 0b1111);
+            uint32_t move = pack_move(square , j, BISHOP, captureflg, 0UL, 0UL, 0b1111);
 
 
-            // verify checks
-            copy_from(test_checks,bd);
-            movef(test_checks,move);
-            if (in_check(test_checks, side)) {continue;}
+            // verify checks            
+            if (check_check(bd, move)) {continue;}
 
             // calculate heristics
             unsigned int heuristic_value = 10;
 
             
             move = set_heuristic(move, (heuristic_value + (captureflg * 5) ));
-            vec->push_back(move);
+            arradd(start_pointer, size, move);
         }
     }
 
@@ -539,7 +547,7 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
     att = 0ULL;
     while (piece_board)
     {
-        int square = LSB_index(piece_board);
+        unsigned int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= get_rook_attacks(square, all_pieces);
         att &= ~attacking_occ;
@@ -552,22 +560,20 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
 
         while (att)
         {
-            unsigned int j = LSB_index(att);
+            int j = LSB_index(att);
             att = pop_bit(att, j);
             unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, castles_ov);
+            uint32_t move = pack_move(square , j, ROOK, captureflg, 0UL, 0UL, castles_ov);
 
             // verify checks
-            copy_from(test_checks,bd);
-            movef(test_checks,move);
-            if (in_check(test_checks, side)) {continue;}
+            if (check_check(bd, move)) {continue;}
 
             // calculate heristics
             unsigned int heuristic_value = 10;
 
             
             move = set_heuristic(move, (heuristic_value + (captureflg * 5) ));
-            vec->push_back(move);
+            arradd(start_pointer, size, move);
         }
     }
 
@@ -576,28 +582,26 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
     att = 0ULL;
     while (piece_board)
     {
-        int square = LSB_index(piece_board);
+        unsigned int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= get_queen_attacks(square, all_pieces);
         att &= ~attacking_occ;
         while (att)
         {
-            unsigned int j = LSB_index(att);
+            int j = LSB_index(att);
             att = pop_bit(att, j);
             unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, 0b1111);
+            uint32_t move = pack_move(square , j, QUEEN, captureflg, 0UL, 0UL, 0b1111);
 
             // verify checks
-            copy_from(test_checks,bd);
-            movef(test_checks,move);
-            if (in_check(test_checks, side)) {continue;}
+            if (check_check(bd, move)) {continue;}
 
             // calculate heristics
             unsigned int heuristic_value = 10;
 
             
             move = set_heuristic(move, (heuristic_value + (captureflg * 5) ));
-            vec->push_back(move);
+            arradd(start_pointer, size, move);
         }
     }
 
@@ -606,7 +610,7 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
     att = 0ULL;
     while (piece_board)
     {
-        int square = LSB_index(piece_board);
+        unsigned int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= king_attacks[square];
         att &= ~attacking_occ;
@@ -616,22 +620,20 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
 
         while (att)
         {
-            unsigned int j = LSB_index(att);
+            int j = LSB_index(att);
             att = pop_bit(att, j);
             unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, 0UL, castles_ov);
+            uint32_t move = pack_move(square , j, KING, captureflg, 0UL, 0UL, castles_ov);
 
             // verify checks
-            copy_from(test_checks,bd);
-            movef(test_checks,move);
-            if (in_check(test_checks, side)) {continue;}
+            if (check_check(bd, move)) {continue;}
 
             // calculate heristics
             unsigned int heuristic_value = 10;
 
             
             move = set_heuristic(move, (heuristic_value + (captureflg * 5) ));
-            vec->push_back(move);
+            arradd(start_pointer, size, move);
         }
     }
 
@@ -639,60 +641,58 @@ static inline void get_moves(Board* bd, std::vector<unsigned int>* vec)
     // castling routine
     if (side == 1)
     {
-        if (bd->castles & 0b1000)
+        if (bd.castles & 0b1000)
         {
             if (!(is_attacked(_E1,bd,-1) || is_attacked(_F1,bd,-1) || is_attacked(_G1,bd,-1)) && !(all_pieces & (_F1 | _G1)))
             {
-                vec->push_back(pack_move(_E1,_G1, 0U, 0U, 1U, 0U, 0b0011));
+                arradd(start_pointer, size, pack_move(_E1,_G1, KING, 0U, 1U, 0U, 0b0011));
             }
         }
-        if (bd->castles & 0b0100)
+        if (bd.castles & 0b0100)
         {
             if (!(is_attacked(_E1,bd,-1) || is_attacked(_D1,bd,-1) || is_attacked(_C1,bd,-1)) && !(all_pieces & (_D1 | _C1 | _B1)))
             {
-                vec->push_back(pack_move(_E1,_C1, 0U, 0U, 1U, 0U, 0b0011));
+                arradd(start_pointer, size, pack_move(_E1,_C1, KING, 0U, 1U, 0U, 0b0011));
             }
         }
     }
     else
     {
-        if (bd->castles & 0b0010)
+        if (bd.castles & 0b0010)
         {
             if (!(is_attacked(_E8,bd,1) || is_attacked(_F8,bd,1) || is_attacked(_G8,bd,1)) && !(all_pieces & (_F8 | _G8)))
             {
-                vec->push_back(pack_move(_E8,_G8, 0U, 0U, 1U, 0U, 0b1100));
+                arradd(start_pointer, size, pack_move(_E8,_G8, KING, 0U, 1U, 0U, 0b1100));
             }
         }
-        if (bd->castles & 0b0001)
+        if (bd.castles & 0b0001)
         {
             if (!(is_attacked(_E8,bd,1) || is_attacked(_D8,bd,1) || is_attacked(_C1,bd,1)) && !(all_pieces & (_D8 | _C8 | _B8)))
             {
-                vec->push_back(pack_move(_E8,_C8, 0U, 0U, 1U, 0U, 0b1100));
+                arradd(start_pointer, size, pack_move(_E8,_C8, KING, 0U, 1U, 0U, 0b1100));
             }
         }
     }
     
 
-    // close test board
-    test_checks->~Board();
 
-    int vector_size = vec->size();
 
     // exit if empty
-    if (vector_size == 0) return;
+    if (size == 0) return;
 
     // sort and finalize heuristics
-    int num_best = (3 > vector_size / 3) ? vector_size / 3 : 3;
-    int num_killer = (3 > vector_size - num_best) ? vector_size - num_best : 3;
+    int num_best = (3 > size / 3) ? size / 3 : 3;
+    int num_killer = (3 > size - num_best) ? size - num_best : 3;
 
     // sort moves
-    std::sort(vec->begin(), vec->end(), std::greater<>());
+    std::sort(start_pointer, start_pointer + size, std::greater<>());
     for (int i = 0; i < num_best; i++)
-        vec->at(i) |= (1UL << 31);
-    std::sort(vec->begin(), vec->end());
+        start_pointer[i] |= (1UL << 31);
+    std::sort(start_pointer, start_pointer + size);
     for (int i = 0; i < num_killer; i++)
-        vec->at(i) |= (1UL << 30);
-    std::sort(vec->begin(), vec->end(), std::greater<>());
+        start_pointer[i] |= (1UL << 31);
+    std::sort(start_pointer, start_pointer + size, std::greater<>());
+    arradd(start_pointer, size, 0U);
 }
 
 

@@ -6,8 +6,7 @@
 #include "Tools.hh"
 #include "Board.hh"
 
-enum piece_numbers {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING};
-enum colors {WHITE, BLACK};
+
 
 #define OTHER_SIDE(side) (side ^ 1)
 #define FLIP(sq) ((sq)^56)
@@ -193,7 +192,7 @@ void initialize_evaluation()
 }
 
 
-int eval(Board* bd)
+int eval(const Board& bd)
 {
     int game_phase = 0;
 
@@ -208,14 +207,14 @@ int eval(Board* bd)
         uint64_t bit = 1ULL << square;
         for (int piece = 0; piece < 6; piece++)
         {
-            if (bd->white[piece] & bit)
+            if (bd.board[piece] & bit)
             {
                 mg[WHITE] += mg_table[WHITE_PIECE(piece)][square];
                 eg[WHITE] += eg_table[WHITE_PIECE(piece)][square];
                 game_phase += game_phase_inc[WHITE_PIECE(piece)];
                 piece = 6;
             }
-            else if (bd->black[piece] & bit)
+            else if (bd.board[piece+6] & bit)
             {
                 mg[BLACK] += mg_table[BLACK_PIECE(piece)][square];
                 eg[BLACK] += eg_table[BLACK_PIECE(piece)][square];
