@@ -44,7 +44,8 @@ static inline int negamax(int depth, int alpha, int beta, int side)
     get_moves(bd, move_arrays[ply].begin());
     if (move_arrays[ply][0] == 0) 
     {
-        if (in_check(bd,side)) return (100000 + depth);
+        bool i_c = in_check(bd,side);
+        if (i_c) return (100000 + depth);
         else return 0;
     }
 
@@ -80,6 +81,7 @@ static inline int negamax(int depth, int alpha, int beta, int side)
     // return the value of the node
     return value;
 }
+
 
 static moveinfo get_best_move(Board* bd, int depth)
 {

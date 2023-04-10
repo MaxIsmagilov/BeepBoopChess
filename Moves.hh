@@ -370,27 +370,20 @@ static inline uint64_t get_queen_attacks(int square, uint64_t occupancy)
 }
 
 // is attacked routine
-static inline bool is_attacked(int square, const Board& bd, int by_side)
-{
-    if (square == -1) return false;
-    if (by_side == 1)
-    {
-        if (pawn_attacks[0][square] & bd.board[0]) return true;
-        if (knight_attacks[square] & bd.board[1]) return true;
-        if (get_bishop_attacks(square, all(bd)) & ((bd.board[2]) | bd.board[4])) return true;
-        if (get_rook_attacks(square, all(bd)) & ((bd.board[3]) | bd.board[4])) return true;
-        if (king_attacks[square] & bd.board[5]) return true;
-    }
-    else 
-    {
-        if (pawn_attacks[1][square] & bd.board[6]) return true;
-        if (knight_attacks[square] & bd.board[7]) return true;
-        if (get_bishop_attacks(square, all(bd)) & ((bd.board[8]) | bd.board[10])) return true;
-        if (get_rook_attacks(square, all(bd)) & ((bd.board[9]) | bd.board[10])) return true;
-        if (king_attacks[square] & bd.board[11]) return true;
-    }
-    return false;
-}
+#define is_attacked(square, bd, by_side)                                            \
+    (square == -1) ? false :  (                                                     \
+    (by_side == 1) ?                                                                \
+        (pawn_attacks[0][square] & bd.board[0]) ||                                  \
+        (knight_attacks[square] & bd.board[1]) ||                                   \
+        (get_bishop_attacks(square, all(bd)) & ((bd.board[2]) | bd.board[4])) ||    \
+        (get_rook_attacks(square, all(bd)) & ((bd.board[3]) | bd.board[4])) ||      \
+        (king_attacks[square] & bd.board[5])                                        \
+    :                                                                               \
+        (pawn_attacks[1][square] & bd.board[6]) ||                                  \
+        (knight_attacks[square] & bd.board[7]) ||                                   \
+        (get_bishop_attacks(square, all(bd)) & ((bd.board[8]) | bd.board[10])) ||   \
+        (get_rook_attacks(square, all(bd)) & ((bd.board[9]) | bd.board[10])) ||     \
+        (king_attacks[square] & bd.board[11]))                                      \
 
 Board tst = Board();
 int attacks[6];
@@ -406,18 +399,7 @@ static inline int MMDLVA_score(const Board& bd, unsigned int move)
 }
 
 // in check routine
-static inline bool in_check(const Board& bd, int side)
-{
-    if (side == 1)
-    {
-        return is_attacked(LSB_index(bd.board[5]), bd, -side);
-    }
-    else
-    {
-        return is_attacked(LSB_index(bd.board[11]), bd, -side);
-    }
-    return false;
-}
+#define in_check(bd, side) (side == 1) ? is_attacked(LSB_index(bd.board[5]), bd, -side) : is_attacked(LSB_index(bd.board[11]), bd, -side);
 
 static inline bool check_check(const Board& bd, unsigned int move)
 {
