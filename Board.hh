@@ -8,14 +8,13 @@ struct Board;
 
 #include "Tools.hh"
 
-
+#define white(i) board[i]
+#define black(i) board[i+6] 
 
 struct Board
 { 
 public:
     uint64_t board[12];
-    uint64_t* white = &board[0];  // represents white's bitboards (P,N,B,R,Q,K)
-    uint64_t* black = &board[6];  // represents black's bitboards (p,n,b,r,q,k)
     uint8_t castles = 0b00000000;       // represents castling ability in 0b0000KQkq
     int8_t side = 1;                    // side to move, 1 for white, -1 for black
     int8_t enpassant = -1;              // enpassant square (-1 for none)
@@ -145,7 +144,7 @@ std::string print_board(Board* bd)
 
 static inline void copy_from(Board* target, const Board& origin)
 {
-    memcpy(&(target->board[0]), &(origin.board[0]), 96);
+    memcpy(&(target->board), &(origin.board), sizeof(int) * 24);
         /*for (int i = 0; i < 12; i++)
         {
             target->board[i] = origin->board[i];
@@ -165,12 +164,12 @@ static inline void movef(Board* bd, uint32_t move)
     int start = start_square(move);
     int moving_side = 0;
     bd->enpassant = -1;
-    if ((1ULL << start) & bd->white[0])
+    if ((1ULL << start) & bd->white(0))
     {
         if (end - start == -16) bd->enpassant = start - 8;
         bd->halfmoves = 0;
     }
-    else if ((1ULL << start) & bd->black[0])
+    else if ((1ULL << start) & bd->black(0))
     {
         if (end - start == 16)  bd->enpassant = start + 8;
         bd->halfmoves = 0;
@@ -179,20 +178,20 @@ static inline void movef(Board* bd, uint32_t move)
     for (int i = 0; i < 6; i++)
     {
         
-        bd->white[i] &= ~(1ULL << end);
-        bd->black[i] &= ~(1ULL << end);
-        if (bd->white[i] & (1ULL << start)) 
+        bd->white(i) &= ~(1ULL << end);
+        bd->black(i) &= ~(1ULL << end);
+        if (bd->white(i) & (1ULL << start)) 
         {
-            bd->white[promotion_piece(move)] |= (1ULL << end);
+            bd->white(promotion_piece(move)) |= (1ULL << end);
             moving_side = 1;
         }
         
-        if (bd->black[i] & (1ULL << start)) 
+        if (bd->black(i) & (1ULL << start)) 
         {
-            bd->black[promotion_piece(move)]  |= (1ULL << end);
+            bd->black(promotion_piece(move))  |= (1ULL << end);
         }
-        bd->white[i] &= ~(1ULL << start);
-        bd->black[i] &= ~(1ULL << start);
+        bd->white(i) &= ~(1ULL << start);
+        bd->black(i) &= ~(1ULL << start);
     }
     bd->side = -(bd->side);
     if (bd->side == 1) bd->fullmoves++;
@@ -201,19 +200,19 @@ static inline void movef(Board* bd, uint32_t move)
     {
         if (moving_side)    
         {
-            bd->white[3] = push_bit(bd->white[3], ((end + start) / 2));
-            bd->white[3] = pop_bit(bd->white[3], ((end > start) ? _H1 : _A1));
+            bd->white(3) = push_bit(bd->white(3), ((end + start) / 2));
+            bd->white(3) = pop_bit(bd->white(3), ((end > start) ? _H1 : _A1));
         }
         else                
         {
-            bd->black[3] = push_bit(bd->black[3], ((end + start) / 2));
-            bd->black[3] = pop_bit(bd->black[3], ((end > start) ? _H8 : _A8));
+            bd->black(3) = push_bit(bd->black(3), ((end + start) / 2));
+            bd->black(3) = pop_bit(bd->black(3), ((end > start) ? _H8 : _A8));
         }
     }
     if (enpassant_flag(move)) 
     {
-        bd->white[0] &= ~(1ULL << (end + ((moving_side) ? 8 : -8)));
-        bd->black[0] &= ~(1ULL << (end + ((moving_side) ? 8 : -8)));
+        bd->white(0) &= ~(1ULL << (end + ((moving_side) ? 8 : -8)));
+        bd->black(0) &= ~(1ULL << (end + ((moving_side) ? 8 : -8)));
     }
 }
 

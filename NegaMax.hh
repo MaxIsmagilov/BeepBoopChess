@@ -4,11 +4,17 @@
 #include <vector>
 #include <bits/stdc++.h>
 #include <array>
+#include <chrono>
+
 
 #include "Eval.hh"
 #include "Moves.hh"
 #include "Board.hh"
 #include "Tools.hh"
+
+
+using namespace std::chrono;
+
 
 struct moveinfo 
 {
@@ -58,6 +64,9 @@ static inline int negamax(int depth, int alpha, int beta, int side)
     {
         // check for null results
         if (i == 0) break;
+
+        // late move pruning
+        if (!(capture_flag(i)) && depth == 1 && !(in_check(bd,side))) {ply--; return -side * eval(bd);}
         
         // move the check board
         copy_from(history[ply], *history[ply-1]);
@@ -106,7 +115,7 @@ static moveinfo get_best_move(Board* bd, int depth)
     printf("|--------------------|\n ");
     for (i = 0; i < arr_size; i++)
     {
-
+        ply = 0;
         if (!arr[i]) break;
         copy_from(history[0], *bd);
         movef(history[0], arr[i]);
@@ -144,4 +153,49 @@ function negamax(node, depth, α, β, color) is
             break (* cut-off *)
     return value
 */
+
+
+
+static inline int get_perft(int depth)
+{
+    if (depth == 0) return 1;
+    int sum = 0;
+    int sz = get_moves(*history[ply], move_arrays[ply].begin());
+    //print_moves(*history[ply]);
+    ply++;
+    for (unsigned int mv : move_arrays[ply-1])
+    {
+        if (!mv) break;
+        copy_from(history[ply], *history[ply-1]);
+        movef(history[ply],mv);
+        int inc = get_perft(depth-1);
+        //if (ply == 1) {print_move(mv); printf("\t%i\n", inc);}
+        sum += inc;
+    }
+    ply--;
+    return sum;
+}
+
+
+void run_perft()
+{
+    for (int i = 0; i < 256; i++) 
+    {
+        history[i] = new Board(); 
+        move_arrays[i] = std::array<unsigned int, ARRAY_SIZE>();
+    }
+    for (int i = 0; i < 6; i++)
+    {
+        int ply = 0;
+        int perftval = 0;
+        import_FEN(history[0],"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        auto begin = high_resolution_clock::now();
+        perftval = get_perft(i);
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast<milliseconds>(end - begin);
+        float speed =  ((float) perftval) / duration.count();
+
+        printf("\n%i:\t%i nodes @%4.1f nodes/second\n\n",i ,perftval, speed);
+    }
+}
 #endif

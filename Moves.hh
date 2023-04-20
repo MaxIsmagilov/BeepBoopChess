@@ -16,6 +16,8 @@
 
 #define arradd(a, b, c) a[b] = c; b++;
 
+const int FAIL_CUT = 1;
+
 enum rook_or_bishop {mROOK, mBISHOP};
 
 // non-slider attack masks
@@ -75,6 +77,7 @@ uint64_t pawn_mask(int square, int side) // side is 1 for white, -1 for black
     }
     return att;
 }
+
 
 uint64_t knight_mask(int square) 
 {
@@ -388,7 +391,7 @@ static inline uint64_t get_queen_attacks(int square, uint64_t occupancy)
 Board tst = Board();
 int attacks[6];
 
-static inline int MMDLVA_score(const Board& bd, unsigned int move)
+static inline int heuristic_score(const Board& bd, unsigned int move)
 {
     copy_from(&tst, bd);
     movef(&tst, move);
@@ -399,7 +402,7 @@ static inline int MMDLVA_score(const Board& bd, unsigned int move)
 }
 
 // in check routine
-#define in_check(bd, side) (side == 1) ? is_attacked(LSB_index(bd.board[5]), bd, -side) : is_attacked(LSB_index(bd.board[11]), bd, -side);
+#define in_check(bd, side) ((side == 1) ? is_attacked(LSB_index(bd.board[5]), bd, -side) : is_attacked(LSB_index(bd.board[11]), bd, -side))
 
 static inline bool check_check(const Board& bd, unsigned int move)
 {
@@ -409,7 +412,7 @@ static inline bool check_check(const Board& bd, unsigned int move)
 }
 
 // generate legal moves
-static inline void get_moves(const Board& bd, unsigned int* start_pointer)
+static inline unsigned int get_moves(const Board& bd, unsigned int* start_pointer)
 {
     unsigned int size = 0;
 
@@ -429,7 +432,7 @@ static inline void get_moves(const Board& bd, unsigned int* start_pointer)
     uint64_t att = 0ULL;
     while (piece_board)
     {
-        unsigned int square = LSB_index(piece_board);
+        int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= (pawn_attacks[binary_side][square] & (defending_occ | (1ULL << bd.enpassant))) | (silent_pawn_moves[binary_side][square] & ~all_pieces);
         att &= ~attacking_occ;
@@ -471,7 +474,7 @@ static inline void get_moves(const Board& bd, unsigned int* start_pointer)
     att = 0ULL;
     while (piece_board)
     {
-        unsigned int square = LSB_index(piece_board);
+        int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= knight_attacks[square];
         att &= ~attacking_occ;
@@ -500,7 +503,7 @@ static inline void get_moves(const Board& bd, unsigned int* start_pointer)
     att = 0ULL;
     while (piece_board)
     {
-        unsigned int square = LSB_index(piece_board);
+        int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= get_bishop_attacks(square, all_pieces);
         att &= ~attacking_occ;
@@ -529,15 +532,15 @@ static inline void get_moves(const Board& bd, unsigned int* start_pointer)
     att = 0ULL;
     while (piece_board)
     {
-        unsigned int square = LSB_index(piece_board);
+        int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= get_rook_attacks(square, all_pieces);
         att &= ~attacking_occ;
 
         // get castling rights
         int castle = 0b11;
-        if ((square % 8) == 0) castle &= 0b01;
-        else if ((square % 8) == 0) castle &= 0b10;
+        if ((square % 8) == 0) castle &= 0b10;
+        else if ((square % 8) == 0) castle &= 0b01;
         unsigned int castles_ov = (binary_side) ? (0b11 | (castle << 2)) : (0b1100 | castle);
 
         while (att)
@@ -564,7 +567,7 @@ static inline void get_moves(const Board& bd, unsigned int* start_pointer)
     att = 0ULL;
     while (piece_board)
     {
-        unsigned int square = LSB_index(piece_board);
+        int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= get_queen_attacks(square, all_pieces);
         att &= ~attacking_occ;
@@ -592,7 +595,7 @@ static inline void get_moves(const Board& bd, unsigned int* start_pointer)
     att = 0ULL;
     while (piece_board)
     {
-        unsigned int square = LSB_index(piece_board);
+        int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= king_attacks[square];
         att &= ~attacking_occ;
@@ -660,11 +663,11 @@ static inline void get_moves(const Board& bd, unsigned int* start_pointer)
 
 
     // exit if empty
-    if (size == 0) return;
+    if (size == 0) return 0;
 
     // sort and finalize heuristics
-    int num_best = (3 > size / 3) ? size / 3 : 3;
-    int num_killer = (3 > size - num_best) ? size - num_best : 3;
+    int num_best = (FAIL_CUT > size / FAIL_CUT) ? size / FAIL_CUT : FAIL_CUT;
+    int num_killer = (FAIL_CUT > size - num_best) ? size - num_best : FAIL_CUT;
 
     // sort moves
     std::sort(start_pointer, start_pointer + size, std::greater<>());
@@ -675,6 +678,73 @@ static inline void get_moves(const Board& bd, unsigned int* start_pointer)
         start_pointer[i] |= (1UL << 31);
     std::sort(start_pointer, start_pointer + size, std::greater<>());
     arradd(start_pointer, size, 0U);
+    return size;
+}
+
+unsigned int pull_move(std::string mv, Board* bd)
+{
+    std::array<unsigned int, 120> arr = std::array<unsigned int, 120>();
+    get_moves(*bd, arr.begin());
+
+    unsigned int source = (mv[0] - 'a') + (8 - (mv[1] - '0')) * 8;
+    unsigned int end = (mv[2] - 'a') + (8 - (mv[3] - '0')) * 8;
+    unsigned int promotion = 0UL;
+    if (mv.length() == 5) 
+    {
+        char pc = mv[4];
+        if (pc == 'Q' || pc == 'q')
+            promotion = 4UL; 
+        if (pc == 'R' || pc == 'R')
+            promotion = 3UL; 
+        if (pc == 'B' || pc == 'b')
+            promotion = 2UL; 
+        if (pc == 'K' || pc == 'k')
+            promotion = 1UL; 
+    }
+    for (unsigned int i : arr)
+    {
+        if (start_square(i) == source && end_square(i) == end && promotion == promotion_piece(i))
+            return i;
+    }
+    return 0;
+}
+
+void print_move(uint32_t move)
+{
+    char sourcef = 'a' + (start_square(move) % 8);
+    char sourcer = '8' - (start_square(move) / 8);
+    char endf = 'a' + (end_square(move) % 8);
+    char endr = '8' - (end_square(move) / 8);
+    
+    char piece;
+    switch (promotion_piece(move))
+    {
+        case 0UL:
+        printf("%c%c%c%c", sourcef, sourcer, endf, endr); return;
+        case 1UL:
+        piece = 'N'; break;
+        case 2UL:
+        piece = 'B'; break;
+        case 3UL:
+        piece = 'R'; break;
+        case 4UL:
+        piece = 'Q'; break;
+    }
+    printf("%c%c%c%c%c", sourcef, sourcer, endf, endr, piece);
+}
+
+
+void print_moves(const Board& bd)
+{
+    std::array<unsigned int, 120> arr = std::array<unsigned int, 120>();
+    get_moves(bd, arr.begin());
+    for (unsigned int j : arr)
+    {
+        if (j == 0) break;
+        print_move(j);
+        printf(", ");
+    }
+    printf("\n\t");
 }
 
 

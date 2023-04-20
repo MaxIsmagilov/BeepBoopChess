@@ -28,29 +28,19 @@ void setup()
     std::cout << "setup complete\n\n";
 }
 
-void print_moves(const Board& bd)
-{
-    std::array<unsigned int, 120> arr = std::array<unsigned int, 120>();
-    get_moves(bd, arr.begin());
-    for (unsigned int j : arr)
-    {
-        if (j == 0) break;
-        print_move(j);
-        printf(", ");
-    }
-    printf("\n\t");
-}
+
 
 int main(int argc, char const *argv[])
 {
     setup();
+    //run_perft();
     Board start = Board();
     import_FEN(&start,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     //import_FEN(&start,"r1b2rk1/p1b1qppp/2pp4/4n3/NP1QP3/P4B2/1B3PPP/R4RK1 w - - 5 17");
     std::array<unsigned int, 120> arr = std::array<unsigned int, 120>();
     std::cout << to_string(&start) << "\n";
     int depth;
-    int plies = 1;
+    int plies = 6;
     std::cout << "enter depth: ";
     std::cin >> depth;
     int i = 0;
@@ -75,5 +65,5 @@ int main(int argc, char const *argv[])
         movef(&start, move.move);
         std::cout << to_string(&start) << "\n";
         i++;
-    }
-}
+    } 
+} 
