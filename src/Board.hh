@@ -11,6 +11,7 @@ struct Board;
 #define white(i) board[i]
 #define black(i) board[i+6] 
 
+
 struct Board
 { 
 public:
@@ -156,42 +157,33 @@ static inline void copy_from(Board* target, const Board& origin)
     target->fullmoves = origin.fullmoves;
 }
 
-static inline void movef(Board* bd, uint32_t move)
+static inline void movef(Board* bd, moveWrapper move)
 {
     
     bd->halfmoves++;
+    if (capture_flag(move)) bd->halfmoves = 0;
     int end = end_square(move);
     int start = start_square(move);
-    int moving_side = 0;
+    int moving_side = (bd->side == 1) ? 0 : 6;
     bd->enpassant = -1;
-    if ((1ULL << start) & bd->white(0))
+    if (moved_piece(move) == 0)
     {
-        if (end - start == -16) bd->enpassant = start - 8;
+        if (double_pawn_flag(move)) bd->enpassant = start - 8;
         bd->halfmoves = 0;
     }
-    else if ((1ULL << start) & bd->black(0))
+    else if (moved_piece(move) == 0)
     {
-        if (end - start == 16)  bd->enpassant = start + 8;
+        if (double_pawn_flag(move)) bd->enpassant = start + 8;
         bd->halfmoves = 0;
     }
-    if (capture_flag(move)) bd->halfmoves = 0;
-    for (int i = 0; i < 6; i++)
+    bd->board[moving_side + moved_piece(move)] &= ~(1ULL << start);
+    if (promotion_piece(move))
     {
-        
-        bd->white(i) &= ~(1ULL << end);
-        bd->black(i) &= ~(1ULL << end);
-        if (bd->white(i) & (1ULL << start)) 
-        {
-            bd->white(promotion_piece(move)) |= (1ULL << end);
-            moving_side = 1;
-        }
-        
-        if (bd->black(i) & (1ULL << start)) 
-        {
-            bd->black(promotion_piece(move))  |= (1ULL << end);
-        }
-        bd->white(i) &= ~(1ULL << start);
-        bd->black(i) &= ~(1ULL << start);
+        bd->board[moving_side + promotion_piece(move)] |= 1ULL << end;
+    }
+    else
+    {
+        bd->board[moving_side + moved_piece(move)] |= 1ULL << end;
     }
     bd->side = -(bd->side);
     if (bd->side == 1) bd->fullmoves++;
@@ -214,6 +206,7 @@ static inline void movef(Board* bd, uint32_t move)
         bd->white(0) &= ~(1ULL << (end + ((moving_side) ? 8 : -8)));
         bd->black(0) &= ~(1ULL << (end + ((moving_side) ? 8 : -8)));
     }
+
 }
 
 std::string to_string(Board* bd)

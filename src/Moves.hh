@@ -394,7 +394,7 @@ int attacks[6];
 static inline int heuristic_score(const Board& bd, unsigned int move)
 {
     copy_from(&tst, bd);
-    movef(&tst, move);
+    movef(&tst, {move,0});
     uint64_t* attacking_set = tst.board + (tst.side == 1) * 6;
     uint64_t defending_occ = (tst.side == -1) ? blacks(tst) : whites(tst);
     int LVA = -1;
@@ -407,12 +407,12 @@ static inline int heuristic_score(const Board& bd, unsigned int move)
 static inline bool check_check(const Board& bd, unsigned int move)
 {
     copy_from(&tst,bd);
-    movef(&tst, move);
+    movef(&tst, {move,0});
     return in_check(tst, tst.side);
 }
 
 // generate legal moves
-static inline unsigned int get_moves(const Board& bd, unsigned int* start_pointer)
+static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer)
 {
     unsigned int size = 0;
 
@@ -440,30 +440,31 @@ static inline unsigned int get_moves(const Board& bd, unsigned int* start_pointe
         {
             int j = LSB_index(att);
             att = pop_bit(att, j);
-            unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            unsigned int enpassantflg = (j == bd.enpassant) ? 0b1 : 0;
-            uint32_t move = pack_move(square , j, 0UL, captureflg, 0UL, enpassantflg, 0b1111);
+            int pp_flag = (abs(square-j) == 16) ? 0b1 : 0b0;
+            uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
+            uint16_t enpassantflg = (j == bd.enpassant) ? 0b1 : 0;
+            moveWrapper move = pack_move(square, j, (uint32_t) PAWN , 0U, captureflg, 0U, enpassantflg, pp_flag, 0b1111U);
 
 
             // verify checks
-            if (check_check(bd, move)) {continue;}
+            if (check_check(bd, move._mv)) {continue;}
 
             // calculate heristics
-            unsigned int heuristic_value = 10;
+            uint16_t heuristic_value = 10U;
 
             // check for promotions
             if ((j / 8 == 0) || (j / 8 == 7))
             {
-                for (unsigned int promotee = 1; promotee < 5; promotee++)
+                for (uint32_t promotee = 1UL; promotee < 5UL; promotee++)
                 {
-                    move = pack_move(square , j, promotee, captureflg, 0UL, enpassantflg, 0b1111);
-                    move = set_heuristic(move, (heuristic_value + (captureflg * 2) + (promotee * 4)));
+                    move = pack_move(square , j, (uint32_t) PAWN , promotee, captureflg, 0U, enpassantflg, pp_flag, 0b1111U);
+                    set_heuristic(move, (heuristic_value + (captureflg * 2) + (promotee * 4)));
                     arradd(start_pointer, size, move);
                 }
             }
             else 
             {
-                move = set_heuristic(move, (heuristic_value + (enpassantflg) + (captureflg * 5) ));
+                set_heuristic(move, (heuristic_value + (enpassantflg) + (captureflg * 5) ));
                 arradd(start_pointer, size, move);
             }
         }
@@ -482,18 +483,18 @@ static inline unsigned int get_moves(const Board& bd, unsigned int* start_pointe
         {
             int j = LSB_index(att);
             att = pop_bit(att, j);
-            unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            uint32_t move = pack_move(square , j, KNIGHT, captureflg, 0UL, 0UL, 0b1111);
+            uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
+            moveWrapper move = pack_move(square , j, (uint32_t) KNIGHT, 0UL, captureflg, 0UL, 0UL, 0UL , 0b1111UL);
 
 
             // verify checks
-            if (check_check(bd, move)) {continue;}
+            if (check_check(bd, move._mv)) {continue;}
 
             // calculate heristics
-            unsigned int heuristic_value = 10;
+            uint16_t heuristic_value = 10U;
 
             
-            move = set_heuristic(move, (heuristic_value + (captureflg * 5) ));
+            set_heuristic(move, (heuristic_value + (captureflg * 5) ));
             arradd(start_pointer, size, move);
         }
     }
@@ -511,18 +512,18 @@ static inline unsigned int get_moves(const Board& bd, unsigned int* start_pointe
         {
             int j = LSB_index(att);
             att = pop_bit(att, j);
-            unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            uint32_t move = pack_move(square , j, BISHOP, captureflg, 0UL, 0UL, 0b1111);
+            uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
+            moveWrapper move = pack_move(square , j, (uint32_t) BISHOP ,0UL, captureflg, 0UL, 0UL,0UL ,0b1111UL);
 
 
             // verify checks            
-            if (check_check(bd, move)) {continue;}
+            if (check_check(bd, move._mv)) {continue;}
 
             // calculate heristics
-            unsigned int heuristic_value = 10;
+            uint16_t heuristic_value = 10U;
 
             
-            move = set_heuristic(move, (heuristic_value + (captureflg * 5) ));
+            set_heuristic(move, (heuristic_value + (captureflg * 5) ));
             arradd(start_pointer, size, move);
         }
     }
@@ -541,23 +542,23 @@ static inline unsigned int get_moves(const Board& bd, unsigned int* start_pointe
         int castle = 0b11;
         if ((square % 8) == 0) castle &= 0b10;
         else if ((square % 8) == 0) castle &= 0b01;
-        unsigned int castles_ov = (binary_side) ? (0b11 | (castle << 2)) : (0b1100 | castle);
+        uint32_t castles_ov = (binary_side) ? (0b11 | (castle << 2)) : (0b1100 | castle);
 
         while (att)
         {
             int j = LSB_index(att);
             att = pop_bit(att, j);
-            unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            uint32_t move = pack_move(square , j, ROOK, captureflg, 0UL, 0UL, castles_ov);
+            uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
+            moveWrapper move = pack_move(square , j, (uint32_t) ROOK, 0UL ,captureflg, 0UL, 0UL, 0UL , castles_ov);
 
             // verify checks
-            if (check_check(bd, move)) {continue;}
+            if (check_check(bd, move._mv)) {continue;}
 
             // calculate heristics
-            unsigned int heuristic_value = 10;
+            uint16_t heuristic_value = 10U;
 
             
-            move = set_heuristic(move, (heuristic_value + (captureflg * 5) ));
+            set_heuristic(move, (heuristic_value + (captureflg * 5) ));
             arradd(start_pointer, size, move);
         }
     }
@@ -575,17 +576,17 @@ static inline unsigned int get_moves(const Board& bd, unsigned int* start_pointe
         {
             int j = LSB_index(att);
             att = pop_bit(att, j);
-            unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            uint32_t move = pack_move(square , j, QUEEN, captureflg, 0UL, 0UL, 0b1111);
+            uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
+            moveWrapper move = pack_move(square , j, (uint32_t) QUEEN, 0UL ,captureflg, 0UL, 0UL, 0UL, 0b1111UL);
 
             // verify checks
-            if (check_check(bd, move)) {continue;}
+            if (check_check(bd, move._mv)) {continue;}
 
             // calculate heristics
-            unsigned int heuristic_value = 10;
+            uint16_t heuristic_value = 10ULL;
 
             
-            move = set_heuristic(move, (heuristic_value + (captureflg * 5) ));
+            set_heuristic(move, (heuristic_value + (captureflg * 5) ));
             arradd(start_pointer, size, move);
         }
     }
@@ -601,23 +602,23 @@ static inline unsigned int get_moves(const Board& bd, unsigned int* start_pointe
         att &= ~attacking_occ;
 
         // get castling rights
-        unsigned int castles_ov = (binary_side) ? (0b0011) : (0b1100);
+        uint32_t castles_ov = (binary_side) ? (0b0011) : (0b1100);
 
         while (att)
         {
             int j = LSB_index(att);
             att = pop_bit(att, j);
-            unsigned int captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            uint32_t move = pack_move(square , j, KING, captureflg, 0UL, 0UL, castles_ov);
+            uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
+            moveWrapper move = pack_move(square , j, (uint32_t) KING, 0UL , captureflg, 0UL, 0UL, 0UL, castles_ov);
 
             // verify checks
-            if (check_check(bd, move)) {continue;}
+            if (check_check(bd, move._mv)) {continue;}
 
             // calculate heristics
-            unsigned int heuristic_value = 10;
+            uint64_t heuristic_value = 10ULL;
 
             
-            move = set_heuristic(move, (heuristic_value + (captureflg * 5) ));
+            set_heuristic(move, (heuristic_value + (captureflg * 5) ));
             arradd(start_pointer, size, move);
         }
     }
@@ -630,14 +631,14 @@ static inline unsigned int get_moves(const Board& bd, unsigned int* start_pointe
         {
             if (!(is_attacked(_E1,bd,-1) || is_attacked(_F1,bd,-1) || is_attacked(_G1,bd,-1)) && !(all_pieces & (_F1 | _G1)))
             {
-                arradd(start_pointer, size, pack_move(_E1,_G1, KING, 0U, 1U, 0U, 0b0011));
+                arradd(start_pointer, size, pack_move(_E1,_G1, KING, 0U, 0U, 1U, 0U, 0U, 0b0011));
             }
         }
         if (bd.castles & 0b0100)
         {
             if (!(is_attacked(_E1,bd,-1) || is_attacked(_D1,bd,-1) || is_attacked(_C1,bd,-1)) && !(all_pieces & (_D1 | _C1 | _B1)))
             {
-                arradd(start_pointer, size, pack_move(_E1,_C1, KING, 0U, 1U, 0U, 0b0011));
+                arradd(start_pointer, size, pack_move(_E1,_C1, KING, 0U, 0U, 1U, 0U, 0U, 0b0011));
             }
         }
     }
@@ -647,14 +648,14 @@ static inline unsigned int get_moves(const Board& bd, unsigned int* start_pointe
         {
             if (!(is_attacked(_E8,bd,1) || is_attacked(_F8,bd,1) || is_attacked(_G8,bd,1)) && !(all_pieces & (_F8 | _G8)))
             {
-                arradd(start_pointer, size, pack_move(_E8,_G8, KING, 0U, 1U, 0U, 0b1100));
+                arradd(start_pointer, size, pack_move(_E8,_G8, KING, 0U, 0U, 1U, 0U, 0U, 0b1100));
             }
         }
         if (bd.castles & 0b0001)
         {
             if (!(is_attacked(_E8,bd,1) || is_attacked(_D8,bd,1) || is_attacked(_C1,bd,1)) && !(all_pieces & (_D8 | _C8 | _B8)))
             {
-                arradd(start_pointer, size, pack_move(_E8,_C8, KING, 0U, 1U, 0U, 0b1100));
+                arradd(start_pointer, size, pack_move(_E8,_C8, KING, 0U, 0U, 1U, 0U, 0U, 0b1100));
             }
         }
     }
@@ -672,18 +673,18 @@ static inline unsigned int get_moves(const Board& bd, unsigned int* start_pointe
     // sort moves
     std::sort(start_pointer, start_pointer + size, std::greater<>());
     for (int i = 0; i < num_best; i++)
-        start_pointer[i] |= (1UL << 31);
+        start_pointer[i]._hv |= (1UL << 15);
     std::sort(start_pointer, start_pointer + size);
     for (int i = 0; i < num_killer; i++)
-        start_pointer[i] |= (1UL << 31);
+        start_pointer[i]._hv |= (1UL << 14);
     std::sort(start_pointer, start_pointer + size, std::greater<>());
-    arradd(start_pointer, size, 0U);
+    start_pointer[size] = {0,0};
     return size;
 }
 
-unsigned int pull_move(std::string mv, Board* bd)
+moveWrapper pull_move(std::string mv, Board* bd)
 {
-    std::array<unsigned int, 120> arr = std::array<unsigned int, 120>();
+    std::array<moveWrapper, 120> arr = std::array<moveWrapper, 120>();
     get_moves(*bd, arr.begin());
 
     unsigned int source = (mv[0] - 'a') + (8 - (mv[1] - '0')) * 8;
@@ -701,15 +702,15 @@ unsigned int pull_move(std::string mv, Board* bd)
         if (pc == 'K' || pc == 'k')
             promotion = 1UL; 
     }
-    for (unsigned int i : arr)
+    for (moveWrapper i : arr)
     {
         if (start_square(i) == source && end_square(i) == end && promotion == promotion_piece(i))
             return i;
     }
-    return 0;
+    return {0,0};
 }
 
-void print_move(uint32_t move)
+void print_move(moveWrapper move)
 {
     char sourcef = 'a' + (start_square(move) % 8);
     char sourcer = '8' - (start_square(move) / 8);
@@ -736,12 +737,13 @@ void print_move(uint32_t move)
 
 void print_moves(const Board& bd)
 {
-    std::array<unsigned int, 120> arr = std::array<unsigned int, 120>();
+    std::array<moveWrapper, 120> arr = std::array<moveWrapper, 120>();
     get_moves(bd, arr.begin());
-    for (unsigned int j : arr)
+    for (moveWrapper mw : arr)
     {
+        unsigned int j = mw._mv;
         if (j == 0) break;
-        print_move(j);
+        print_move(mw);
         printf(", ");
     }
     printf("\n\t");

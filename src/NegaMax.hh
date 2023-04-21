@@ -18,7 +18,7 @@ using namespace std::chrono;
 
 struct moveinfo 
 {
-    unsigned int move;
+    moveWrapper move;
     long long int total_nodes;
     float eval;
 };
@@ -29,7 +29,7 @@ static long long int total_nodes;
 
 
 Board* history[256];
-std::array<unsigned int, ARRAY_SIZE> move_arrays[256];
+std::array<moveWrapper, ARRAY_SIZE> move_arrays[256];
 
 static int ply = 0;
 
@@ -48,7 +48,7 @@ static inline int negamax(int depth, int alpha, int beta, int side)
 
     // create and check moves
     get_moves(bd, move_arrays[ply].begin());
-    if (move_arrays[ply][0] == 0) 
+    if (move_arrays[ply][0]._mv == 0) 
     {
         bool i_c = in_check(bd,side);
         if (i_c) return (100000 + depth);
@@ -60,13 +60,13 @@ static inline int negamax(int depth, int alpha, int beta, int side)
     // set initial value
     int value = -1000000;
     ply++;
-    for (unsigned int i : move_arrays[ply-1])
+    for (moveWrapper i : move_arrays[ply-1])
     {
         // check for null results
-        if (i == 0) break;
+        if (i._mv == 0) break;
 
         // late move pruning
-        if (!(capture_flag(i)) && depth == 1 && !(in_check(bd,side))) {ply--; return -side * eval(bd);}
+       // if (!(capture_flag(i)) && depth == 1 && !(in_check(bd,side))) {ply--; return -side * eval(bd);}
         
         // move the check board
         copy_from(history[ply], *history[ply-1]);
@@ -94,15 +94,15 @@ static inline int negamax(int depth, int alpha, int beta, int side)
 
 static moveinfo get_best_move(Board* bd, int depth)
 {
-    for (int i = 0; i < 256; i++) {history[i] = new Board(); move_arrays[i] = std::array<unsigned int, ARRAY_SIZE>();}
+    for (int i = 0; i < 256; i++) {history[i] = new Board(); move_arrays[i] = std::array<moveWrapper, ARRAY_SIZE>();}
     ply = 0;
-    if (bd->halfmoves >= 50) return {0U,0,0.0F};
+    if (bd->halfmoves >= 50) return {{0,0}, 0LL, 0.0F};
     total_nodes = 0;
 
-    std::array<unsigned int, ARRAY_SIZE> arr = std::array<unsigned int, ARRAY_SIZE>();
+    std::array<moveWrapper, ARRAY_SIZE> arr = std::array<moveWrapper, ARRAY_SIZE>();
 
     get_moves(*bd, arr.begin());
-    if (arr[0] == 0) return {0U,0,0.0F};
+    if (arr[0]._mv == 0) return {{0,0},0,0.0F};
 
     int max_index = 0;
     int best_move_value = -1000000;
@@ -110,13 +110,13 @@ static moveinfo get_best_move(Board* bd, int depth)
     int i;
     unsigned int arr_size;
 
-    for (arr_size = 0; arr[arr_size]; arr_size++);
+    for (arr_size = 0; arr[arr_size]._mv; arr_size++);
 
     printf("|--------------------|\n ");
     for (i = 0; i < arr_size; i++)
     {
         ply = 0;
-        if (!arr[i]) break;
+        if (!arr[i]._mv) break;
         copy_from(history[0], *bd);
         movef(history[0], arr[i]);
         int value = negamax(depth, -1000000, 1000000, history[0]->side);
@@ -163,13 +163,13 @@ static inline int get_perft(int depth)
     int sz = get_moves(*history[ply], move_arrays[ply].begin());
     //print_moves(*history[ply]);
     ply++;
-    for (unsigned int mv : move_arrays[ply-1])
+    for (moveWrapper mv : move_arrays[ply-1])
     {
-        if (!mv) break;
+        if (!mv._mv) break;
         copy_from(history[ply], *history[ply-1]);
         movef(history[ply],mv);
         int inc = get_perft(depth-1);
-        //if (ply == 1) {print_move(mv); printf("\t%i\n", inc);}
+        if (ply == 1) {print_move(mv); printf("\t%i\n", inc);}
         sum += inc;
     }
     ply--;
@@ -177,25 +177,25 @@ static inline int get_perft(int depth)
 }
 
 
-void run_perft()
+void run_perft(const Board& bd)
 {
     for (int i = 0; i < 256; i++) 
     {
         history[i] = new Board(); 
-        move_arrays[i] = std::array<unsigned int, ARRAY_SIZE>();
+        move_arrays[i] = std::array<moveWrapper, ARRAY_SIZE>();
     }
     for (int i = 0; i < 6; i++)
     {
         int ply = 0;
         int perftval = 0;
-        import_FEN(history[0],"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        copy_from(history[0], bd);
         auto begin = high_resolution_clock::now();
         perftval = get_perft(i);
         auto end = high_resolution_clock::now();
         auto duration = duration_cast<milliseconds>(end - begin);
         float speed =  ((float) perftval) / duration.count();
 
-        printf("\n%i:\t%i nodes @%4.1f nodes/second\n\n",i ,perftval, speed);
+        printf("\n%i:\t%i nodes @%4.1fk nodes/second\n\n",i ,perftval, speed);
     }
 }
 #endif

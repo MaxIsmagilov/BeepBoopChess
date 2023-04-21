@@ -33,9 +33,10 @@ void setup()
 int main(int argc, char const *argv[])
 {
     setup();
-    //run_perft();
     Board start = Board();
     import_FEN(&start,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    run_perft(start);
+    return 0;
     //import_FEN(&start,"r1b2rk1/p1b1qppp/2pp4/4n3/NP1QP3/P4B2/1B3PPP/R4RK1 w - - 5 17");
     std::array<unsigned int, 120> arr = std::array<unsigned int, 120>();
     std::cout << to_string(&start) << "\n";
@@ -57,7 +58,7 @@ int main(int argc, char const *argv[])
         print_move(move.move);
         printf("\n");
 
-        if (!move.move)
+        if (!move.move._mv)
         {
             std::cout << "endpoint reached or illegal move\n";
             break;

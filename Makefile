@@ -1,11 +1,14 @@
 all: 
-	gcc -oFast Main.cpp Uciapi.hh NegaMax.hh Eval.hh Moves.hh Board.hh Tools.hh MagicNumbers.hh -o Main -lstdc++
+	gcc -oFast src/Main.cpp src/Uciapi.hh src/NegaMax.hh src/Eval.hh src/Moves.hh src/Board.hh src/Tools.hh src/MagicNumbers.hh -o bin/Main -lstdc++
 
 debug: 
-	gcc -o Main.cpp Uciapi.hh NegaMax.hh Eval.hh Moves.hh Board.hh Tools.hh MagicNumbers.hh -o Main
+	gcc -o src/Main.cpp src/Uciapi.hh src/NegaMax.hh src/Eval.hh src/Moves.hh src/Board.hh src/Tools.hh src/MagicNumbers.hh -o bin/Main
+
+run:
+	./bin/Main
 
 clean:
-	rm -f *.o
-	rm -f *.exe
+	rm -f bin/*.o
+	rm -f bin/*.exe
 	
 	
