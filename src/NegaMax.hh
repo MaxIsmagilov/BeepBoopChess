@@ -23,7 +23,6 @@ struct moveinfo
     float eval;
 };
 
-const unsigned int ARRAY_SIZE = 120;
 
 static long long int total_nodes;
 
@@ -92,7 +91,7 @@ static inline int negamax(int depth, int alpha, int beta, int side)
 }
 
 
-static moveinfo get_best_move(Board* bd, int depth)
+static moveinfo get_best_move(const Board* bd, int depth)
 {
     for (int i = 0; i < 256; i++) {history[i] = new Board(); move_arrays[i] = std::array<moveWrapper, ARRAY_SIZE>();}
     ply = 0;
@@ -184,7 +183,7 @@ void run_perft(const Board& bd)
         history[i] = new Board(); 
         move_arrays[i] = std::array<moveWrapper, ARRAY_SIZE>();
     }
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 7; i++)
     {
         int ply = 0;
         int perftval = 0;

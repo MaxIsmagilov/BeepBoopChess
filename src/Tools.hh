@@ -19,6 +19,9 @@ enum piece_numbers {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING};
 
 enum colors {WHITE, BLACK};
 
+
+const unsigned int ARRAY_SIZE = 120;
+
 enum square {
     _A8, _B8, _C8, _D8, _E8, _F8, _G8, _H8, 
     _A7, _B7, _C7, _D7, _E7, _F7, _G7, _H7,
@@ -34,15 +37,16 @@ struct moveWrapper
 {
     uint32_t _mv;
     uint16_t _hv;
-    inline bool operator<(const moveWrapper& other)
-    {
+    inline bool operator<(const moveWrapper& other) const
+    { 
         return this->_hv < other._hv;
     }
-    inline bool operator>(const moveWrapper& other)
+    inline bool operator>(const moveWrapper& other) const
     {
         return this->_hv > other._hv;
     }
 };
+
 
 // move encoding guide (using uint32_t wrapper struct)
     // 0000 0000 0000 0000 0000 0000 0011 1111  start square 
@@ -56,8 +60,8 @@ struct moveWrapper
     // 0000 1111 0000 0000 0000 0000 0000 0000  castle overrides (1111 by default, 0 where no longer available)
     // 0000 0000 0000 0000 0000 0000 0000 0000  ordering priority (1000 000 = best, 0100 000 = killer, rest are other info)
 
-// returns a movewrapper struct with 0 hv
-#define pack_move(start_square, end_square, moved_piece, promotion_piece, capture, castle, enpassant, pp_flag , castle_ov) {((start_square & 0x3FUL)|((end_square & 0x3FUL) << 6) | ((moved_piece&0xFUL) << 12) | ((promotion_piece & 0xFUL) << 16) | ((capture & 0x1UL) << 20) | ((castle & 0x1UL) << 21)| ((enpassant & 0x1UL) << 22)|((pp_flag & 0x1UL) << 23)| ((castle_ov & 0xFUL) << 24)), 0}
+// returns a movewrapper struct with 1 hv
+#define pack_move(start_square, end_square, moved_piece, promotion_piece, capture, castle, enpassant, pp_flag , castle_ov) {((start_square & 0x3FUL)|((end_square & 0x3FUL) << 6) | ((moved_piece&0xFUL) << 12) | ((promotion_piece & 0xFUL) << 16) | ((capture & 0x1UL) << 20) | ((castle & 0x1UL) << 21)| ((enpassant & 0x1UL) << 22)|((pp_flag & 0x1UL) << 23)| ((castle_ov & 0xFUL) << 24)), 1}
 
 #define set_heuristic(mv, new_heuristic) (mv._hv = new_heuristic)
 

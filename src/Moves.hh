@@ -373,9 +373,9 @@ static inline uint64_t get_queen_attacks(int square, uint64_t occupancy)
 }
 
 // is attacked routine
-#define is_attacked(square, bd, by_side)                                            \
+#define is_attacked(square, bd, attacking_side)                                     \
     (square == -1) ? false :  (                                                     \
-    (by_side == 1) ?                                                                \
+    (attacking_side == 1) ?                                                         \
         (pawn_attacks[0][square] & bd.board[0]) ||                                  \
         (knight_attacks[square] & bd.board[1]) ||                                   \
         (get_bishop_attacks(square, all(bd)) & ((bd.board[2]) | bd.board[4])) ||    \
@@ -402,19 +402,24 @@ static inline int heuristic_score(const Board& bd, unsigned int move)
 }
 
 // in check routine
-#define in_check(bd, side) ((side == 1) ? is_attacked(LSB_index(bd.board[5]), bd, -side) : is_attacked(LSB_index(bd.board[11]), bd, -side))
+#define in_check(bd, side_in_check) ((side_in_check == 1) ? is_attacked(LSB_index(bd.board[5]), bd, -side_in_check) : is_attacked(LSB_index(bd.board[11]), bd, -side_in_check))
 
 static inline bool check_check(const Board& bd, unsigned int move)
 {
     copy_from(&tst,bd);
     movef(&tst, {move,0});
-    return in_check(tst, tst.side);
+    return in_check(tst, -tst.side);
 }
 
 // generate legal moves
 static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer)
 {
+    // clear array
     unsigned int size = 0;
+    for (int i = size; i < ARRAY_SIZE; i++)
+    {
+        start_pointer[i] = {0,0};
+    }
 
     // initiallize constants
     uint64_t all_pieces = all(bd);
@@ -446,8 +451,6 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
             moveWrapper move = pack_move(square, j, (uint32_t) PAWN , 0U, captureflg, 0U, enpassantflg, pp_flag, 0b1111U);
 
 
-            // verify checks
-            if (check_check(bd, move._mv)) {continue;}
 
             // calculate heristics
             uint16_t heuristic_value = 10U;
@@ -486,10 +489,6 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
             uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             moveWrapper move = pack_move(square , j, (uint32_t) KNIGHT, 0UL, captureflg, 0UL, 0UL, 0UL , 0b1111UL);
 
-
-            // verify checks
-            if (check_check(bd, move._mv)) {continue;}
-
             // calculate heristics
             uint16_t heuristic_value = 10U;
 
@@ -516,8 +515,6 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
             moveWrapper move = pack_move(square , j, (uint32_t) BISHOP ,0UL, captureflg, 0UL, 0UL,0UL ,0b1111UL);
 
 
-            // verify checks            
-            if (check_check(bd, move._mv)) {continue;}
 
             // calculate heristics
             uint16_t heuristic_value = 10U;
@@ -551,8 +548,6 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
             uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             moveWrapper move = pack_move(square , j, (uint32_t) ROOK, 0UL ,captureflg, 0UL, 0UL, 0UL , castles_ov);
 
-            // verify checks
-            if (check_check(bd, move._mv)) {continue;}
 
             // calculate heristics
             uint16_t heuristic_value = 10U;
@@ -579,8 +574,6 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
             uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             moveWrapper move = pack_move(square , j, (uint32_t) QUEEN, 0UL ,captureflg, 0UL, 0UL, 0UL, 0b1111UL);
 
-            // verify checks
-            if (check_check(bd, move._mv)) {continue;}
 
             // calculate heristics
             uint16_t heuristic_value = 10ULL;
@@ -612,7 +605,6 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
             moveWrapper move = pack_move(square , j, (uint32_t) KING, 0UL , captureflg, 0UL, 0UL, 0UL, castles_ov);
 
             // verify checks
-            if (check_check(bd, move._mv)) {continue;}
 
             // calculate heristics
             uint64_t heuristic_value = 10ULL;
@@ -666,6 +658,12 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
     // exit if empty
     if (size == 0) return 0;
 
+    // remove illegal moves
+    for (int i = 0; i < size; i++)
+    {
+        if (check_check(bd, start_pointer[i]._mv)) start_pointer[i] = {0,0};
+    }
+
     // sort and finalize heuristics
     int num_best = (FAIL_CUT > size / FAIL_CUT) ? size / FAIL_CUT : FAIL_CUT;
     int num_killer = (FAIL_CUT > size - num_best) ? size - num_best : FAIL_CUT;
@@ -678,7 +676,6 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
     for (int i = 0; i < num_killer; i++)
         start_pointer[i]._hv |= (1UL << 14);
     std::sort(start_pointer, start_pointer + size, std::greater<>());
-    start_pointer[size] = {0,0};
     return size;
 }
 
