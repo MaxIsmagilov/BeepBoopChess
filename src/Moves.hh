@@ -7,6 +7,7 @@
 #include <vector>
 #include <cstring>
 #include <algorithm>
+#include <utility>
 
 #include "Board.hh"
 #include "Tools.hh"
@@ -35,7 +36,7 @@ uint64_t rook_attack_masks[64];
 uint64_t magic_rook_attacks   [64][4096];
 uint64_t magic_bishop_attacks [64][512];
 
-int bishop_occupancy_bits[64] = {
+constexpr int bishop_occupancy_bits[64] = {
     6, 5, 5, 5, 5, 5, 5, 6, 
     5, 5, 5, 5, 5, 5, 5, 5, 
     5, 5, 7, 7, 7, 7, 5, 5, 
@@ -46,7 +47,7 @@ int bishop_occupancy_bits[64] = {
     6, 5, 5, 5, 5, 5, 5, 6
 };
 
-int rook_occupancy_bits[64] = {
+constexpr int rook_occupancy_bits[64] = {
     12, 11, 11, 11, 11, 11, 11, 12, 
     11, 10, 10, 10, 10, 10, 10, 11, 
     11, 10, 10, 10, 10, 10, 10, 11, 
@@ -234,7 +235,7 @@ uint64_t get_occupancy(int index, int bit_count, uint64_t mask)
 
     for (int i = 0; i < bit_count; i++)
     {
-        int square = LSB_index(mask);
+        const int square = LSB_index(mask);
         mask = pop_bit(mask, square);
         if (index & (1ULL << i))
         {
@@ -293,11 +294,11 @@ void initialize_magic_numbers()
 {
     for (int i = 0; i < 64; i++)
     {
-        rook_magics[i] = find_magic(i, rook_occupancy_bits[i], mROOK);
+        //rook_magics[i] = find_magic(i, rook_occupancy_bits[i], mROOK);
     }
     for (int i = 0; i < 64; i++)
     {
-       bishop_magics[i] = find_magic(i, bishop_occupancy_bits[i], mBISHOP);
+       //bishop_magics[i] = find_magic(i, bishop_occupancy_bits[i], mBISHOP);
     }
 }
 
@@ -351,7 +352,7 @@ void initialize_sliders()
 }
 
 // magic attack calculator
-static inline uint64_t get_bishop_attacks(int square, uint64_t occupancy)
+static inline uint64_t get_bishop_attacks(const int square, uint64_t occupancy)
 {
     occupancy &= bishop_attack_masks[square];
     occupancy *= bishop_magics[square];
@@ -359,7 +360,7 @@ static inline uint64_t get_bishop_attacks(int square, uint64_t occupancy)
     return magic_bishop_attacks[square][occupancy];
 }
 
-static inline uint64_t get_rook_attacks(int square, uint64_t occupancy)
+static inline uint64_t get_rook_attacks(const int square, uint64_t occupancy)
 {
     occupancy &= rook_attack_masks[square];
     occupancy *= rook_magics[square];
@@ -367,9 +368,21 @@ static inline uint64_t get_rook_attacks(int square, uint64_t occupancy)
     return magic_rook_attacks[square][occupancy];
 }
 
-static inline uint64_t get_queen_attacks(int square, uint64_t occupancy)
+static inline uint64_t get_queen_attacks(const int square, const uint64_t& occupancy)
 {
-    return get_bishop_attacks(square, occupancy) | get_rook_attacks(square, occupancy);
+    uint64_t occ1 = occupancy;
+
+    occ1 &= bishop_attack_masks[square];
+    occ1 *= bishop_magics[square];
+    occ1 >>= 64 - bishop_occupancy_bits[square];
+
+    uint64_t occ2 = occupancy;
+
+    occ2 &= rook_attack_masks[square];
+    occ2 *= rook_magics[square];
+    occ2 >>= 64 - rook_occupancy_bits[square];
+
+    return magic_rook_attacks[square][occ2] | magic_bishop_attacks[square][occ1];
 }
 
 // is attacked routine
@@ -389,9 +402,8 @@ static inline uint64_t get_queen_attacks(int square, uint64_t occupancy)
         (king_attacks[square] & bd.board[11]))                                      \
 
 Board tst = Board();
-int attacks[6];
 
-static inline int heuristic_score(const Board& bd, unsigned int move)
+static inline int heuristic_score(const Board& bd, const unsigned int move)
 {
     copy_from(&tst, bd);
     movef(&tst, {move,0});
@@ -404,7 +416,7 @@ static inline int heuristic_score(const Board& bd, unsigned int move)
 // in check routine
 #define in_check(bd, side_in_check) ((side_in_check == 1) ? is_attacked(LSB_index(bd.board[5]), bd, -side_in_check) : is_attacked(LSB_index(bd.board[11]), bd, -side_in_check))
 
-static inline bool check_check(const Board& bd, unsigned int move)
+static inline const bool check_check(const Board& bd, const unsigned int move)
 {
     copy_from(&tst,bd);
     movef(&tst, {move,0});
@@ -416,17 +428,15 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
 {
     // clear array
     unsigned int size = 0;
-    for (int i = size; i < ARRAY_SIZE; i++)
-    {
-        start_pointer[i] = {0,0};
-    }
+
+    memset(start_pointer, 0b0, sizeof(moveWrapper)*ARRAY_SIZE);
 
     // initiallize constants
-    uint64_t all_pieces = all(bd);
-    int side = bd.side;
-    int binary_side = (side == 1) ? 1 : 0;
-    uint64_t attacking_occ = (side == 1) ? whites(bd) : blacks(bd);
-    uint64_t defending_occ = (side == 1) ? blacks(bd) : whites(bd);
+    const uint64_t all_pieces = all(bd);
+    const int side = bd.side;
+    const int binary_side = (side == 1) ? 1 : 0;
+    const uint64_t attacking_occ = (side == 1) ? whites(bd) : blacks(bd);
+    const uint64_t defending_occ = (side == 1) ? blacks(bd) : whites(bd);
 
     // set pointers for attacking and defending pieces
     const uint64_t* attacking_pieces = &(bd.board[0]) + (side == -1) * 6;
@@ -437,15 +447,15 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
     uint64_t att = 0ULL;
     while (piece_board)
     {
-        int square = LSB_index(piece_board);
+        const int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= (pawn_attacks[binary_side][square] & (defending_occ | (1ULL << bd.enpassant))) | (silent_pawn_moves[binary_side][square] & ~all_pieces);
         att &= ~attacking_occ;
         while (att)
         {
-            int j = LSB_index(att);
+            const int j = LSB_index(att);
             att = pop_bit(att, j);
-            int pp_flag = (abs(square-j) == 16) ? 0b1 : 0b0;
+            const int pp_flag = (abs(square-j) == 16) ? 0b1 : 0b0;
             uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             uint16_t enpassantflg = (j == bd.enpassant) ? 0b1 : 0;
             moveWrapper move = pack_move(square, j, (uint32_t) PAWN , 0U, captureflg, 0U, enpassantflg, pp_flag, 0b1111U);
@@ -478,13 +488,13 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
     att = 0ULL;
     while (piece_board)
     {
-        int square = LSB_index(piece_board);
+        const int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= knight_attacks[square];
         att &= ~attacking_occ;
         while (att)
         {
-            int j = LSB_index(att);
+            const int j = LSB_index(att);
             att = pop_bit(att, j);
             uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             moveWrapper move = pack_move(square , j, (uint32_t) KNIGHT, 0UL, captureflg, 0UL, 0UL, 0UL , 0b1111UL);
@@ -503,13 +513,13 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
     att = 0ULL;
     while (piece_board)
     {
-        int square = LSB_index(piece_board);
+        const int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= get_bishop_attacks(square, all_pieces);
         att &= ~attacking_occ;
         while (att)
         {
-            int j = LSB_index(att);
+            const int j = LSB_index(att);
             att = pop_bit(att, j);
             uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             moveWrapper move = pack_move(square , j, (uint32_t) BISHOP ,0UL, captureflg, 0UL, 0UL,0UL ,0b1111UL);
@@ -530,7 +540,7 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
     att = 0ULL;
     while (piece_board)
     {
-        int square = LSB_index(piece_board);
+        const int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= get_rook_attacks(square, all_pieces);
         att &= ~attacking_occ;
@@ -543,7 +553,7 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
 
         while (att)
         {
-            int j = LSB_index(att);
+            const int j = LSB_index(att);
             att = pop_bit(att, j);
             uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             moveWrapper move = pack_move(square , j, (uint32_t) ROOK, 0UL ,captureflg, 0UL, 0UL, 0UL , castles_ov);
@@ -563,13 +573,13 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
     att = 0ULL;
     while (piece_board)
     {
-        int square = LSB_index(piece_board);
+        const int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= get_queen_attacks(square, all_pieces);
         att &= ~attacking_occ;
         while (att)
         {
-            int j = LSB_index(att);
+            const int j = LSB_index(att);
             att = pop_bit(att, j);
             uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             moveWrapper move = pack_move(square , j, (uint32_t) QUEEN, 0UL ,captureflg, 0UL, 0UL, 0UL, 0b1111UL);
@@ -589,7 +599,7 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
     att = 0ULL;
     while (piece_board)
     {
-        int square = LSB_index(piece_board);
+        const int square = LSB_index(piece_board);
         piece_board = pop_bit(piece_board, square);
         att |= king_attacks[square];
         att &= ~attacking_occ;
@@ -599,7 +609,7 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
 
         while (att)
         {
-            int j = LSB_index(att);
+            const int j = LSB_index(att);
             att = pop_bit(att, j);
             uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             moveWrapper move = pack_move(square , j, (uint32_t) KING, 0UL , captureflg, 0UL, 0UL, 0UL, castles_ov);
@@ -659,24 +669,23 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
     if (size == 0) return 0;
 
     // remove illegal moves
-    for (int i = 0; i < size; i++)
-    {
-        if (check_check(bd, start_pointer[i]._mv)) start_pointer[i] = {0,0};
-    }
+    std::for_each(start_pointer, start_pointer+size, [&](moveWrapper& mv) mutable {if (check_check(bd, mv._mv)) mv = {0,0};});
 
     // sort and finalize heuristics
-    int num_best = (FAIL_CUT > size / FAIL_CUT) ? size / FAIL_CUT : FAIL_CUT;
-    int num_killer = (FAIL_CUT > size - num_best) ? size - num_best : FAIL_CUT;
+    std::sort(start_pointer, start_pointer + ARRAY_SIZE, std::greater<>());
+    const int final_size = std::find_if(start_pointer, start_pointer+ARRAY_SIZE, [](moveWrapper mv) -> bool {return (mv._mv != 0);}) - start_pointer;
+    const auto num_best = std::min(final_size / FAIL_CUT , FAIL_CUT);
+    const auto num_killer = std::min(final_size - num_best , FAIL_CUT);
 
-    // sort moves
-    std::sort(start_pointer, start_pointer + size, std::greater<>());
-    for (int i = 0; i < num_best; i++)
-        start_pointer[i]._hv |= (1UL << 15);
-    std::sort(start_pointer, start_pointer + size);
-    for (int i = 0; i < num_killer; i++)
-        start_pointer[i]._hv |= (1UL << 14);
-    std::sort(start_pointer, start_pointer + size, std::greater<>());
-    return size;
+    // set best and killer values
+    std::for_each(start_pointer, start_pointer+num_best, 
+        [&](moveWrapper& mv) mutable {  mv._hv |= (1UL << 15); } );
+    std::for_each(start_pointer+(final_size-num_killer), start_pointer+final_size, 
+        [&](moveWrapper& mv) mutable {  mv._hv |= (1UL << 14); } );
+    std::swap_ranges(start_pointer+(final_size-num_killer), start_pointer+final_size, start_pointer+num_best);
+
+    // return size of the array
+    return final_size;
 }
 
 moveWrapper pull_move(std::string mv, Board* bd)
@@ -707,7 +716,7 @@ moveWrapper pull_move(std::string mv, Board* bd)
     return {0,0};
 }
 
-void print_move(moveWrapper move)
+void print_move(const moveWrapper& move)
 {
     char sourcef = 'a' + (start_square(move) % 8);
     char sourcer = '8' - (start_square(move) / 8);
@@ -734,17 +743,32 @@ void print_move(moveWrapper move)
 
 void print_moves(const Board& bd)
 {
+    int i = 1;
+    printf("\n\t");
     std::array<moveWrapper, 120> arr = std::array<moveWrapper, 120>();
     get_moves(bd, arr.begin());
     for (moveWrapper mw : arr)
     {
         unsigned int j = mw._mv;
-        if (j == 0) break;
+        printf("%i:", i++);
         print_move(mw);
-        printf(", ");
+        printf("\n\t");
     }
-    printf("\n\t");
+    printf("\n");
 }
 
+void print_move_values(const Board& bd)
+{
+    int i = 1;
+    printf("\n\t");
+    std::array<moveWrapper, 120> arr = std::array<moveWrapper, 120>();
+    get_moves(bd, arr.begin());
+    for (moveWrapper mw : arr)
+    {
+        unsigned int j = mw._mv;
+        printf("%i:%x\t->%i\n\t", i++, j, mw._hv);
+    }
+    printf("\n");
+}
 
 #endif

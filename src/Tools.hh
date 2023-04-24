@@ -100,9 +100,10 @@ std::string print_bitboard(uint64_t bb)
     return str;
 }
 
-static inline unsigned int count_bits(uint64_t test)
+static inline unsigned int count_bits(const uint64_t& bitboard)
 {
-    int bitnumber = 0;
+    uint64_t test = bitboard;
+    unsigned int bitnumber = 0;
     while (test)
     {
         test &= test - 1;
@@ -111,7 +112,7 @@ static inline unsigned int count_bits(uint64_t test)
     return bitnumber;
 }
 
-static inline int LSB_index(uint64_t test)
+static inline int LSB_index(const uint64_t& test)
 {
     return (test) ? count_bits((test &  -test) - 1) : -1;
 }

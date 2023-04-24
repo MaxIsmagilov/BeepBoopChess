@@ -10,5 +10,8 @@ run:
 clean:
 	rm -f bin/*.o
 	rm -f bin/*.exe
+	rm -f src/*.exe
+	rm -f *.exe
+
 	
 	

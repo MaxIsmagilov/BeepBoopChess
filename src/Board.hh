@@ -21,23 +21,13 @@ public:
     int8_t enpassant = -1;              // enpassant square (-1 for none)
     uint8_t halfmoves;                  // halfmoves
     uint8_t fullmoves;                  // fullmoves
-    Board()                             // Board Constructor
-    {
-        fullmoves = 0;
-        halfmoves = 0;
-        for (int i = 0; i < 12; i++)
-        {
-            *(board+i) = 0ULL;
-        }
-    }
-    ~Board() {}
 };
 
-inline uint64_t whites(const Board& bd) {return bd.board[0] | bd.board[1] | bd.board[2] | bd.board[3] | bd.board[4]  | bd.board[5] ;}
-inline uint64_t blacks(const Board& bd) {return bd.board[6] | bd.board[7] | bd.board[8] | bd.board[9] | bd.board[10] | bd.board[11];}
-inline uint64_t all(const Board& bd) {return whites(bd) | blacks(bd);}
+static inline uint64_t whites(const Board& bd) {return bd.board[0] | bd.board[1] | bd.board[2] | bd.board[3] | bd.board[4]  | bd.board[5] ;}
+static inline uint64_t blacks(const Board& bd) {return bd.board[6] | bd.board[7] | bd.board[8] | bd.board[9] | bd.board[10] | bd.board[11];}
+static inline uint64_t all(const Board& bd) {return whites(bd) | blacks(bd);}
 
-void import_FEN(Board* bd, std::string FEN)
+void import_FEN(Board* bd, const std::string FEN)
 {
     char arr[64];  
     int index = 0;
@@ -122,7 +112,7 @@ void import_FEN(Board* bd, std::string FEN)
 std::string print_board(Board* bd)
 {
     std::string boardstr = "--|---|---|---|---|---|---|--\n";
-    char p[12] = {'P','N','B','R','Q','K','p','n','b','r','q','k'};
+    const char p[12] = {'P','N','B','R','Q','K','p','n','b','r','q','k'};
     for (int pos = 0; pos < 64; pos++)
     {
         uint64_t itr = std::pow(2,pos);
@@ -143,28 +133,31 @@ std::string print_board(Board* bd)
     return boardstr;
 }
 
-static inline void copy_from(Board* target, const Board& origin)
+const static inline void copy_from(Board* target, const Board& origin)
 {
-    memcpy(&(target->board), &(origin.board), sizeof(int) * 24);
+    memcpy(target, &(origin), sizeof(Board));
         /*for (int i = 0; i < 12; i++)
         {
             target->board[i] = origin->board[i];
-        }*/
+        }
     target->castles = origin.castles;
     target->side = origin.side;
     target->enpassant = origin.enpassant;
     target->halfmoves = origin.halfmoves;
-    target->fullmoves = origin.fullmoves;
+    target->fullmoves = origin.fullmoves;*/
 }
 
-static inline void movef(Board* bd, moveWrapper move)
+const static inline void movef(Board* bd, const moveWrapper& move)
 {
     
     bd->halfmoves++;
     if (capture_flag(move)) bd->halfmoves = 0;
-    int end = end_square(move);
-    int start = start_square(move);
-    int moving_side = (bd->side == 1) ? 0 : 6;
+    const int end = end_square(move);
+    const int start = start_square(move);
+    const int moving_side = (bd->side == 1) ? 0 : 6;
+    bd->side = -(bd->side);
+    if (bd->side == 1) bd->fullmoves++;
+    bd->castles &= castle_overrides(move);
     bd->enpassant = -1;
     if (moved_piece(move) == 0)
     {
@@ -185,9 +178,6 @@ static inline void movef(Board* bd, moveWrapper move)
     {
         bd->board[moving_side + moved_piece(move)] |= 1ULL << end;
     }
-    bd->side = -(bd->side);
-    if (bd->side == 1) bd->fullmoves++;
-    bd->castles &= castle_overrides(move);
     if (castle_flag(move)) 
     {
         if (moving_side)    
