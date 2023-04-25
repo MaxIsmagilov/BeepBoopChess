@@ -13,7 +13,6 @@
 #include "Eval.hh"
 #include "Board.hh"
 
-
 using namespace std::chrono;
 
 constexpr int NUM_THREADS = 1;
@@ -71,8 +70,8 @@ static inline int negamax(int& ply, const int depth, int alpha, int beta, const 
         if (i._mv == 0) return true;
         
         // move the check board
-        copy_from(current_bd[ply], *current_bd[ply-1]);
-        movef(current_bd[ply], i);
+        copy_board(current_bd[ply], *current_bd[ply-1]);
+        movef(*current_bd[ply], i);
 
         // recursively evaluate next node
         // set value as the most valuable node
@@ -98,8 +97,8 @@ static inline move_info value_of(const int depth, const move_wrapper move, const
     std::for_each(move_arrays, move_arrays+MAX_DEPTH, [&](std::array<move_wrapper, ARRAY_SIZE>& arr){arr = std::array<move_wrapper, ARRAY_SIZE>();});
     long long int total_nodes = 0;
     int ply = 0;
-    copy_from(history[0], bd);
-    movef(history[0], move);
+    copy_board(history[0], bd);
+    movef(*history[0], move);
     int v = negamax(ply, depth, -1000000, 1000000, bd.side, total_nodes, &history[0], move_arrays);
     //printf("%i\n", (int)v);
     return {move, total_nodes, v};
@@ -171,8 +170,8 @@ static inline int get_perft(int depth, int& ply, Board** history, std::array<mov
     std::find_if(&move_arrays[ply-1][0], (&move_arrays[ply-1][0]) + ARRAY_SIZE, [&](move_wrapper mw) mutable -> bool
     {
         if (!mw._mv) return true;
-        copy_from(history[ply], *history[ply-1]);
-        movef(history[ply],mw);
+        copy_board(history[ply], *history[ply-1]);
+        movef(*history[ply],mw);
         const int inc = get_perft(depth-1, ply, history, move_arrays);
         if (ply == 1) {print_move(mw); printf("\t%i\n", inc);}
         sum += inc;
@@ -194,7 +193,7 @@ void run_perft(const Board& bd)
     {
         
         int ply = 0;
-        copy_from(history[0], bd);
+        copy_board(history[0], bd);
         const auto begin = high_resolution_clock::now();
         const int perftval = get_perft(i, ply, history, move_arrays);
         const auto end = high_resolution_clock::now();
@@ -204,4 +203,5 @@ void run_perft(const Board& bd)
         printf("\n%i:\t%i nodes @%4.1fk nodes/second\n\n",i ,perftval, speed);
     }
 }
+
 #endif

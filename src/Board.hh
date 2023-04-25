@@ -8,6 +8,9 @@
 #include "Random.hh"
 #include "MagicNumbers.hh"
 
+/*************************************\
+|           TOOL DEFINITIONS          |
+\*************************************/
 
 /*      misc. constants, enums, and macroes*/
 
@@ -117,6 +120,7 @@ constexpr int rook_occupancy_bits[64] = {
     12, 11, 11, 11, 11, 11, 11, 12
 };
 
+/*      wrapper struct to store and sort moves      */
 
 /// @brief struct to store moves and their heuristic
 struct move_wrapper
@@ -175,6 +179,8 @@ struct move_wrapper
 
 #define pop_bit(board, square) (board & ~(1ULL << square))
 
+/*      print bitboard (debug tool)     */
+
 /// @brief prints a bitboard
 /// @param bb 
 /// @return a string
@@ -188,6 +194,8 @@ std::string print_bitboard(const uint64_t& bb)
     }
     return str;
 }
+
+/*      counting and finding bits       */
 
 /// @brief counts the bits in a bitboard
 /// @param bitboard 
@@ -212,6 +220,7 @@ static inline int LSB_index(const uint64_t& test)
     return (test) ? count_bits((test &  -test) - 1) : -1;
 }
 
+/*      pack moves      */
 
 /// @brief packs a move_wrapper struct (1hv assumed)
 /// @param start_square 
@@ -231,6 +240,14 @@ static inline move_wrapper pack_move(const unsigned int& start_square, const uns
     return {((start_square & 0x3FUL)|((end_square & 0x3FUL) << 6) | ((moved_piece&0xFUL) << 12) | ((promotion_piece & 0xFUL) << 16) | ((capture & 0x1UL) << 20) | ((castle & 0x1UL) << 21)| ((enpassant & 0x1UL) << 22)|((pp_flag & 0x1UL) << 23)| ((castle_ov & 0xFUL) << 24)), 1};
 }
 
+/*************************************\
+|           BOARD DEFINITION          |
+\*************************************/
+
+
+/*      board struct        */
+
+/// @brief board struct with all relevant info
 struct Board
 { 
 public:
@@ -242,11 +259,23 @@ public:
     uint8_t fullmoves;                  // fullmoves
 };
 
+/// @brief gets white's occupancy
+/// @param bd 
+/// @return bitboard of occupancy
 static inline uint64_t whites(const Board& bd) {return bd.board[0] | bd.board[1] | bd.board[2] | bd.board[3] | bd.board[4]  | bd.board[5] ;}
+/// @brief gets black's occuspancy
+/// @param bd 
+/// @return bitboard of occupancy
 static inline uint64_t blacks(const Board& bd) {return bd.board[6] | bd.board[7] | bd.board[8] | bd.board[9] | bd.board[10] | bd.board[11];}
+/// @brief gets all occupancy
+/// @param bd 
+/// @return bitboard of occupancy
 static inline uint64_t all(const Board& bd) {return whites(bd) | blacks(bd);}
 
-void import_FEN(Board* bd, const std::string FEN)
+/// @brief loads a position from a FEN code
+/// @param bd a pointer to a Board
+/// @param FEN 
+void import_FEN(Board* bd, const std::string& FEN)
 {
     char arr[64];  
     int index = 0;
@@ -328,6 +357,9 @@ void import_FEN(Board* bd, const std::string FEN)
     } while (isdigit(FEN[++feni]));
 }
 
+/// @brief nicely formats a board
+/// @param bd a pointer
+/// @return a string of the board
 std::string print_board(Board* bd)
 {
     std::string boardstr = "--|---|---|---|---|---|---|--\n";
@@ -352,63 +384,72 @@ std::string print_board(Board* bd)
     return boardstr;
 }
 
-const static inline void copy_from(Board* target, const Board& origin)
+/// @brief copies a board
+/// @param target a pointer to a Board
+/// @param origin a Board to be copied
+const static inline void copy_board(Board* target, const Board& origin)
 {
     memcpy(target, &(origin), sizeof(Board));
 }
 
-const static inline void movef(Board* bd, const move_wrapper& move)
+/// @brief makes a move
+/// @param bd a Board object
+/// @param move a movewrapper
+const static inline void movef(Board& bd, const move_wrapper& move)
 {
     
-    bd->halfmoves++;
-    if (capture_flag(move)) bd->halfmoves = 0;
+    bd.halfmoves++;
+    if (capture_flag(move)) bd.halfmoves = 0;
     const int end = end_square(move);
     const int start = start_square(move);
-    const int moving_side = (bd->side == 1) ? 0 : 6;
-    bd->side = -(bd->side);
-    if (bd->side == 1) bd->fullmoves++;
-    bd->castles &= castle_overrides(move);
-    bd->enpassant = -1;
+    const int moving_side = (bd.side == 1) ? 0 : 6;
+    bd.side = -(bd.side);
+    if (bd.side == 1) bd.fullmoves++;
+    bd.castles &= castle_overrides(move);
+    bd.enpassant = -1;
     if (moved_piece(move) == 0)
     {
-        if (double_pawn_flag(move)) bd->enpassant = start - 8;
-        bd->halfmoves = 0;
+        if (double_pawn_flag(move)) bd.enpassant = start - 8;
+        bd.halfmoves = 0;
     }
     else if (moved_piece(move) == 0)
     {
-        if (double_pawn_flag(move)) bd->enpassant = start + 8;
-        bd->halfmoves = 0;
+        if (double_pawn_flag(move)) bd.enpassant = start + 8;
+        bd.halfmoves = 0;
     }
-    bd->board[moving_side + moved_piece(move)] &= ~(1ULL << start);
+    bd.board[moving_side + moved_piece(move)] &= ~(1ULL << start);
     if (promotion_piece(move))
     {
-        bd->board[moving_side + promotion_piece(move)] |= 1ULL << end;
+        bd.board[moving_side + promotion_piece(move)] |= 1ULL << end;
     }
     else
     {
-        bd->board[moving_side + moved_piece(move)] |= 1ULL << end;
+        bd.board[moving_side + moved_piece(move)] |= 1ULL << end;
     }
     if (castle_flag(move)) 
     {
         if (moving_side)    
         {
-            bd->white(3) = push_bit(bd->white(3), ((end + start) / 2));
-            bd->white(3) = pop_bit(bd->white(3), ((end > start) ? _H1 : _A1));
+            bd.white(3) = push_bit(bd.white(3), ((end + start) / 2));
+            bd.white(3) = pop_bit(bd.white(3), ((end > start) ? _H1 : _A1));
         }
         else                
         {
-            bd->black(3) = push_bit(bd->black(3), ((end + start) / 2));
-            bd->black(3) = pop_bit(bd->black(3), ((end > start) ? _H8 : _A8));
+            bd.black(3) = push_bit(bd.black(3), ((end + start) / 2));
+            bd.black(3) = pop_bit(bd.black(3), ((end > start) ? _H8 : _A8));
         }
     }
     if (enpassant_flag(move)) 
     {
-        bd->white(0) &= ~(1ULL << (end + ((moving_side) ? 8 : -8)));
-        bd->black(0) &= ~(1ULL << (end + ((moving_side) ? 8 : -8)));
+        bd.white(0) &= ~(1ULL << (end + ((moving_side) ? 8 : -8)));
+        bd.black(0) &= ~(1ULL << (end + ((moving_side) ? 8 : -8)));
     }
 
 }
 
+/// @brief converts the board to a string
+/// @param bd 
+/// @return a string version of the board
 std::string to_string(Board* bd)
 {
     std::string bdstr = "";
@@ -446,8 +487,17 @@ std::string to_string(Board* bd)
 }
 
 
+/*************************************\
+|           MOVE GENERATION           |
+\*************************************/
 
-// it's what the mask is
+
+/*      attack masks        */
+
+/// @brief find an attack mask for a pawn
+/// @param square 
+/// @param side 1 for white, -1 for black
+/// @return a bitboard mask
 uint64_t pawn_mask(int square, int side) // side is 1 for white, -1 for black
 {
     uint64_t att = 0ULL;            // attacks
@@ -468,6 +518,9 @@ uint64_t pawn_mask(int square, int side) // side is 1 for white, -1 for black
     return att;
 }
 
+/// @brief find a mask for a knight
+/// @param square 
+/// @return a bitboard mask
 uint64_t knight_mask(int square) 
 {
     uint64_t att = 0ULL;            // attacks
@@ -488,6 +541,9 @@ uint64_t knight_mask(int square)
     return att;
 }
 
+/// @brief find a mask for a king
+/// @param square 
+/// @return a bitboard mask
 uint64_t king_mask(int square)
 {
     uint64_t att = 0ULL;            // attacks
@@ -511,7 +567,9 @@ uint64_t king_mask(int square)
     return att;
 }
 
-// masks for magic generation
+/// @brief find a mask for bishop occupancies
+/// @param square 
+/// @return a bitboard mask
 uint64_t bishop_mask(int square)
 {
     int rank, file;
@@ -525,6 +583,9 @@ uint64_t bishop_mask(int square)
     return att;
 }
 
+/// @brief find a mask for rook occupancies
+/// @param square 
+/// @return a bitboard mask
 uint64_t rook_mask(int square)
 {
     int rank, file;
@@ -538,7 +599,10 @@ uint64_t rook_mask(int square)
     return att;
 }
 
-// silent pawn moves
+/// @brief silent masks for pawns
+/// @param square 
+/// @param side 
+/// @return a bitboard mask
 uint64_t silent_pawn_mask(int square, int side)
 {
     uint64_t mv = 0ULL;
@@ -557,7 +621,13 @@ uint64_t silent_pawn_mask(int square, int side)
     return mv;
 }
 
-// on the fly attacks
+/*      on the fly attacks and other magic generation tools     */
+
+/// @brief on the fly attacks for bishops 
+/// @param square 
+/// @param blockers 
+/// @return an attack bitboard
+/// @note for magic generation 
 uint64_t otf_bishop_attacks(int square, uint64_t blockers)
 {
     int rank, file;
@@ -587,6 +657,11 @@ uint64_t otf_bishop_attacks(int square, uint64_t blockers)
     return att;
 }
 
+/// @brief on the fly attacks for rooks 
+/// @param square 
+/// @param blockers 
+/// @return an attack bitboard
+/// @note for magic generation 
 uint64_t otf_rook_attacks(int square, uint64_t blockers)
 {
     int rank, file;
@@ -616,7 +691,12 @@ uint64_t otf_rook_attacks(int square, uint64_t blockers)
     return att;
 }
 
-// occupancies
+/// @brief gets the occupancy for a mask
+/// @param index 
+/// @param bit_count 
+/// @param mask 
+/// @return a bitboard
+/// @note for magic generation
 uint64_t get_occupancy(int index, int bit_count, uint64_t mask)
 {
     uint64_t occupancy = 0ULL;
@@ -634,8 +714,11 @@ uint64_t get_occupancy(int index, int bit_count, uint64_t mask)
     return occupancy;
 }
 
-
-// find magic
+/// @brief finds a magic number
+/// @param square 
+/// @param occupancy 
+/// @param piece 
+/// @return a magic number
 uint64_t find_magic(int square, int occupancy, int piece)
 {
     uint64_t occupancies[4096];
@@ -677,7 +760,10 @@ uint64_t find_magic(int square, int occupancy, int piece)
     return 0;
 }
 
-// init routines
+/*      initialization routines         */
+
+/// @brief initalizes magic numbers 
+/// @note does not do anything, magics are already generated and known at compile-time
 void initialize_magic_numbers()
 {
     for (int i = 0; i < 64; i++)
@@ -690,6 +776,7 @@ void initialize_magic_numbers()
     }
 }
 
+/// @brief initialize attack tables for non-slider pieces (pawns, knights, kings)
 void initialize_non_sliders() 
 {
     for (int i = 0; i < 64; i++)
@@ -703,6 +790,7 @@ void initialize_non_sliders()
     }
 }
 
+/// @brief initialize attack tables for slider pieces (bishops, rooks, queens)
 void initialize_sliders()
 {
     for (int i = 0; i < 64; i++)
@@ -739,7 +827,12 @@ void initialize_sliders()
     }
 }
 
-// magic attack calculator
+/*      slider attack lookups       */
+
+/// @brief gets bishop attacks for an occupancy
+/// @param square 
+/// @param occupancy 
+/// @return an attack bitboard
 static inline uint64_t get_bishop_attacks(const int square, uint64_t occupancy)
 {
     occupancy &= bishop_attack_masks[square];
@@ -748,6 +841,10 @@ static inline uint64_t get_bishop_attacks(const int square, uint64_t occupancy)
     return magic_bishop_attacks[square][occupancy];
 }
 
+/// @brief gets rook attacks for an occupancy
+/// @param square 
+/// @param occupancy 
+/// @return an attack bitboard
 static inline uint64_t get_rook_attacks(const int square, uint64_t occupancy)
 {
     occupancy &= rook_attack_masks[square];
@@ -756,6 +853,10 @@ static inline uint64_t get_rook_attacks(const int square, uint64_t occupancy)
     return magic_rook_attacks[square][occupancy];
 }
 
+/// @brief gets queen attacks for an occupancy
+/// @param square 
+/// @param occupancy 
+/// @return an attack bitboard
 static inline uint64_t get_queen_attacks(const int square, const uint64_t& occupancy)
 {
     uint64_t occ1 = occupancy;
@@ -773,6 +874,13 @@ static inline uint64_t get_queen_attacks(const int square, const uint64_t& occup
     return magic_rook_attacks[square][occ2] | magic_bishop_attacks[square][occ1];
 }
 
+/*      check and attack routines       */
+
+/// @brief checks if a square is attacked
+/// @param square 
+/// @param bd 
+/// @param attacking_side 
+/// @return whether the square is attacked or not
 static inline const bool is_attacked(int square, const Board& bd, const int& attacking_side)
 {                                  \
     return (square == -1) ? false :  (                                                     
@@ -797,8 +905,8 @@ static inline const bool is_attacked(int square, const Board& bd, const int& att
 /// @return the heuristic score (currently inused)
 static inline int heuristic_score(const Board& bd, const unsigned int move, Board& tst)
 {
-    copy_from(&tst, bd);
-    movef(&tst, {move,0});
+    copy_board(&tst, bd);
+    movef(tst, {move,0});
     uint64_t* attacking_set = tst.board + (tst.side == 1) * 6;
     uint64_t defending_occ = (tst.side == -1) ? blacks(tst) : whites(tst);
     int LVA = -1;
@@ -814,14 +922,24 @@ static inline const bool in_check(const Board& bd, const int& side_in_check)
     return ((side_in_check == 1) ? is_attacked(LSB_index(bd.board[5]), bd, -side_in_check) : is_attacked(LSB_index(bd.board[11]), bd, -side_in_check));
 }
 
+/// @brief checks whether a move would put the moving side in check
+/// @param bd 
+/// @param move 
+/// @param tst 
+/// @return boolean value
 static inline const bool check_check(const Board& bd, const unsigned int move, Board& tst)
 {
-    copy_from(&tst,bd);
-    movef(&tst, {move,0});
+    copy_board(&tst,bd);
+    movef(tst, {move,0});
     return in_check(tst, -tst.side);
 }
 
-// generate legal moves
+/*      move generation routine     */
+
+/// @brief generate all legal moves
+/// @param bd 
+/// @param start_pointer 
+/// @return the size of the array
 static inline unsigned int get_moves(const Board& bd, move_wrapper* start_pointer)
 {
     // clear array
@@ -1071,8 +1189,8 @@ static inline unsigned int get_moves(const Board& bd, move_wrapper* start_pointe
     Board tst = Board();
     std::for_each(start_pointer, start_pointer+size, [&](move_wrapper& mv) mutable 
         {
-            copy_from(&tst,bd);
-            movef(&tst, mv);
+            copy_board(&tst,bd);
+            movef(tst, mv);
             if (in_check(tst, -tst.side)) mv = {0,0};
         });
 
@@ -1093,6 +1211,10 @@ static inline unsigned int get_moves(const Board& bd, move_wrapper* start_pointe
     return final_size;
 }
 
+/*      move checking routine       */
+
+/// @brief prints the move and heuristic values for a board
+/// @param bd 
 void print_move_values(const Board& bd)
 {
     int i = 1;
