@@ -32,6 +32,7 @@ int main(int argc, char const *argv[])
 
     parse_input("position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves e2e4 e7e5");
     std::cout << to_string(&MAIN_BOARD);
+    parse_input("go depth 7");
 
     return 0;
 
