@@ -5,9 +5,7 @@
 
 #include "NegaMax.hh"
 #include "Board.hh"
-#include "Moves.hh"
 #include "Eval.hh"
-#include "Tools.hh"
 #include "Random.hh"
 #include "Uciapi.hh"
 
@@ -15,7 +13,6 @@ using namespace std::chrono;
 
 void setup()
 {
-
     std::cout << "starting setup...\n";
     std::cout << "initializing non-sliders...\n";
     initialize_non_sliders();
@@ -27,8 +24,6 @@ void setup()
     initialize_evaluation();
     std::cout << "setup complete\n\n";
 }
-
-
 
 int main(int argc, char const *argv[]) 
 {

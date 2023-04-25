@@ -5,10 +5,7 @@
 #include <sstream>
 #include <algorithm>
 
-#include "Tools.hh"
 #include "Board.hh"
-
-
 
 #define OTHER_SIDE(side) (side ^ 1)
 #define FLIP(sq) ((sq)^56)
@@ -170,7 +167,6 @@ constexpr const int* eg_pesto_table[6] =
 constexpr int mg_value[6] = { 100, 300, 330, 500, 1000,  100000};
 constexpr int eg_value[6] = { 100, 300, 330, 500, 1000,  100000};
 
-
 int mg_table[12][64];
 int eg_table[12][64];
 
@@ -190,7 +186,6 @@ void initialize_evaluation()
         }
     }
 }
-
 
 static inline int eval(const uint64_t* board)
 {

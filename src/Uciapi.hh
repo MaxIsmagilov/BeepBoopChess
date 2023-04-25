@@ -7,11 +7,17 @@
 
 #include "NegaMax.hh"
 #include "Board.hh"
-#include "Moves.hh"
 #include "Eval.hh"
-#include "Tools.hh"
 #include "Random.hh"
 
+Board MAIN_BOARD = Board();
 
+void uci_loop()
+{
+    while (false) 
+    {
+        
+    }
+}
 
 #endif

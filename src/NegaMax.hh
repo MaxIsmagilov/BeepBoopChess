@@ -11,9 +11,7 @@
 #include <mutex>
 
 #include "Eval.hh"
-#include "Moves.hh"
 #include "Board.hh"
-#include "Tools.hh"
 
 
 using namespace std::chrono;
