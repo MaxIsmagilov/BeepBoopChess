@@ -22,6 +22,8 @@ constexpr int MAX_DEPTH = 256;
 
 std::mutex array_lock;
 
+void print_move(const move_wrapper& move);
+
 struct move_info 
 {
     move_wrapper move;
