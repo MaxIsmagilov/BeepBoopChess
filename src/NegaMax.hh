@@ -18,32 +18,39 @@
 
 using namespace std::chrono;
 
-const int NUM_THREADS = 1;
+constexpr int NUM_THREADS = 1;
+constexpr bool MULTITHREADING_ENABLED = false;  // do not enable multithreading it deletes the home directory (not really but it won't work)
+constexpr int MAX_DEPTH = 256;
 
-struct moveinfo 
+std::mutex array_lock;
+
+struct move_info 
 {
-    moveWrapper move;
+    move_wrapper move;
     long long int total_nodes;
-    float eval;
-    inline bool operator>(const moveinfo& other) const
+    int eval;
+    inline bool operator>(const move_info& other) const
     {
         return this->eval > other.eval;
     }
 };
 
-const int MAX_DEPTH = 256;
+void print_move_info(const move_info& mvif)
+{
+    printf("move_info: "); print_move(mvif.move); printf("\tafter %10lli nodes -> %+4.1f\n", mvif.total_nodes, (float) mvif.eval/100.0);
+}
 
 inline int quescence_search(int alpha, int beta)
 {
     return 0;
 }
 
-static inline int negamax(int& ply, const int depth, int alpha, int beta, const int side, long long int& nodes, Board** current_bd, std::array<moveWrapper, ARRAY_SIZE>* current_arr)
+static inline int negamax(int& ply, const int depth, int alpha, int beta, const int side, long long int& nodes, Board** current_bd, std::array<move_wrapper, ARRAY_SIZE>* current_arr)
 {
     nodes++; 
     Board& bd = *current_bd[ply];
     // return if done or draw
-    if (depth == 0) {return -side * eval(bd.board[0]);}
+    if (depth == 0) {return side * eval(bd.board);}
     if (bd.halfmoves >= 50) return 0;
 
     // create and check moves
@@ -55,22 +62,21 @@ static inline int negamax(int& ply, const int depth, int alpha, int beta, const 
     }
 
     /*   start of NegaMax   */
-
     // set initial value
     ply++;
     int value = -1000000;
-    std::find_if(current_arr[ply-1].begin(), current_arr[ply-1].begin() + ARRAY_SIZE, [&](moveWrapper i) mutable -> bool 
+    std::find_if(current_arr[ply-1].begin(), current_arr[ply-1].end(), [&](move_wrapper i) mutable -> bool 
         {
         // check for null results
         if (i._mv == 0) return true;
         
         // move the check board
-        copy_from(current_bd[ply], bd);
+        copy_from(current_bd[ply], *current_bd[ply-1]);
         movef(current_bd[ply], i);
 
         // recursively evaluate next node
         // set value as the most valuable node
-        value = std::max(-negamax(ply, depth - 1, -beta, -alpha, -side, nodes, current_bd, current_arr),value);
+        value = std::max(-negamax(ply, depth - 1, -beta, -alpha, -side, nodes, current_bd, current_arr), value);
 
         // set alpha
         alpha = std::max(alpha, value);
@@ -84,100 +90,85 @@ static inline int negamax(int& ply, const int depth, int alpha, int beta, const 
     return value;
 }
 
-static inline moveinfo value_of(const int depth, const moveWrapper move, const Board& bd)
+static inline move_info value_of(const int depth, const move_wrapper move, const Board& bd)
 {
     Board* history[MAX_DEPTH];
     std::for_each(history, history+MAX_DEPTH, [&](Board*& bd) mutable {bd = new Board();});
-    std::array<moveWrapper, ARRAY_SIZE> move_arrays[MAX_DEPTH];
-    std::for_each(move_arrays, move_arrays+MAX_DEPTH, [&](std::array<moveWrapper, ARRAY_SIZE>& arr){arr = std::array<moveWrapper, ARRAY_SIZE>();});
+    std::array<move_wrapper, ARRAY_SIZE> move_arrays[MAX_DEPTH];
+    std::for_each(move_arrays, move_arrays+MAX_DEPTH, [&](std::array<move_wrapper, ARRAY_SIZE>& arr){arr = std::array<move_wrapper, ARRAY_SIZE>();});
     long long int total_nodes = 0;
     int ply = 0;
     copy_from(history[0], bd);
-    float v = negamax(ply, depth, -1000000, 1000000, bd.side, total_nodes, history, move_arrays);
+    movef(history[0], move);
+    int v = negamax(ply, depth, -1000000, 1000000, bd.side, total_nodes, &history[0], move_arrays);
+    //printf("%i\n", (int)v);
     return {move, total_nodes, v};
 }
 
-std::mutex array_lock;
-
-static inline void run_threads(const int depth, const moveWrapper& mv, const Board& bd, std::vector<moveinfo>& eval_arr) 
+static inline void run_threads(const int depth, const move_wrapper& mv, const Board& bd, std::vector<move_info>& eval_arr) 
 {
-    moveinfo mvnfo = value_of(depth, mv, bd);
+    move_info mvnfo = value_of(depth, mv, bd);
     array_lock.lock();
     eval_arr.push_back(mvnfo);
     array_lock.unlock();
 }
 
-moveinfo get_best_move(const Board* bd, int depth)
+static inline move_info get_best_move(const Board* bd, int depth)
 {
-    if (bd->halfmoves >= 50) return {{0,0}, 0LL, 0.0F};
+    if (bd->halfmoves >= 50) return {{0,0}, 0LL, 0};
     long long int total_nodes = 0;
 
-    std::array<moveWrapper, ARRAY_SIZE> arr = std::array<moveWrapper, ARRAY_SIZE>();
-    std::vector<moveinfo> eval_arrays = std::vector<moveinfo>();
-    std::array<std::thread, NUM_THREADS> threads = std::array<std::thread, NUM_THREADS>();
-    int current_thread = 0;
+    std::array<move_wrapper, ARRAY_SIZE> arr = std::array<move_wrapper, ARRAY_SIZE>();
+    std::vector<move_info> eval_arrays = std::vector<move_info>();
+    std::array<std::thread*, NUM_THREADS> threads = std::array<std::thread*, NUM_THREADS>();
 
     long long int _total_nodes = 0;
     const int size = ARRAY_SIZE;
 
     get_moves(*bd, arr.begin());
 
-    if (arr[0]._mv == 0) return {{0,0},0,0.0F};
+    if (arr[0]._mv == 0) return {{0,0},0,0};
     
     const int last_move = ([&]() -> int
     {
-        int pos = 0;
-        while (arr[pos]._mv)
+        if (MULTITHREADING_ENABLED)
         {
-            threads.at(current_thread) = std::thread(run_threads, depth, arr[pos]._mv, *bd, eval_arrays);
-            threads.at(current_thread).join();
-            delete &threads.at(current_thread);
-            current_thread = (current_thread == NUM_THREADS) ? 0 : current_thread + 1;
+            int pos = 0;
+            while (arr[pos]._mv)
+            {
+                std::for_each(threads.begin(), threads.end(), [&](std::thread* thread) mutable {if (!arr[pos]._mv) return; /*thread = new std::thread(run_threads, depth, arr[pos]._mv, *bd, eval_arrays)*/; pos++;});
+                std::for_each(threads.begin(), threads.end(), [&](std::thread*thread) mutable {thread->join(); delete thread;});
+            }
+            return pos;
         }
-        return pos;
+        else 
+        {
+            const auto pos = std::find_if(arr.begin(), arr.end(), [&](const move_wrapper& mv) -> bool
+            {
+                if (!mv._mv) return true;
+                eval_arrays.push_back(value_of(depth, mv, *bd));
+                return false;
+            });
+
+            return pos - &arr[0];
+        }
     })();
-    
-    
-    /*std::find_if((&arr[0]), (&arr[0])+size, [&](const moveWrapper& mv) -> bool
-    {
-        if (!mv._mv) return true;
-        eval_arrays.push_back(value_of(depth, mv, *bd));
-        return false;
-    });*/
 
-
-    std::for_each(eval_arrays.begin(), eval_arrays.begin()+last_move, [&](moveinfo mi) {_total_nodes += mi.total_nodes;});
+    std::for_each(eval_arrays.begin(), eval_arrays.begin()+last_move, [&](move_info mi) {_total_nodes += mi.total_nodes;});
     std::sort(eval_arrays.begin(), eval_arrays.begin()+last_move, std::greater<>());
+
     eval_arrays[0].total_nodes = _total_nodes;
     return {eval_arrays[0]};
 }
 
-/*
-function negamax(node, depth, α, β, color) is
-    if depth = 0 or node is a terminal node then
-        return color × the heuristic value of node
-
-    childNodes := generateMoves(node)
-    childNodes := orderMoves(childNodes)
-    value := −∞
-    foreach child in childNodes do
-        value := max(value, −negamax(child, depth − 1, −β, −α, −color))
-        α := max(α, value)
-        if α ≥ β then
-            break (* cut-off *)
-    return value
-*/
-
-
-
-static inline int get_perft(int depth, int& ply ,Board** history, std::array<moveWrapper, ARRAY_SIZE>* move_arrays)
+static inline int get_perft(int depth, int& ply, Board** history, std::array<move_wrapper, ARRAY_SIZE>* move_arrays)
 {
     if (depth == 0) return 1;
     int sum = 0;
     const int sz = get_moves(*history[ply], move_arrays[ply].begin());
     //print_moves(*history[ply]);
     ply++;
-    std::find_if(&move_arrays[ply-1][0], (&move_arrays[ply-1][0]) + ARRAY_SIZE, [&](moveWrapper mw) mutable -> bool
+    std::find_if(&move_arrays[ply-1][0], (&move_arrays[ply-1][0]) + ARRAY_SIZE, [&](move_wrapper mw) mutable -> bool
     {
         if (!mw._mv) return true;
         copy_from(history[ply], *history[ply-1]);
@@ -191,20 +182,18 @@ static inline int get_perft(int depth, int& ply ,Board** history, std::array<mov
     return sum;
 }
 
-
 void run_perft(const Board& bd)
 {
     Board* history[MAX_DEPTH];
     std::for_each(history, history+MAX_DEPTH, [&](Board*& bd) mutable {bd = new Board();});
-    std::array<moveWrapper, ARRAY_SIZE> move_arrays[MAX_DEPTH];
-    std::for_each(move_arrays, move_arrays+MAX_DEPTH, [&](std::array<moveWrapper, ARRAY_SIZE>& arr){arr = std::array<moveWrapper, ARRAY_SIZE>();});
+    std::array<move_wrapper, ARRAY_SIZE> move_arrays[MAX_DEPTH];
+    std::for_each(move_arrays, move_arrays+MAX_DEPTH, [&](std::array<move_wrapper, ARRAY_SIZE>& arr){arr = std::array<move_wrapper, ARRAY_SIZE>();});
     long long int total_nodes = 0;
 
     for (int i = 0; i < 7; i++)
     {
         
         int ply = 0;
-        copy_from(history[0], bd);
         copy_from(history[0], bd);
         const auto begin = high_resolution_clock::now();
         const int perftval = get_perft(i, ply, history, move_arrays);

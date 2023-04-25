@@ -401,9 +401,9 @@ static inline uint64_t get_queen_attacks(const int square, const uint64_t& occup
         (get_rook_attacks(square, all(bd)) & ((bd.board[9]) | bd.board[10])) ||     \
         (king_attacks[square] & bd.board[11]))                                      \
 
-Board tst = Board();
 
-static inline int heuristic_score(const Board& bd, const unsigned int move)
+
+static inline int heuristic_score(const Board& bd, const unsigned int move, Board& tst)
 {
     copy_from(&tst, bd);
     movef(&tst, {move,0});
@@ -416,7 +416,7 @@ static inline int heuristic_score(const Board& bd, const unsigned int move)
 // in check routine
 #define in_check(bd, side_in_check) ((side_in_check == 1) ? is_attacked(LSB_index(bd.board[5]), bd, -side_in_check) : is_attacked(LSB_index(bd.board[11]), bd, -side_in_check))
 
-static inline const bool check_check(const Board& bd, const unsigned int move)
+static inline const bool check_check(const Board& bd, const unsigned int move, Board& tst)
 {
     copy_from(&tst,bd);
     movef(&tst, {move,0});
@@ -424,12 +424,12 @@ static inline const bool check_check(const Board& bd, const unsigned int move)
 }
 
 // generate legal moves
-static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer)
+static inline unsigned int get_moves(const Board& bd, move_wrapper* start_pointer)
 {
     // clear array
     unsigned int size = 0;
 
-    memset(start_pointer, 0b0, sizeof(moveWrapper)*ARRAY_SIZE);
+    memset(start_pointer, 0b0, sizeof(move_wrapper)*ARRAY_SIZE);
 
     // initiallize constants
     const uint64_t all_pieces = all(bd);
@@ -458,7 +458,7 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
             const int pp_flag = (abs(square-j) == 16) ? 0b1 : 0b0;
             uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
             uint16_t enpassantflg = (j == bd.enpassant) ? 0b1 : 0;
-            moveWrapper move = pack_move(square, j, (uint32_t) PAWN , 0U, captureflg, 0U, enpassantflg, pp_flag, 0b1111U);
+            move_wrapper move = pack_move(square, j, (uint32_t) PAWN , 0U, captureflg, 0U, enpassantflg, pp_flag, 0b1111U);
 
 
 
@@ -497,7 +497,7 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
             const int j = LSB_index(att);
             att = pop_bit(att, j);
             uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            moveWrapper move = pack_move(square , j, (uint32_t) KNIGHT, 0UL, captureflg, 0UL, 0UL, 0UL , 0b1111UL);
+            move_wrapper move = pack_move(square , j, (uint32_t) KNIGHT, 0UL, captureflg, 0UL, 0UL, 0UL , 0b1111UL);
 
             // calculate heristics
             uint16_t heuristic_value = 10U;
@@ -522,7 +522,7 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
             const int j = LSB_index(att);
             att = pop_bit(att, j);
             uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            moveWrapper move = pack_move(square , j, (uint32_t) BISHOP ,0UL, captureflg, 0UL, 0UL,0UL ,0b1111UL);
+            move_wrapper move = pack_move(square , j, (uint32_t) BISHOP ,0UL, captureflg, 0UL, 0UL,0UL ,0b1111UL);
 
 
 
@@ -556,7 +556,7 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
             const int j = LSB_index(att);
             att = pop_bit(att, j);
             uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            moveWrapper move = pack_move(square , j, (uint32_t) ROOK, 0UL ,captureflg, 0UL, 0UL, 0UL , castles_ov);
+            move_wrapper move = pack_move(square , j, (uint32_t) ROOK, 0UL ,captureflg, 0UL, 0UL, 0UL , castles_ov);
 
 
             // calculate heristics
@@ -582,7 +582,7 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
             const int j = LSB_index(att);
             att = pop_bit(att, j);
             uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            moveWrapper move = pack_move(square , j, (uint32_t) QUEEN, 0UL ,captureflg, 0UL, 0UL, 0UL, 0b1111UL);
+            move_wrapper move = pack_move(square , j, (uint32_t) QUEEN, 0UL ,captureflg, 0UL, 0UL, 0UL, 0b1111UL);
 
 
             // calculate heristics
@@ -612,7 +612,7 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
             const int j = LSB_index(att);
             att = pop_bit(att, j);
             uint32_t captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
-            moveWrapper move = pack_move(square , j, (uint32_t) KING, 0UL , captureflg, 0UL, 0UL, 0UL, castles_ov);
+            move_wrapper move = pack_move(square , j, (uint32_t) KING, 0UL , captureflg, 0UL, 0UL, 0UL, castles_ov);
 
             // verify checks
 
@@ -668,29 +668,36 @@ static inline unsigned int get_moves(const Board& bd, moveWrapper* start_pointer
     // exit if empty
     if (size == 0) return 0;
 
+
     // remove illegal moves
-    std::for_each(start_pointer, start_pointer+size, [&](moveWrapper& mv) mutable {if (check_check(bd, mv._mv)) mv = {0,0};});
+    Board tst = Board();
+    std::for_each(start_pointer, start_pointer+size, [&](move_wrapper& mv) mutable 
+        {
+            copy_from(&tst,bd);
+            movef(&tst, mv);
+            if (in_check(tst, -tst.side)) mv = {0,0};
+        });
 
     // sort and finalize heuristics
     std::sort(start_pointer, start_pointer + ARRAY_SIZE, std::greater<>());
-    const int final_size = std::find_if(start_pointer, start_pointer+ARRAY_SIZE, [](moveWrapper mv) -> bool {return (mv._mv != 0);}) - start_pointer;
+    const int final_size = std::find_if(start_pointer, start_pointer+ARRAY_SIZE, [](move_wrapper mv) -> bool {return (mv._mv != 0);}) - start_pointer;
     const auto num_best = std::min(final_size / FAIL_CUT , FAIL_CUT);
     const auto num_killer = std::min(final_size - num_best , FAIL_CUT);
 
     // set best and killer values
     std::for_each(start_pointer, start_pointer+num_best, 
-        [&](moveWrapper& mv) mutable {  mv._hv |= (1UL << 15); } );
+        [&](move_wrapper& mv) mutable {  mv._hv |= (1UL << 15); } );
     std::for_each(start_pointer+(final_size-num_killer), start_pointer+final_size, 
-        [&](moveWrapper& mv) mutable {  mv._hv |= (1UL << 14); } );
+        [&](move_wrapper& mv) mutable {  mv._hv |= (1UL << 14); } );
     std::swap_ranges(start_pointer+(final_size-num_killer), start_pointer+final_size, start_pointer+num_best);
 
     // return size of the array
     return final_size;
 }
 
-moveWrapper pull_move(std::string mv, Board* bd)
+move_wrapper pull_move(std::string mv, Board* bd)
 {
-    std::array<moveWrapper, 120> arr = std::array<moveWrapper, 120>();
+    std::array<move_wrapper, 120> arr = std::array<move_wrapper, 120>();
     get_moves(*bd, arr.begin());
 
     unsigned int source = (mv[0] - 'a') + (8 - (mv[1] - '0')) * 8;
@@ -708,7 +715,7 @@ moveWrapper pull_move(std::string mv, Board* bd)
         if (pc == 'K' || pc == 'k')
             promotion = 1UL; 
     }
-    for (moveWrapper i : arr)
+    for (move_wrapper i : arr)
     {
         if (start_square(i) == source && end_square(i) == end && promotion == promotion_piece(i))
             return i;
@@ -716,7 +723,7 @@ moveWrapper pull_move(std::string mv, Board* bd)
     return {0,0};
 }
 
-void print_move(const moveWrapper& move)
+void print_move(const move_wrapper& move)
 {
     char sourcef = 'a' + (start_square(move) % 8);
     char sourcer = '8' - (start_square(move) / 8);
@@ -745,9 +752,9 @@ void print_moves(const Board& bd)
 {
     int i = 1;
     printf("\n\t");
-    std::array<moveWrapper, 120> arr = std::array<moveWrapper, 120>();
+    std::array<move_wrapper, 120> arr = std::array<move_wrapper, 120>();
     get_moves(bd, arr.begin());
-    for (moveWrapper mw : arr)
+    for (move_wrapper mw : arr)
     {
         unsigned int j = mw._mv;
         printf("%i:", i++);
@@ -761,9 +768,9 @@ void print_move_values(const Board& bd)
 {
     int i = 1;
     printf("\n\t");
-    std::array<moveWrapper, 120> arr = std::array<moveWrapper, 120>();
+    std::array<move_wrapper, 120> arr = std::array<move_wrapper, 120>();
     get_moves(bd, arr.begin());
-    for (moveWrapper mw : arr)
+    for (move_wrapper mw : arr)
     {
         unsigned int j = mw._mv;
         printf("%i:%x\t->%i\n\t", i++, j, mw._hv);

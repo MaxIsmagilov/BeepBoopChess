@@ -147,7 +147,7 @@ const static inline void copy_from(Board* target, const Board& origin)
     target->fullmoves = origin.fullmoves;*/
 }
 
-const static inline void movef(Board* bd, const moveWrapper& move)
+const static inline void movef(Board* bd, const move_wrapper& move)
 {
     
     bd->halfmoves++;

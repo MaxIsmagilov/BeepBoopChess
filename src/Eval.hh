@@ -192,18 +192,20 @@ void initialize_evaluation()
 }
 
 
-static inline int eval(const uint64_t& board)
+static inline int eval(const uint64_t* board)
 {
     int game_phase = 0;
-    
+
     uint64_t board_copy[12];
 
-    memcpy(&board_copy, &(board), sizeof(int) * 24);
+    std::move(board, board+12, &board_copy[0]);
 
     int mg[2] = {0,0};
     int eg[2] = {0,0};
 
 
+
+    
     // evaluate white pieces
     std::for_each(board_copy, board_copy + 6, [&](uint64_t& bb) mutable
         {
@@ -238,14 +240,14 @@ static inline int eval(const uint64_t& board)
         uint64_t bit = 1ULL << square;
         for (int piece = 0; piece < 6; piece++)
         {
-            if (bd.board[piece] & bit)
+            if (board_copy[piece] & bit)
             {
                 mg[WHITE] += mg_table[WHITE_PIECE(piece)][square];
                 eg[WHITE] += eg_table[WHITE_PIECE(piece)][square];
                 game_phase += game_phase_inc[WHITE_PIECE(piece)];
                 piece = 6;
             }
-            else if (bd.board[piece+6] & bit)
+            else if (board_copy[piece+6] & bit)
             {
                 mg[BLACK] += mg_table[BLACK_PIECE(piece)][square];
                 eg[BLACK] += eg_table[BLACK_PIECE(piece)][square];
