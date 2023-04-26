@@ -15,6 +15,8 @@
 
 Board MAIN_BOARD = Board();
 
+constexpr int BUFFER_SIZE = 80;
+
 move_wrapper pull_move(std::string mv, Board* bd)
 {
     std::array<move_wrapper, 120> arr = std::array<move_wrapper, 120>();
@@ -54,7 +56,7 @@ void print_move(const move_wrapper& move)
     switch (promotion_piece(move))
     {
         case 0UL:
-        printf("%c%c%c%c", sourcef, sourcer, endf, endr); return;
+        printf("%c%c%c%c\n", sourcef, sourcer, endf, endr); return;
         case 1UL:
         piece = 'n'; break;
         case 2UL:
@@ -64,7 +66,7 @@ void print_move(const move_wrapper& move)
         case 4UL:
         piece = 'q'; break;
     }
-    printf("%c%c%c%c%c", sourcef, sourcer, endf, endr, piece);
+    printf("%c%c%c%c%c\n", sourcef, sourcer, endf, endr, piece);
 }
 
 void print_moves(const Board& bd)
@@ -83,7 +85,7 @@ void print_moves(const Board& bd)
     printf("\n");
 }
 
-void parse_input(const std::string& input_string)
+int parse_input(const std::string& input_string)
 {
     if (input_string.substr(0,8) == "position")
     {
@@ -131,15 +133,42 @@ void parse_input(const std::string& input_string)
     else if (input_string.substr(0,2) == "go") //"go depth 6"
     {
         int depth = std::stoi(input_string.substr(9));
-        printf("%i <- depth", depth);
+        const move_info best_move = get_best_move(&MAIN_BOARD, depth);
+        print_move(best_move.move);
+        movef(MAIN_BOARD, best_move.move);
     }
+    else if (input_string.substr(0,7) == "readyok") std::cout << "isready\n";
+    else if (input_string.substr(0,10) == "ucinewgame") parse_input("position startpos");
+    else if (input_string.substr(0,4) == "quit") {return 1;}
+    return 0;
+}
+
+std::string trim(const char* word, int size)
+{
+    std::string result = "";
+    std::find_if(word, word+size, [&](const char& c) mutable -> bool 
+        {
+            if (c == '\0') return true;
+            result += c;
+            return false;
+        });
+    return result;
 }
 
 void uci_loop()
 {
-    while (false) 
+    
+    std::cout << "id name BobChess\n" 
+              << "id author BL0OOP\n"
+              << "uciok" << std::endl;
+    char input[BUFFER_SIZE];
+    while (true) 
     {
-        
+        std::cin.sync();
+        if (std::cin.getline(input, BUFFER_SIZE))
+        {
+            if(parse_input(trim(input, BUFFER_SIZE))) break;
+        }
     }
 }
 

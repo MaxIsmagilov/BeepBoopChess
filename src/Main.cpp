@@ -11,28 +11,34 @@
 
 using namespace std::chrono;
 
-void setup()
+void setup(const bool& print)
 {
-    std::cout << "starting setup...\n";
-    std::cout << "initializing non-sliders...\n";
-    initialize_non_sliders();
-    std::cout << "creating magic numbers...\n";
-    // initialize_magic_numbers();
-    std::cout << "initializing sliders...\n";
-    initialize_sliders();
-    std::cout << "initializing eval tables... \n";
-    initialize_evaluation();
-    std::cout << "setup complete\n\n";
+    if (print)
+    {
+        std::cout << "starting setup...\n";
+        std::cout << "initializing non-sliders...\n";
+        initialize_non_sliders();
+        std::cout << "creating magic numbers...\n";
+        // initialize_magic_numbers();
+        std::cout << "initializing sliders...\n";
+        initialize_sliders();
+        std::cout << "initializing eval tables... \n";
+        initialize_evaluation();
+        std::cout << "setup complete\n\n";
+    }
+    else
+    {
+        initialize_non_sliders();
+        initialize_sliders();
+        initialize_evaluation();
+    }
 }
 
 int main(int argc, char const *argv[]) 
 {
-    setup();
+    setup(false);
     
-
-    parse_input("position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves e2e4 e7e5");
-    std::cout << to_string(&MAIN_BOARD);
-    parse_input("go depth 7");
+    uci_loop();
 
     return 0;
 
