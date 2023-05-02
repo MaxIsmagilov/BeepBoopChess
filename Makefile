@@ -1,8 +1,8 @@
 all: 
-	gcc -oFast src/Main.cpp src/Uciapi.hh src/NegaMax.hh src/Eval.hh src/Board.hh src/MagicNumbers.hh -o bin/Main -lstdc++ 
+	gcc -oFast src/Main.cpp src/Uciapi.hh src/NegaMax.hh src/Eval.hh src/Board.hh src/MagicNumbers.hh -o bin/BobChess -lstdc++ 
 
 debug: 
-	gcc -o src/Main.cpp src/Uciapi.hh src/NegaMax.hh src/Eval.hh ssrc/Board.hh src/MagicNumbers.hh -o bin/Main -lstdc++ 
+	gcc -o src/Main.cpp src/Uciapi.hh src/NegaMax.hh src/Eval.hh ssrc/Board.hh src/MagicNumbers.hh -o bin/BobChess -lstdc++ 
 
 run:
 	./bin/Main

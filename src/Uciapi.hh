@@ -1,3 +1,10 @@
+/*
+ * time controls forked from BBC by CMK who forked it from VICE by Richard Allbert
+ *
+ */
+
+
+
 #ifndef UCIAPI
 #define UCIAPI
 
@@ -6,7 +13,6 @@
 #include <bits/stdc++.h>
 #include <algorithm>
 
-#include "NegaMax.hh"
 #include "Board.hh"
 #include "Eval.hh"
 #include "Random.hh"
@@ -15,9 +21,11 @@
 
 Board MAIN_BOARD = Board();
 
-constexpr int BUFFER_SIZE = 80;
+constexpr int BUFFER_SIZE = 120;
 
-move_wrapper pull_move(std::string mv, Board* bd)
+
+
+static inline move_wrapper pull_move(std::string mv, Board* bd)
 {
     std::array<move_wrapper, 120> arr = std::array<move_wrapper, 120>();
     get_moves(*bd, arr.begin());
@@ -45,7 +53,7 @@ move_wrapper pull_move(std::string mv, Board* bd)
     return {0,0};
 }
 
-void print_move(const move_wrapper& move)
+static inline void print_move(const move_wrapper& move, const bool& new_line)
 {
     char sourcef = 'a' + (start_square(move) % 8);
     char sourcer = '8' - (start_square(move) / 8);
@@ -55,8 +63,8 @@ void print_move(const move_wrapper& move)
     char piece;
     switch (promotion_piece(move))
     {
-        case 0UL:
-        printf("%c%c%c%c\n", sourcef, sourcer, endf, endr); return;
+        case 0UL: 
+                        printf("%c%c%c%c%c", sourcef, sourcer, endf, endr, (new_line) ? '\n' : ' '); return;
         case 1UL:
         piece = 'n'; break;
         case 2UL:
@@ -66,10 +74,10 @@ void print_move(const move_wrapper& move)
         case 4UL:
         piece = 'q'; break;
     }
-    printf("%c%c%c%c%c\n", sourcef, sourcer, endf, endr, piece);
+    printf("%c%c%c%c%c%c", sourcef, sourcer, endf, endr, piece, (new_line) ? '\n' : ' ');
 }
 
-void print_moves(const Board& bd)
+static inline void print_moves(const Board& bd)
 {
     int i = 1;
     printf("\n\t");
@@ -79,13 +87,13 @@ void print_moves(const Board& bd)
     {
         unsigned int j = mw._mv;
         printf("%i:", i++);
-        print_move(mw);
+        print_move(mw, true);
         printf("\n\t");
     }
     printf("\n");
 }
 
-int parse_input(const std::string& input_string)
+static inline int parse_input(const std::string& input_string)
 {
     if (input_string.substr(0,8) == "position")
     {
@@ -94,7 +102,7 @@ int parse_input(const std::string& input_string)
             import_FEN(&MAIN_BOARD, START_POSITION);
             if (input_string.size() != 17)
             {
-                int move_position = 23;
+                int move_position = 24;
                 do
                 {
                     const int move_end = [&]() -> int
@@ -130,20 +138,69 @@ int parse_input(const std::string& input_string)
         }
     }
 
-    else if (input_string.substr(0,2) == "go") //"go depth 6"
+    else if (input_string.substr(0,2) == "go") //"go depth 6" "go binc 123124 winc 21301"
     {
-        int depth = std::stoi(input_string.substr(9));
+        int depth = -1;
+        depth = std::stoi(input_string.substr(9));
+        char* value;
+
+        if (value = strstr(input_string.c_str(), "infinity"));
+        if ((value = strstr(input_string.c_str(), "binc")) && MAIN_BOARD.side == -1)
+            pub_time._inc = std::atoi(value + 5);
+        if ((value = strstr(input_string.c_str(), "winc")) && MAIN_BOARD.side == 1)
+            pub_time._inc = std::atoi(value + 5);
+        if ((value = strstr(input_string.c_str(),"wtime")) && MAIN_BOARD.side == 1)
+            pub_time._time = atoi(value + 6);
+        if ((value = strstr(input_string.c_str(),"btime")) && MAIN_BOARD.side == -1)
+            pub_time._time = atoi(value + 6);
+        if ((value = strstr(input_string.c_str(),"movestogo")))
+            pub_time._movestogo = atoi(value + 10);
+        if ((value = strstr(input_string.c_str(),"movetime")))
+            pub_time._movetime = atoi(value + 9);
+        if ((value = strstr(input_string.c_str(),"depth")))
+            depth = atoi(value + 6);
+
+        if(pub_time._movetime != -1)
+        {
+            pub_time._time = pub_time._movetime;
+            pub_time._movestogo = 1;
+        }
+
+        pub_time._starttime = high_resolution_clock::now();;
+
+        depth = depth;
+
+        if(pub_time._time != -1)
+        {
+            pub_time._timeset = 1;
+
+            pub_time._time /= pub_time._movestogo;
+            
+            if (pub_time._time > 1500) pub_time._time -= 50;
+            
+            pub_time._stoptime = pub_time._time + pub_time._inc;
+            
+            if (pub_time._time < 1500 && pub_time._inc && depth == 64) pub_time._stoptime = pub_time._inc - 50;
+        }
+
+        if(depth == -1)
+            depth = 64;
+
+
         const move_info best_move = get_best_move(&MAIN_BOARD, depth);
-        print_move(best_move.move);
+        print_move(best_move.move, true);
         movef(MAIN_BOARD, best_move.move);
     }
     else if (input_string.substr(0,7) == "readyok") std::cout << "isready\n";
     else if (input_string.substr(0,10) == "ucinewgame") parse_input("position startpos");
     else if (input_string.substr(0,4) == "quit") {return 1;}
+    else if (input_string.substr(0,3) == "uci") {std::cout  << "id name BobChess\n" 
+                                                            << "id author BL0OOP\n"
+                                                            << "uciok" << std::endl;}
     return 0;
 }
 
-std::string trim(const char* word, int size)
+static inline std::string trim(const char* word, int size)
 {
     std::string result = "";
     std::find_if(word, word+size, [&](const char& c) mutable -> bool 
@@ -155,7 +212,7 @@ std::string trim(const char* word, int size)
     return result;
 }
 
-void uci_loop()
+static inline void uci_loop()
 {
     
     std::cout << "id name BobChess\n" 

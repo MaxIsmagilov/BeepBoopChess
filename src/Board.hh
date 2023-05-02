@@ -4,9 +4,18 @@
 
 #include <bits/stdc++.h>
 #include <string>
+#include <chrono>
 #include <sstream>
+#include <array>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <thread>
+#include <mutex>
 #include "Random.hh"
 #include "MagicNumbers.hh"
+
+using namespace std::chrono;
 
 /*************************************\
 |           TOOL DEFINITIONS          |
@@ -239,6 +248,41 @@ static inline move_wrapper pack_move(const unsigned int& start_square, const uns
 {
     return {((start_square & 0x3FUL)|((end_square & 0x3FUL) << 6) | ((moved_piece&0xFUL) << 12) | ((promotion_piece & 0xFUL) << 16) | ((capture & 0x1UL) << 20) | ((castle & 0x1UL) << 21)| ((enpassant & 0x1UL) << 22)|((pp_flag & 0x1UL) << 23)| ((castle_ov & 0xFUL) << 24)), 1};
 }
+
+/*************************************\
+|           TIME CONTROLS             |
+\*************************************/
+
+/// @brief time managing struct
+struct time_controls
+{
+    int _quit = 0;
+    int _movestogo = 30;
+    int _movetime = -1;
+    int _time = -1;
+    int _inc = 0;
+    std::chrono::_V2::system_clock::time_point _starttime = high_resolution_clock::now();
+    int _stoptime = 0;
+    int _timeset = 0;
+    int _stopped = 0;
+};
+
+/// @brief public time
+time_controls pub_time;
+
+/// @brief resets time
+static inline void reset_time()
+{
+    pub_time._quit = 0;
+    pub_time._movestogo = 30;
+    pub_time._movetime = -1;
+    pub_time._time = -1;
+    pub_time._inc = 0;
+    pub_time._starttime = high_resolution_clock::now();
+    pub_time._timeset = 0;
+    pub_time._stopped = 0;
+}
+
 
 /*************************************\
 |           BOARD DEFINITION          |
@@ -1191,7 +1235,7 @@ static inline unsigned int get_moves(const Board& bd, move_wrapper* start_pointe
         {
             copy_board(&tst,bd);
             movef(tst, mv);
-            if (in_check(tst, -tst.side)) mv = {0,0};
+            if (in_check(tst, tst.side)) mv = {0,0};
         });
 
     // sort and finalize heuristics
@@ -1228,5 +1272,202 @@ void print_move_values(const Board& bd)
     }
     printf("\n");
 }
+
+
+
+constexpr int NUM_THREADS = 1;
+constexpr bool MULTITHREADING_ENABLED = false;  // do not enable multithreading it deletes the home directory (not really but it won't work)
+constexpr int MAX_DEPTH = 256;
+
+constexpr int infinity = 1000000;
+constexpr int checkmate = 500000;
+
+std::mutex array_lock;
+
+static inline int eval(const uint64_t* board);
+
+static inline void print_move(const move_wrapper& move, const bool& new_line);
+
+struct move_info 
+{
+    move_wrapper move;
+    long long int total_nodes;
+    int eval;
+    inline bool operator>(const move_info& other) const
+    {
+        return this->eval > other.eval;
+    }
+};
+
+void print_move_info(const move_info& mvif)
+{
+    printf("move_info: "); print_move(mvif.move, false); printf("\tafter %10lli nodes -> %+4.1f\n", mvif.total_nodes, (float) mvif.eval/100.0);
+}
+
+static inline int quescence_search(int alpha, int beta)
+{
+    return 0;
+}
+
+static inline int negamax(int& ply, const int depth, int alpha, int beta, const int side, long long int& nodes, Board** current_bd, std::array<move_wrapper, ARRAY_SIZE>* current_arr)
+{
+    nodes++; 
+    Board& bd = *current_bd[ply];
+    // return if done or draw
+    if (depth == 0) {return side * eval(bd.board);}
+    if (bd.halfmoves >= 50) return 0;
+
+    // create and check moves
+    get_moves(bd, current_arr[ply].begin());
+    if (current_arr[ply][0]._mv == 0) 
+    {
+        if (in_check(bd,-side)) return (checkmate + depth);
+        else return 0;
+    }
+
+    /*   start of NegaMax   */
+    // set initial value
+    ply++;
+    int value = -infinity;
+    std::find_if(current_arr[ply-1].begin(), current_arr[ply-1].end(), [&](move_wrapper i) mutable -> bool 
+        {
+        // check for null results
+        if (i._mv == 0) return true;
+        
+        // move the check board
+        copy_board(current_bd[ply], *current_bd[ply-1]);
+        movef(*current_bd[ply], i);
+
+        // recursively evaluate next node
+        // set value as the most valuable node
+        value = std::max(-negamax(ply, depth - 1, -beta, -alpha, -side, nodes, current_bd, current_arr), value);
+
+        // set alpha
+        alpha = std::max(alpha, value);
+
+        // alpha-beta cutoff
+        if (alpha >= beta) {value = alpha; return true;}
+        return false;
+        });
+    // return the value of the node
+    ply--;
+    return value;
+}
+
+static inline move_info value_of(const int depth, const move_wrapper move, const Board& bd)
+{
+    Board* history[MAX_DEPTH];
+    std::for_each(history, history+MAX_DEPTH, [&](Board*& bd) mutable {bd = new Board();});
+    std::array<move_wrapper, ARRAY_SIZE> move_arrays[MAX_DEPTH];
+    std::for_each(move_arrays, move_arrays+MAX_DEPTH, [&](std::array<move_wrapper, ARRAY_SIZE>& arr){arr = std::array<move_wrapper, ARRAY_SIZE>();});
+    long long int total_nodes = 0;
+    int ply = 0;
+    copy_board(history[0], bd);
+    movef(*history[0], move);
+    int v = negamax(ply, depth, -infinity, infinity, bd.side, total_nodes, &history[0], move_arrays);
+    //printf("%i\n", (int)v);
+    return {move, total_nodes, v};
+}
+
+static inline void run_threads(const int depth, const move_wrapper& mv, const Board& bd, std::vector<move_info>& eval_arr) 
+{
+    move_info mvnfo = value_of(depth, mv, bd);
+    array_lock.lock();
+    eval_arr.push_back(mvnfo);
+    array_lock.unlock();
+}
+
+static inline move_info get_best_move(const Board* bd, int depth)
+{
+    if (bd->halfmoves >= 50) return {{0,0}, 0LL, 0};
+    long long int total_nodes = 0;
+
+    std::array<move_wrapper, ARRAY_SIZE> arr = std::array<move_wrapper, ARRAY_SIZE>();
+    std::vector<move_info> eval_arrays = std::vector<move_info>();
+    std::array<std::thread*, NUM_THREADS> threads = std::array<std::thread*, NUM_THREADS>();
+
+    long long int _total_nodes = 0;
+    const int size = ARRAY_SIZE;
+
+    get_moves(*bd, arr.begin());
+
+    if (arr[0]._mv == 0) return {{0,0},0,0};
+    
+    const int last_move = ([&]() -> int
+    {
+        if (MULTITHREADING_ENABLED)
+        {
+            int pos = 0;
+            while (arr[pos]._mv)
+            {
+                std::for_each(threads.begin(), threads.end(), [&](std::thread* thread) mutable {if (!arr[pos]._mv) return; /*thread = new std::thread(run_threads, depth, arr[pos]._mv, *bd, eval_arrays)*/; pos++;});
+                std::for_each(threads.begin(), threads.end(), [&](std::thread*thread) mutable {thread->join(); delete thread;});
+            }
+            return pos;
+        }
+        else 
+        {
+            const auto pos = std::find_if(arr.begin(), arr.end(), [&](const move_wrapper& mv) -> bool
+            {
+                if (!mv._mv) return true;
+                eval_arrays.push_back(value_of(depth, mv, *bd));
+                return false;
+            });
+
+            return pos - &arr[0];
+        }
+    })();
+
+    std::for_each(eval_arrays.begin(), eval_arrays.begin()+last_move, [&](move_info mi) {_total_nodes += mi.total_nodes;});
+    std::sort(eval_arrays.begin(), eval_arrays.begin()+last_move, std::greater<>());
+
+    eval_arrays[0].total_nodes = _total_nodes;
+    return {eval_arrays[0]};
+}
+
+static inline int get_perft(int depth, int& ply, Board** history, std::array<move_wrapper, ARRAY_SIZE>* move_arrays)
+{
+    if (depth == 0) return 1;
+    int sum = 0;
+    const int sz = get_moves(*history[ply], move_arrays[ply].begin());
+    //print_moves(*history[ply]);
+    ply++;
+    std::find_if(&move_arrays[ply-1][0], (&move_arrays[ply-1][0]) + ARRAY_SIZE, [&](move_wrapper mw) mutable -> bool
+    {
+        if (!mw._mv) return true;
+        copy_board(history[ply], *history[ply-1]);
+        movef(*history[ply],mw);
+        const int inc = get_perft(depth-1, ply, history, move_arrays);
+        if (ply == 1) {print_move(mw, false); printf("\t%i\n", inc);}
+        sum += inc;
+        return false;
+    });
+    ply--;
+    return sum;
+}
+
+void run_perft(const Board& bd)
+{
+    Board* history[MAX_DEPTH];
+    std::for_each(history, history+MAX_DEPTH, [&](Board*& bd) mutable {bd = new Board();});
+    std::array<move_wrapper, ARRAY_SIZE> move_arrays[MAX_DEPTH];
+    std::for_each(move_arrays, move_arrays+MAX_DEPTH, [&](std::array<move_wrapper, ARRAY_SIZE>& arr){arr = std::array<move_wrapper, ARRAY_SIZE>();});
+    long long int total_nodes = 0;
+
+    for (int i = 0; i < 7; i++)
+    {
+        
+        int ply = 0;
+        copy_board(history[0], bd);
+        const auto begin = high_resolution_clock::now();
+        const int perftval = get_perft(i, ply, history, move_arrays);
+        const auto end = high_resolution_clock::now();
+        const auto duration = duration_cast<milliseconds>(end - begin);
+        const float speed =  ((float) perftval) / duration.count();
+
+        printf("\n%i:\t%i nodes @%4.1fk nodes/second\n\n",i ,perftval, speed);
+    }
+}
+
 
 #endif

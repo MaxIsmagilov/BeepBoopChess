@@ -3,7 +3,6 @@
 #include <bits/stdc++.h>
 #include <chrono>
 
-#include "NegaMax.hh"
 #include "Board.hh"
 #include "Eval.hh"
 #include "Random.hh"
@@ -37,7 +36,12 @@ void setup(const bool& print)
 int main(int argc, char const *argv[]) 
 {
     setup(false);
-    
+
+
+    //parse_input("position startpos");
+   // run_perft(MAIN_BOARD);
+
+
     uci_loop();
 
     return 0;
