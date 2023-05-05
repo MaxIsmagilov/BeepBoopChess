@@ -21,7 +21,7 @@
 
 Board MAIN_BOARD = Board();
 
-constexpr int BUFFER_SIZE = 120;
+static constexpr int BUFFER_SIZE = 120;
 
 
 
@@ -109,7 +109,7 @@ static inline int parse_input(const std::string& input_string)
                     {
                         return std::find_if(&input_string[move_position], &input_string[move_position] + (input_string.size()- move_position), [&](const char& c) -> bool{return c == ' ';}) - &input_string[0];
                     }();
-                    movef(MAIN_BOARD, pull_move(input_string.substr(move_position, move_end - move_position), &MAIN_BOARD));
+                    MAIN_BOARD.make_move(pull_move(input_string.substr(move_position, move_end - move_position), &MAIN_BOARD));
                     move_position = move_end+1;
                 } while (move_position < input_string.size());
             }
@@ -131,7 +131,7 @@ static inline int parse_input(const std::string& input_string)
                     {
                         return std::find_if(&input_string[move_position], &input_string[move_position] + (input_string.size()- move_position), [&](const char& c) -> bool{return c == ' ';}) - &input_string[0];
                     }();
-                    movef(MAIN_BOARD, pull_move(input_string.substr(move_position, move_end - move_position), &MAIN_BOARD));
+                    MAIN_BOARD.make_move(pull_move(input_string.substr(move_position, move_end - move_position), &MAIN_BOARD));
                     move_position = move_end+1;
                 } while (move_position < input_string.size());
             }
@@ -145,13 +145,13 @@ static inline int parse_input(const std::string& input_string)
         char* value;
 
         if (value = strstr(input_string.c_str(), "infinity"));
-        if ((value = strstr(input_string.c_str(), "binc")) && MAIN_BOARD.side == -1)
+        if ((value = strstr(input_string.c_str(), "binc")) && MAIN_BOARD.get_side_to_move() == -1)
             pub_time._inc = std::atoi(value + 5);
-        if ((value = strstr(input_string.c_str(), "winc")) && MAIN_BOARD.side == 1)
+        if ((value = strstr(input_string.c_str(), "winc")) && MAIN_BOARD.get_side_to_move() == 1)
             pub_time._inc = std::atoi(value + 5);
-        if ((value = strstr(input_string.c_str(),"wtime")) && MAIN_BOARD.side == 1)
+        if ((value = strstr(input_string.c_str(),"wtime")) && MAIN_BOARD.get_side_to_move() == 1)
             pub_time._time = atoi(value + 6);
-        if ((value = strstr(input_string.c_str(),"btime")) && MAIN_BOARD.side == -1)
+        if ((value = strstr(input_string.c_str(),"btime")) && MAIN_BOARD.get_side_to_move() == -1)
             pub_time._time = atoi(value + 6);
         if ((value = strstr(input_string.c_str(),"movestogo")))
             pub_time._movestogo = atoi(value + 10);
@@ -189,7 +189,8 @@ static inline int parse_input(const std::string& input_string)
 
         const move_info best_move = get_best_move(&MAIN_BOARD, depth);
         print_move(best_move.move, true);
-        movef(MAIN_BOARD, best_move.move);
+        printf("%10i\n", best_move.total_nodes);
+        MAIN_BOARD.make_move(best_move.move);
     }
     else if (input_string.substr(0,7) == "readyok") std::cout << "isready\n";
     else if (input_string.substr(0,10) == "ucinewgame") parse_input("position startpos");
@@ -226,6 +227,7 @@ static inline void uci_loop()
         {
             if(parse_input(trim(input, BUFFER_SIZE))) break;
         }
+        std::cout << to_string(&MAIN_BOARD);
     }
 }
 

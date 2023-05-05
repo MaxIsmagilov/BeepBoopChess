@@ -4,7 +4,7 @@
 #include <bits/stdc++.h>
 
 /// @brief magic mumbers for bishops
-constexpr uint64_t bishop_magics[64] = {
+static constexpr uint64_t bishop_magics[64] = {
     0x120605409102020ULL,
     0xc004100200411009ULL,
     0x426022401040310ULL,
@@ -72,7 +72,7 @@ constexpr uint64_t bishop_magics[64] = {
 };
 
 /// @brief magic mumbers for bishops
-constexpr uint64_t rook_magics[64] = {
+static constexpr uint64_t rook_magics[64] = {
     0x80008810204000ULL,
     0x540029000c2e001ULL,
     0x12002010400a0080ULL,
