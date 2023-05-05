@@ -193,7 +193,7 @@ static inline int eval(const Board& bd)
 
     uint64_t board_copy[12];
 
-    memcpy(&board_copy[0], &( bd.at(0)), sizeof(uint64_t) * 12);
+    memcpy(&board_copy[0], &( bd[0]), sizeof(uint64_t) * 12);
 
     int mg[2] = {0,0};
     int eg[2] = {0,0};

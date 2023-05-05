@@ -228,6 +228,7 @@ static inline void uci_loop()
             if(parse_input(trim(input, BUFFER_SIZE))) break;
         }
         std::cout << to_string(&MAIN_BOARD);
+        //print_move_values(MAIN_BOARD);
     }
 }
 

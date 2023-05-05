@@ -64,8 +64,6 @@ enum rook_or_bishop {mROOK, mBISHOP};
 /// @brief adds an element to an array
 #define arradd(a, b, c) a[b] = c; b++;
 
-/// @brief length of best and worst moves
-static constexpr int FAIL_CUT = 2;
 
 /// @brief size of arrays used for move storage
 static constexpr unsigned int ARRAY_SIZE = 120;
@@ -310,18 +308,22 @@ static inline void reset_time()
 class Board
 { 
 private:
-    uint64_t board[14]; // contains bitboards for {P, N, B, R, Q, K, p, n, b, r, q, k, data, hash key}
+    std::array<uint64_t,14> board; // contains bitboards for {P, N, B, R, Q, K, p, n, b, r, q, k, data, hash key}
 public:
-    Board() noexcept : board{0ULL} {} 
+    explicit Board() noexcept : board{0ULL} {} 
+
+    explicit Board(const Board& bd) noexcept : board{std::move(bd.board)} {};
+
+    explicit Board(Board& bd) noexcept : board{std::move(bd.board)} {};
 
     inline uint64_t& operator[](const int index)
      {  return board[index]; }
 
+    inline const uint64_t& operator[](const int index) const
+     {  return board[index]; }
+
     inline const uint64_t& at(const int index) const
      {  return board[index]; }
- 
-    inline void operator=(const Board& other)
-     {  memcpy(&(this->board[0]), &other.board[0], sizeof(uint64_t) * 8);}
 
     inline uint64_t  whites() const
      {  return board[0] | board[1] | board[2] | board[3] | board[4] | board[5];  }
@@ -599,17 +601,31 @@ public:
     }
 
     inline void make_move(const move_wrapper& mw)
-      { *(top + 1) = std::move(*top); 
+      { *(top + 1) = *top; 
         top++; top->make_move(mw); }
 
     inline void unmake_move()
       { top--; }
 
-    inline const Board& get_top() 
-      { return *top; }
+    inline Board& get_top() 
+      { return (*top); }
 
+    inline void null_move()
+      { *(top + 1) = *top; 
+        top++; top->flip_side(); }
 };  
 
+/*************************************\
+|       MOVE & SEARCH CONSTANTS       |
+\*************************************/
+
+namespace chess_algo
+{
+    /// @brief length of best and worst moves
+    static constexpr int FAIL_CUT = 1;
+
+    static constexpr int NULL_R = 2;
+}
 
 
 /*************************************\
@@ -1006,21 +1022,21 @@ static inline uint64_t get_queen_attacks(const int square, const uint64_t& occup
 /// @param bd 
 /// @param attacking_side 
 /// @return whether the square is attacked or not
-static inline const bool is_attacked(int square, const Board& bd, const int& attacking_side)
-{                                  \
+static inline const bool is_attacked(int square, const Board& bd, const int attacking_side)
+{                                  
     return (square == -1) ? false :  (                                                     
                             (attacking_side == 1) ?                                                         
-                                            ((pawn_attacks[0][square] & bd.at(0)) ||                                  
-                                            (knight_attacks[square] & bd.at(1)) ||                                   
-                                            (get_bishop_attacks(square, bd.all()) & (bd.at(2)) | bd.at(4)) ||    
-                                            (get_rook_attacks(square, bd.all()) & (bd.at(3) | bd.at(4))) ||      
-                                            (king_attacks[square] & bd.at(5)))                                       
+                                            ((pawn_attacks[0][square] & bd[0]) ||                                  
+                                            (knight_attacks[square] & bd[1]) ||                                   
+                                            (get_bishop_attacks(square, bd.all()) & (bd[2] | bd[4])) ||    
+                                            (get_rook_attacks(square, bd.all()) & (bd[3] | bd[4])) ||      
+                                            (king_attacks[square] & bd[5]))                                       
                                             :                                                                               
-                                            ((pawn_attacks[1][square] & bd.at(6)) ||                                  
-                                            (knight_attacks[square] & bd.at(7)) ||                                   
-                                            (get_bishop_attacks(square, bd.all()) & ((bd.at(8)) | bd.at(10))) ||   
-                                            (get_rook_attacks(square, bd.all()) & (bd.at(9) | bd.at(10))) ||     
-                                            (king_attacks[square] & bd.at(11))));                                  
+                                            ((pawn_attacks[1][square] & bd[6]) ||                                  
+                                            (knight_attacks[square] & bd[7]) ||                                   
+                                            (get_bishop_attacks(square, bd.all()) & (bd[8] | bd[10])) ||   
+                                            (get_rook_attacks(square, bd.all()) & (bd[9] | bd[10])) ||     
+                                            (king_attacks[square] & bd[11])));                                  
 }
 
 /// @brief scores a move for move ordering
@@ -1038,9 +1054,9 @@ static inline int heuristic_score(const Board& bd, const unsigned int move, Boar
 /// @param bd 
 /// @param side_in_check 
 /// @return whether the side is in check
-static inline const bool in_check(const Board& bd, const int& side_in_check) 
+static inline const bool in_check(const Board& bd, const int side_in_check) 
 {
-    return ((side_in_check == 1) ? is_attacked(LSB_index(bd.at(5)), bd, -side_in_check) : is_attacked(LSB_index(bd.at(11)), bd, -side_in_check));
+    return ((side_in_check == 1) ? is_attacked(LSB_index(bd[5]), bd, -1) : is_attacked(LSB_index(bd[11]), bd, 1));
 }
 
 /// @brief checks whether a move would put the moving side in check
@@ -1080,7 +1096,7 @@ static inline unsigned int get_moves(const Board& bd, move_wrapper* start_pointe
     const int defending_pieces = (side ==  1) * 6;
 
     // generate pawn moves
-    uint64_t piece_board = bd.at(PAWN+attacking_pieces);
+    uint64_t piece_board = bd[PAWN+attacking_pieces];
     uint64_t att = 0ULL;
     while (piece_board)
     {
@@ -1121,7 +1137,7 @@ static inline unsigned int get_moves(const Board& bd, move_wrapper* start_pointe
     }
             
     // generate knight moves
-    piece_board = bd.at(KNIGHT+attacking_pieces);
+    piece_board = bd[KNIGHT+attacking_pieces];
     att = 0ULL;
     while (piece_board)
     {
@@ -1146,7 +1162,7 @@ static inline unsigned int get_moves(const Board& bd, move_wrapper* start_pointe
     }
 
     // generate bishop moves
-    piece_board = bd.at(BISHOP+attacking_pieces);
+    piece_board = bd[BISHOP+attacking_pieces];
     att = 0ULL;
     while (piece_board)
     {
@@ -1173,7 +1189,7 @@ static inline unsigned int get_moves(const Board& bd, move_wrapper* start_pointe
     }
 
     // generate rook moves
-    piece_board = bd.at(ROOK+attacking_pieces);
+    piece_board = bd[ROOK+attacking_pieces];
     att = 0ULL;
     while (piece_board)
     {
@@ -1206,7 +1222,7 @@ static inline unsigned int get_moves(const Board& bd, move_wrapper* start_pointe
     }
 
     // generate queen moves
-    piece_board = bd.at(QUEEN+attacking_pieces);
+    piece_board = bd[QUEEN+attacking_pieces];
     att = 0ULL;
     while (piece_board)
     {
@@ -1232,7 +1248,7 @@ static inline unsigned int get_moves(const Board& bd, move_wrapper* start_pointe
     }
 
     // generate king moves
-    piece_board = bd.at(QUEEN+attacking_pieces);
+    piece_board = bd[QUEEN+attacking_pieces];
     att = 0ULL;
     while (piece_board)
     {
@@ -1305,21 +1321,22 @@ static inline unsigned int get_moves(const Board& bd, move_wrapper* start_pointe
     // exit if empty
     if (size == 0) return 0;
 
+    
 
     // remove illegal moves
     Board tst = Board();
     std::for_each(start_pointer, start_pointer+size, [&](move_wrapper& mv) mutable 
         {
-            tst = bd;
+            tst = Board(bd);
             tst.make_move(mv);
-            if (in_check(tst, tst.get_side_to_move())) mv = {0,0};
+            if (in_check(tst, bd.get_side_to_move())) mv = {0,0};
         });
 
     // sort and finalize heuristics
     std::sort(start_pointer, start_pointer + ARRAY_SIZE, std::greater<>());
     const int final_size = std::find_if(start_pointer, start_pointer+ARRAY_SIZE, [](move_wrapper mv) -> bool {return (mv._mv != 0);}) - start_pointer;
-    const auto num_best = std::min(final_size / FAIL_CUT , FAIL_CUT);
-    const auto num_killer = std::min(final_size - num_best , FAIL_CUT);
+    const auto num_best = std::min(final_size / chess_algo::FAIL_CUT , chess_algo::FAIL_CUT);
+    const auto num_killer = std::min(final_size - num_best , chess_algo::FAIL_CUT);
 
     // set best and killer values
     std::for_each(start_pointer, start_pointer+num_best, 
@@ -1355,6 +1372,8 @@ void print_move_values(const Board& bd)
 \*************************************/
 
 
+
+
 static constexpr int infinity = 1000000;
 static constexpr int checkmate = 500000;
 
@@ -1385,69 +1404,90 @@ static inline int quescence_search(int alpha, int beta)
     return 0;
 }
 
-static inline int negamax(int& ply, const int depth, int alpha, int beta, const int side, long long int& nodes, BoardManager& boards, std::array<move_wrapper, ARRAY_SIZE>* current_arr)
+struct get_values
 {
-    nodes++; 
-    // return if done or draw
-    if (depth == 0) {return side * eval(boards.get_top());}
-    if (boards.get_top().get_halfmoves() >= 50) return 0;
+private:
+    BoardManager _bm{Board()};
+    std::array<move_wrapper, ARRAY_SIZE> _move_arrays[MAX_DEPTH];
+    int* _ply{nullptr};
+    long long int* _total_nodes{nullptr};
+    move_wrapper _mvwr;
 
-    // create and check moves
-    get_moves(boards.get_top(), current_arr[ply].begin());
-    if (current_arr[ply][0]._mv == 0) 
+    inline int negamax(const int depth, int alpha, int beta, const int side)
     {
-        if (in_check(boards.get_top(),-side)) return (checkmate + depth);
-        else return 0;
+        (*_total_nodes)++; 
+        // return if done or draw
+        if (depth <= 0) {return side * eval(_bm.get_top());}
+        if (_bm.get_top().get_halfmoves() >= 50) return 0;
+
+        // null move pruning
+        _bm.null_move();
+        const int prune = -negamax(depth - 1 - chess_algo::NULL_R, -beta, -alpha, -side);
+        _bm.unmake_move();
+        if (prune >= beta) return beta;
+
+        // create and check moves
+        get_moves(_bm.get_top(), _move_arrays[*_ply].begin());
+        if (_move_arrays[*_ply][0]._mv == 0) 
+        {
+            if (in_check(_bm.get_top(),-side)) return (checkmate + depth);
+            else return 0;
+        }
+
+        /*   start of NegaMax   */
+        // set initial value
+        (*_ply)++;
+        int value = -infinity;
+        std::find_if(_move_arrays[*_ply-1].begin(), _move_arrays[*_ply-1].end(), [&](move_wrapper i) mutable -> bool 
+            {
+            // check for null results
+            if (i._mv == 0) return true;
+            
+            // move the check board
+            _bm.make_move(i);
+
+            // recursively evaluate next node
+            const int ng = -negamax(depth - 1, -beta, -alpha, -side);
+
+            // unmake move
+            _bm.unmake_move();
+
+            // set value as the most valuable node
+            value = std::max(ng , value);
+
+            // alpha-beta cutoff
+            if (value >= beta) {return true;}
+
+            // set alpha
+            alpha = std::max(alpha, value);
+            return false;
+            });
+        // return the value of the node
+        (*_ply)--;
+        return value;
     }
 
-    /*   start of NegaMax   */
-    // set initial value
-    ply++;
-    int value = -infinity;
-    std::find_if(current_arr[ply-1].begin(), current_arr[ply-1].end(), [&](move_wrapper i) mutable -> bool 
-        {
-        // check for null results
-        if (i._mv == 0) return true;
-        
-        // move the check board
-        boards.make_move(i);
+public:
+    inline get_values(const move_wrapper& move, const Board& bd) :  _mvwr{move}
+     {  std::for_each(_move_arrays, _move_arrays+MAX_DEPTH, [&](std::array<move_wrapper, ARRAY_SIZE>& arr){arr = std::array<move_wrapper, ARRAY_SIZE>();});
+        _bm = BoardManager(bd); 
+        _bm.make_move(move); 
+        _total_nodes = new long long {0}; 
+        _ply = new int {0};  }
 
-        // recursively evaluate next node
-        const int ng = -negamax(ply, depth - 1, -beta, -alpha, -side, nodes, boards, current_arr);
+    inline move_info operator()(const int& depth)
+     {  const int val = negamax(depth, -infinity, infinity, _bm.get_top().get_side_to_move());
+        return {_mvwr, *_total_nodes, val}; }
 
-        // unmake move
-        boards.unmake_move();
+    inline ~get_values()
+     {  delete this->_total_nodes, this->_ply;  }
 
-        // set value as the most valuable node
-        value = std::max(ng , value);
-
-        // alpha-beta cutoff
-        if (alpha >= beta) {value = alpha; return true;}
-
-        // set alpha
-        alpha = std::max(alpha, value);
-        return false;
-        });
-    // return the value of the node
-    ply--;
-    return value;
-}
-
-static inline move_info value_of(const int depth, const move_wrapper move, const Board& bd)
-{
-    BoardManager bdmngr = BoardManager(bd);
-    std::array<move_wrapper, ARRAY_SIZE> move_arrays[MAX_DEPTH];
-    std::for_each(move_arrays, move_arrays+MAX_DEPTH, [&](std::array<move_wrapper, ARRAY_SIZE>& arr){arr = std::array<move_wrapper, ARRAY_SIZE>();});
-    long long int total_nodes = 0;
-    int ply = 0;
-    bdmngr.make_move(move);
-    int v = negamax(ply, depth, -infinity, infinity, bd.get_side_to_move(), total_nodes, bdmngr, move_arrays);
-    return {move, total_nodes, v};
-}
+};
 
 static inline void run_threads(const int depth, const move_wrapper& mv, const Board& bd, std::vector<move_info>& eval_arr) 
 {
-    move_info mvnfo = value_of(depth, mv, bd);
+    get_values v(mv, bd);
+    move_info mvnfo = v(depth);
     array_lock.lock();
     eval_arr.push_back(mvnfo);
     array_lock.unlock();
@@ -1486,7 +1526,8 @@ static inline move_info get_best_move(const Board* bd, int depth)
             const auto pos = std::find_if(arr.begin(), arr.end(), [&](const move_wrapper& mv) -> bool
             {
                 if (!mv._mv) return true;
-                eval_arrays.push_back(value_of(depth, mv, *bd));
+                get_values v(mv, *bd);
+                eval_arrays.push_back(v(depth));
                 return false;
             });
 
