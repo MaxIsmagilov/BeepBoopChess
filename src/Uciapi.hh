@@ -19,7 +19,7 @@
 
 #define START_POSITION "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-Board MAIN_BOARD = Board();
+Board MAIN_BOARD;
 
 static constexpr int BUFFER_SIZE = 120;
 

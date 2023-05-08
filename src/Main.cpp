@@ -39,7 +39,7 @@ int main(int argc, char const *argv[])
 
 
     //parse_input("position startpos");
-   // run_perft(MAIN_BOARD);
+    //run_perft(MAIN_BOARD);
 
 
     uci_loop();

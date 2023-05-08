@@ -191,9 +191,9 @@ static inline int eval(const Board& bd)
 {
     int game_phase = 0;
 
-    uint64_t board_copy[12];
+    uint64_t board_copy[12] =  {bd[0], bd[1], bd[2], bd[3], bd[4],  bd[5],
+                                bd[6], bd[7], bd[8], bd[9], bd[10], bd[11]};
 
-    memcpy(&board_copy[0], &( bd[0]), sizeof(uint64_t) * 12);
 
     int mg[2] = {0,0};
     int eg[2] = {0,0};
