@@ -14,16 +14,16 @@ class Move {
   Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool is_promote, bool enpassant, bool is_double,
        unsigned int heuristic);
 
-  void set_heuristic(unsigned int heuristic);
+  void set_heuristic(unsigned int heuristic) noexcept;
 
-  u8 get_start() const;
-  u8 get_end() const;
-  u8 get_piece() const;
-  u8 get_promote() const;
-  bool is_capture() const;
-  bool is_promote() const;
-  bool is_enpassant() const;
-  bool is_double_push() const;
+  u8 get_start() const noexcept;
+  u8 get_end() const noexcept;
+  u8 get_piece() const noexcept;
+  u8 get_promote() const noexcept;
+  bool is_capture() const noexcept;
+  bool is_promote() const noexcept;
+  bool is_enpassant() const noexcept;
+  bool is_double_push() const noexcept;
 
  private:
   unsigned int m_heuristic : 16;

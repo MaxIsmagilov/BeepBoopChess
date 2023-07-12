@@ -10,7 +10,14 @@ namespace BobChess {
 
 class Board {
  public:
-  void make_move(const Move& mv);
+  enum Castle { WHITE_SHORT, WHITE_LONG, QUEEN_SHORT, QUEEN_LONG };
+  void make_move(const Move& mv) noexcept;
+  u64 operator[](int index) const noexcept;
+  u64 white_occ() const noexcept;
+  u64 black_occ() const noexcept;
+  u64 all_occ() const noexcept;
+
+  bool castle_available(int castle);
 
  private:
   u64 m_board[12];
