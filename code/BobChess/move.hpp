@@ -9,10 +9,11 @@ namespace BobChess {
 
 class Move {
  public:
-  Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool is_promote, bool enpassant, bool is_double);
+  Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bool is_promote, bool enpassant,
+       bool is_double);
 
-  Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool is_promote, bool enpassant, bool is_double,
-       unsigned int heuristic);
+  Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bool is_promote, bool enpassant,
+       bool is_double, unsigned int heuristic);
 
   void set_heuristic(unsigned int heuristic) noexcept;
 
@@ -21,6 +22,7 @@ class Move {
   u8 get_piece() const noexcept;
   u8 get_promote() const noexcept;
   bool is_capture() const noexcept;
+  bool is_castle() const noexcept;
   bool is_promote() const noexcept;
   bool is_enpassant() const noexcept;
   bool is_double_push() const noexcept;
@@ -33,6 +35,7 @@ class Move {
   u8 m_piece       : 4;
   u8 m_promote     : 4;
   u8 m_capture     : 1;
+  u8 m_castle      : 1;
   u8 m_is_promote  : 1;
   u8 m_enpassant   : 1;
   u8 m_double_push : 1;

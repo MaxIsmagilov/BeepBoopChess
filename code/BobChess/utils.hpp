@@ -10,7 +10,7 @@ typedef unsigned long long u64;
 typedef unsigned int u32;
 typedef unsigned char u8;
 
-namespace utlis {
+namespace utils {
 
 /// @brief piece enums
 enum piece_numbers { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
@@ -86,6 +86,6 @@ enum squares {
   _H1,
 };
 
-}  // namespace utlis
+}  // namespace utils
 
 }  // namespace BobChess
