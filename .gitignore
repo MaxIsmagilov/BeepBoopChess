@@ -35,3 +35,6 @@
 .vscode/
 *.vscode
 vscode/
+
+# build directory
+build/
