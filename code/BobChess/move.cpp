@@ -7,6 +7,18 @@
 
 namespace BobChess
 {
+Move::Move() noexcept
+    : m_start{0},
+      m_end{0},
+      m_piece{0},
+      m_promote{0},
+      m_capture{0},
+      m_castle{0},
+      m_is_promote{0},
+      m_enpassant{0},
+      m_double_push{0}
+{
+}
 
 Move::Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bool is_promote, bool enpassant,
            bool is_double)

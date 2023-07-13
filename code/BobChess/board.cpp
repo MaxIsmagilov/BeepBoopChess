@@ -47,6 +47,32 @@ void Board::make_move(const Move& mv) noexcept
     m_board[0] &= ~(1ULL << (mv.get_end() + ((m_side) ? 8 : -8)));
     m_board[6] &= ~(1ULL << (mv.get_end() + ((m_side) ? 8 : -8)));
   }
+
+  if (mv.get_start() == utils::_A1) {
+    m_castle_WQ = false;
+  }
+
+  if (mv.get_start() == utils::_A8) {
+    m_castle_BQ = false;
+  }
+
+  if (mv.get_start() == utils::_H1) {
+    m_castle_WK = false;
+  }
+
+  if (mv.get_start() == utils::_H8) {
+    m_castle_BK = false;
+  }
+
+  if (mv.get_piece() == utils::KING) {
+    if (!m_side) {
+      m_castle_WK = false;
+      m_castle_WQ = false;
+    } else {
+      m_castle_BK = false;
+      m_castle_BQ = false;
+    }
+  }
 }
 
 void Board::import_FEN([[maybe_unused]] const char* FEN)
@@ -73,7 +99,7 @@ void Board::import_FEN([[maybe_unused]] const char* FEN)
     m_board[i] = 0ULL;
   }
   for (int pos = 0; pos < 64; pos++) {
-    uint64_t itr = 1ULL << pos;
+    u64 itr = 1ULL << pos;
     switch (arr[pos]) {
       case 'P':
         m_board[0] |= itr;
@@ -173,7 +199,7 @@ u64 Board::all_occ() const noexcept
 
 bool Board::side_to_move() const noexcept { return m_side; }
 
-bool Board::castle_available(int castle)
+bool Board::castle_available(int castle) const
 {
   switch (castle) {
     case 0:
@@ -187,6 +213,8 @@ bool Board::castle_available(int castle)
   }
   return false;
 }
+
+u32 Board::enpassant_square() const { return static_cast<u32>(m_enpassant); }
 
 std::string Board::debug_print() const
 {

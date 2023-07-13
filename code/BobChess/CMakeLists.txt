@@ -6,6 +6,8 @@ SET(BobChess_Headers
     board.hpp
     random_generator.hpp
     magics.hpp
+    move_list.hpp
+    move_generator.hpp
     )
 
 SET(BobChess_Impl
@@ -14,6 +16,8 @@ SET(BobChess_Impl
     board.cpp
     random_generator.cpp
     magics.cpp
+    move_list.cpp
+    move_generator.cpp
     )
 
 ADD_LIBRARY(BobChess_objects OBJECT 

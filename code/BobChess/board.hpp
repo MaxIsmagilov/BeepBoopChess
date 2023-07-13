@@ -13,7 +13,7 @@ namespace BobChess
 class Board
 {
  public:
-  enum Castle { WHITE_SHORT, WHITE_LONG, QUEEN_SHORT, QUEEN_LONG };
+  enum Castle { WHITE_SHORT, WHITE_LONG, BLACK_SHORT, BLACK_LONG };
 
   void make_move(const Move& mv) noexcept;
   void import_FEN(const char* FEN);
@@ -25,7 +25,9 @@ class Board
   u64 all_occ() const noexcept;
   bool side_to_move() const noexcept;
 
-  bool castle_available(int castle);
+  bool castle_available(int castle) const;
+
+  u32 enpassant_square() const;
 
   std::string debug_print() const;
   std::string nice_print() const;

@@ -11,6 +11,8 @@ namespace BobChess
 class Move
 {
  public:
+  Move() noexcept;
+
   Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bool is_promote, bool enpassant,
        bool is_double);
 

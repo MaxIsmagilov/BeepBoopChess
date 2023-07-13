@@ -10,13 +10,14 @@ namespace BobChess
 
 typedef unsigned long long u64;
 typedef unsigned int u32;
+typedef unsigned short u16;
 typedef unsigned char u8;
 
 namespace utils
 {
 
 /// @brief piece enums
-enum piece_numbers { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
+enum piece_numbers : u8 { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
 
 /// @brief color enums
 enum colors { BLACK, WHITE };
