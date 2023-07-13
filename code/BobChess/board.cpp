@@ -1,9 +1,11 @@
 #include "board.hpp"
 
 //
-namespace BobChess {
+namespace BobChess
+{
 
-void Board::make_move(const Move& mv) noexcept {
+void Board::make_move(const Move& mv) noexcept
+{
   m_halfmoves++;
   auto piecemod = (m_side) ? 0 : 6;
 
@@ -47,7 +49,8 @@ void Board::make_move(const Move& mv) noexcept {
   }
 }
 
-void Board::import_FEN([[maybe_unused]] const char* FEN) {
+void Board::import_FEN([[maybe_unused]] const char* FEN)
+{
   char arr[64];
   int board_index = 0;
   int str_index;
@@ -152,22 +155,26 @@ void Board::flip_side() noexcept { m_side ^= 1; }
 
 u64 Board::operator[](int index) const noexcept { return m_board[index]; }
 
-u64 Board::white_occ() const noexcept {
+u64 Board::white_occ() const noexcept
+{
   return m_board[0] | m_board[1] | m_board[2] | m_board[3] | m_board[4] | m_board[5];
 }
 
-u64 Board::black_occ() const noexcept {
+u64 Board::black_occ() const noexcept
+{
   return m_board[6] | m_board[7] | m_board[8] | m_board[9] | m_board[10] | m_board[11];
 }
 
-u64 Board::all_occ() const noexcept {
+u64 Board::all_occ() const noexcept
+{
   return m_board[0] | m_board[1] | m_board[2] | m_board[3] | m_board[4] | m_board[5] | m_board[6] | m_board[7] |
          m_board[8] | m_board[9] | m_board[10] | m_board[11];
 }
 
 bool Board::side_to_move() const noexcept { return m_side; }
 
-bool Board::castle_available(int castle) {
+bool Board::castle_available(int castle)
+{
   switch (castle) {
     case 0:
       return m_castle_WK;
@@ -180,5 +187,35 @@ bool Board::castle_available(int castle) {
   }
   return false;
 }
+
+std::string Board::debug_print() const
+{
+  char pieces[13] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', ' '};
+  std::string str{""};
+  for (int i = 0; i < 64; ++i) {
+    for (int j = 0; j < 13; ++j) {
+      if (j == 12) str += pieces[j];
+      if (utils::get_bit(m_board[j], i)) {
+        str += pieces[j];
+        break;
+      }
+    }
+    if (i % 8 == 7) str += '\n';
+  }
+  str += "fullmoves: ";
+  str += std::to_string(m_fullmoves);
+  str += "\nhalfmoves: ";
+  str += std::to_string(m_halfmoves);
+  str += (m_side) ? "\nblack to move\n" : "\nwhite to move\n";
+  str += (m_castle_WK) ? 'y' : 'n';
+  str += (m_castle_WQ) ? 'y' : 'n';
+  str += (m_castle_BK) ? 'y' : 'n';
+  str += (m_castle_BQ) ? 'y' : 'n';
+  str += "\nenpassant square: ";
+  str += std::to_string(m_enpassant);
+  str += '\n';
+  return str;
+}
+std::string Board::nice_print() const { return debug_print(); }
 
 }  // namespace BobChess

@@ -4,12 +4,16 @@ SET(BobChess_Headers
     utils.hpp
     move.hpp
     board.hpp
+    random_generator.hpp
+    magics.hpp
     )
 
 SET(BobChess_Impl
     utils.cpp
     move.cpp
     board.cpp
+    random_generator.cpp
+    magics.cpp
     )
 
 ADD_LIBRARY(BobChess_objects OBJECT 

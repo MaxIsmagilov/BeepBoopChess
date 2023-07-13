@@ -1,4 +1,5 @@
 BasedOnStyle: Google
+BreakBeforeBraces: Linux
 PointerAlignment: Left
 ColumnLimit: 120
 AlignConsecutiveMacros: AcrossEmptyLines

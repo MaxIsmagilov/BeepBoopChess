@@ -7,9 +7,11 @@
 #include "move.hpp"
 #include "utils.hpp"
 
-namespace BobChess {
+namespace BobChess
+{
 
-class Board {
+class Board
+{
  public:
   enum Castle { WHITE_SHORT, WHITE_LONG, QUEEN_SHORT, QUEEN_LONG };
 
@@ -24,6 +26,9 @@ class Board {
   bool side_to_move() const noexcept;
 
   bool castle_available(int castle);
+
+  std::string debug_print() const;
+  std::string nice_print() const;
 
  private:
   u64 m_board[12];

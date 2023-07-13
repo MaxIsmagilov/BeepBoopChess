@@ -5,9 +5,11 @@
 // BobChess headers:
 #include "utils.hpp"
 
-namespace BobChess {
+namespace BobChess
+{
 
-class Move {
+class Move
+{
  public:
   Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bool is_promote, bool enpassant,
        bool is_double);
@@ -26,6 +28,9 @@ class Move {
   bool is_promote() const noexcept;
   bool is_enpassant() const noexcept;
   bool is_double_push() const noexcept;
+
+  bool operator>(const Move& other) const noexcept;
+  bool operator<(const Move& other) const noexcept;
 
  private:
   unsigned int m_heuristic : 16;

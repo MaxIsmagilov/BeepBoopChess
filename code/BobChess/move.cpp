@@ -5,7 +5,8 @@
 // BobChess headers:
 #include "utils.hpp"
 
-namespace BobChess {
+namespace BobChess
+{
 
 Move::Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bool is_promote, bool enpassant,
            bool is_double)
@@ -17,7 +18,9 @@ Move::Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bo
       m_castle{castle},
       m_is_promote{is_promote},
       m_enpassant{enpassant},
-      m_double_push{is_double} {}
+      m_double_push{is_double}
+{
+}
 
 Move::Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bool is_promote, bool enpassant,
            bool is_double, unsigned int heuristic)
@@ -30,7 +33,9 @@ Move::Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bo
       m_castle{castle},
       m_is_promote{is_promote},
       m_enpassant{enpassant},
-      m_double_push{is_double} {}
+      m_double_push{is_double}
+{
+}
 
 void Move::set_heuristic(unsigned int heuristic) noexcept { m_heuristic = heuristic; }
 
@@ -51,5 +56,9 @@ bool Move::is_promote() const noexcept { return static_cast<bool>(m_is_promote);
 bool Move::is_enpassant() const noexcept { return static_cast<bool>(m_enpassant); }
 
 bool Move::is_double_push() const noexcept { return static_cast<bool>(m_double_push); }
+
+bool Move::operator>(const Move& other) const noexcept { return m_heuristic > other.m_heuristic; }
+
+bool Move::operator<(const Move& other) const noexcept { return m_heuristic < other.m_heuristic; }
 
 }  // namespace BobChess

@@ -1,16 +1,19 @@
 #pragma once
 
 // C++ standard library:
+#include <string>
 
 // BobChess headers:
 
-namespace BobChess {
+namespace BobChess
+{
 
 typedef unsigned long long u64;
 typedef unsigned int u32;
 typedef unsigned char u8;
 
-namespace utils {
+namespace utils
+{
 
 /// @brief piece enums
 enum piece_numbers { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
@@ -85,6 +88,27 @@ enum squares {
   _G1,
   _H1,
 };
+
+constexpr bool get_bit(const u64 bb, int index) { return bb & (1ULL << index); }
+
+constexpr u64 set_bit_true(u64 bb, int index) { return bb | (1ULL << index); }
+
+constexpr u64 set_bit_false(u64 bb, int index) { return bb & ~(1ULL << index); }
+
+/// @brief prints a bitboard
+/// @param bb
+/// @return a string
+std::string print_bitboard(const u64& bb);
+
+/// @brief counts the bits in a bitboard
+/// @param bitboard
+/// @return the number of bits
+unsigned int count_bits(const u64& bitboard);
+
+/// @brief  finds the index of the least significant bit
+/// @param test
+/// @return the index
+int LSB_index(const u64& test);
 
 }  // namespace utils
 
