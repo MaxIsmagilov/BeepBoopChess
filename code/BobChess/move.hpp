@@ -1,6 +1,7 @@
 #pragma once
 
 // C++ standard library:
+#include <string>
 
 // BobChess headers:
 #include "utils.hpp"
@@ -33,6 +34,8 @@ class Move
 
   bool operator>(const Move& other) const noexcept;
   bool operator<(const Move& other) const noexcept;
+
+  std::string to_string() const;
 
  private:
   unsigned int m_heuristic : 16;

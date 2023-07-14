@@ -69,3 +69,11 @@ INSTALL( EXPORT BobChessTargets
     NAMESPACE BobChess::
     DESTINATION ${CMAKE_INSTAL_LIBDIR}/cmake/BobChess)
     
+enable_testing()
+
+# test file
+
+ADD_EXECUTABLE(test.t test.t.cpp)
+TARGET_LINK_LIBRARIES(test.t BobChess::BobChess)
+
+# tests

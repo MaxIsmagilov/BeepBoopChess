@@ -7,6 +7,7 @@
 #include "board.hpp"
 #include "board_stack.hpp"
 #include "move.hpp"
+#include "move_generator.hpp"
 #include "transposition.hpp"
 #include "utils.hpp"
 

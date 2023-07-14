@@ -1,5 +1,7 @@
 #include "board.hpp"
 
+#include <iostream>
+
 //
 namespace BobChess
 {
@@ -79,18 +81,19 @@ void Board::import_FEN([[maybe_unused]] const char* FEN) {
   int board_index = 0;
   int str_index;
 
-  for (str_index = 0; FEN[str_index]; ++str_index) {
+  for (str_index = 0; FEN[str_index] != ' '; ++str_index) {
     if (FEN[str_index] == '/')
       continue;
     else if (std::isdigit(FEN[str_index])) {
       auto num = std::stoi(FEN + str_index);
       while (num) {
         arr[board_index] = '\0';
-        board_index++;
+        ++board_index;
+        --num;
       }
     } else {
       arr[board_index] = FEN[str_index];
-      board_index++;
+      ++board_index;
     }
   }
   for (int i = 0; i < 12; i++) {
@@ -147,7 +150,7 @@ void Board::import_FEN([[maybe_unused]] const char* FEN) {
   m_castle_WQ = false;
   m_castle_BK = false;
   m_castle_BQ = false;
-  for (str_index = str_index; FEN[str_index] != ' '; str_index++) {
+  for (str_index = str_index; FEN[str_index] != ' '; ++str_index) {
     switch (FEN[str_index]) {
       case 'K':
         m_castle_WK = true;
@@ -211,13 +214,18 @@ bool Board::castle_available(int castle) const {
 u32 Board::enpassant_square() const { return static_cast<u32>(m_enpassant); }
 
 std::string Board::debug_print() const {
-  char pieces[13] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', ' '};
+  char pieces[14] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', ' ', '#'};
   std::string str{""};
   for (int i = 0; i < 64; ++i) {
     for (int j = 0; j < 13; ++j) {
-      if (j == 12) str += pieces[j];
+      if (j == 12) {
+        str += pieces[12 + (((i / 8) + i) % 2)];
+        str += ' ';
+        break;
+      }
       if (utils::get_bit(m_board[j], i)) {
         str += pieces[j];
+        str += ' ';
         break;
       }
     }

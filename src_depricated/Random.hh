@@ -5,13 +5,11 @@
 
 #include <cstdlib>
 
-
 namespace BCdepricated
 {
 unsigned int random_state = 0xC6497B5D;
 
-static inline unsigned int random()
-{
+static inline unsigned int random() {
   unsigned int number = random_state;
 
   number ^= number >> 13;
@@ -23,8 +21,7 @@ static inline unsigned int random()
   return number;
 }
 
-uint64_t random_uint64()
-{
+uint64_t random_uint64() {
   uint64_t num;
 
   uint64_t n1 = random() & 0xFFFF, n2 = random() & 0xFFFF, n3 = random() & 0xFFFF, n4 = random() & 0xFFFF;

@@ -67,4 +67,13 @@ bool Move::operator>(const Move& other) const noexcept { return m_heuristic > ot
 
 bool Move::operator<(const Move& other) const noexcept { return m_heuristic < other.m_heuristic; }
 
+std::string Move::to_string() const {
+  std::string s = "";
+  s.push_back('a' + (m_start % 8));
+  s.push_back('1' + (m_start / 8));
+  s.push_back('a' + (m_end % 8));
+  s.push_back('1' + (m_end / 8));
+  return s;
+}
+
 }  // namespace BobChess

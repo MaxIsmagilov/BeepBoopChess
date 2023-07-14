@@ -474,4 +474,20 @@ bool MoveGenerator::check_check(const Board& bd, const Move& move) {
   return in_check(tst, -tst.side_to_move());
 }
 
+u64 MoveGenerator::pawn_attacks[2][64] = {0};
+
+u64 MoveGenerator::knight_attacks[64] = {0};
+
+u64 MoveGenerator::king_attacks[64] = {0};
+
+u64 MoveGenerator::silent_pawn_moves[2][64] = {0};
+
+u64 MoveGenerator::bishop_attack_masks[64] = {0};
+
+u64 MoveGenerator::rook_attack_masks[64] = {0};
+
+u64 MoveGenerator::magic_bishop_attacks[64][512] = {0};
+
+u64 MoveGenerator::magic_rook_attacks[64][4096] = {0};
+
 }  // namespace BobChess
