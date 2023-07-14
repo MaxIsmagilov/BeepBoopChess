@@ -7,8 +7,7 @@
 namespace BobChess
 {
 
-MoveList MoveGenerator::generate_all(const Board& bd) noexcept
-{
+MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
   MoveList movelist;
 
   // initiallize constants
@@ -219,8 +218,7 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept
   return movelist;
 }
 
-void MoveGenerator::initialize_all() noexcept
-{
+void MoveGenerator::initialize_all() noexcept {
   initialize_sliders();
   initialize_non_sliders();
 }
@@ -240,8 +238,7 @@ u64 MoveGenerator::pawn_mask(int square, int side)  // side is 1 for white, -1 f
   return att;
 }
 
-u64 MoveGenerator::knight_mask(int square)
-{
+u64 MoveGenerator::knight_mask(int square) {
   u64 att = 0ULL;       // attacks
   u64 bitboard = 0ULL;  // knight square
   bitboard = utils::set_bit_true(bitboard, square);
@@ -264,8 +261,7 @@ u64 MoveGenerator::knight_mask(int square)
   return att;
 }
 
-u64 MoveGenerator::king_mask(int square)
-{
+u64 MoveGenerator::king_mask(int square) {
   u64 att = 0ULL;       // attacks
   u64 bitboard = 0ULL;  // king square
   bitboard = utils::set_bit_true(bitboard, square);
@@ -279,8 +275,7 @@ u64 MoveGenerator::king_mask(int square)
   return att;
 }
 
-u64 MoveGenerator::bishop_mask(int square)
-{
+u64 MoveGenerator::bishop_mask(int square) {
   int rank, file;
   int t_rank = square / 8;
   int t_file = square % 8;
@@ -292,8 +287,7 @@ u64 MoveGenerator::bishop_mask(int square)
   return att;
 }
 
-u64 MoveGenerator::rook_mask(int square)
-{
+u64 MoveGenerator::rook_mask(int square) {
   int rank, file;
   int t_rank = square / 8;
   int t_file = square % 8;
@@ -305,8 +299,7 @@ u64 MoveGenerator::rook_mask(int square)
   return att;
 }
 
-u64 MoveGenerator::silent_pawn_mask(int square, int side)
-{
+u64 MoveGenerator::silent_pawn_mask(int square, int side) {
   u64 mv = 0ULL;
   u64 bitboard = 0ULL;  // pawn square
   bitboard = utils::set_bit_true(bitboard, square);
@@ -320,8 +313,7 @@ u64 MoveGenerator::silent_pawn_mask(int square, int side)
   return mv;
 }
 
-u64 MoveGenerator::otf_bishop_attacks(int square, u64 blockers)
-{
+u64 MoveGenerator::otf_bishop_attacks(int square, u64 blockers) {
   int rank, file;
   int t_rank = square / 8;
   int t_file = square % 8;
@@ -345,8 +337,7 @@ u64 MoveGenerator::otf_bishop_attacks(int square, u64 blockers)
   return att;
 }
 
-u64 MoveGenerator::otf_rook_attacks(int square, u64 blockers)
-{
+u64 MoveGenerator::otf_rook_attacks(int square, u64 blockers) {
   int rank, file;
   int t_rank = square / 8;
   int t_file = square % 8;
@@ -370,8 +361,7 @@ u64 MoveGenerator::otf_rook_attacks(int square, u64 blockers)
   return att;
 }
 
-u64 MoveGenerator::get_occupancy(int index, int bit_count, u64 mask)
-{
+u64 MoveGenerator::get_occupancy(int index, int bit_count, u64 mask) {
   u64 occupancy = 0ULL;
 
   for (int i = 0; i < bit_count; i++) {
@@ -385,8 +375,7 @@ u64 MoveGenerator::get_occupancy(int index, int bit_count, u64 mask)
   return occupancy;
 }
 
-void MoveGenerator::initialize_non_sliders()
-{
+void MoveGenerator::initialize_non_sliders() {
   for (int i = 0; i < 64; i++) {
     pawn_attacks[0][i] = pawn_mask(i, -1);
     pawn_attacks[1][i] = pawn_mask(i, 1);
@@ -397,8 +386,7 @@ void MoveGenerator::initialize_non_sliders()
   }
 }
 
-void MoveGenerator::initialize_sliders()
-{
+void MoveGenerator::initialize_sliders() {
   for (int i = 0; i < 64; i++) {
     bishop_attack_masks[i] = bishop_mask(i);
     rook_attack_masks[i] = rook_mask(i);
@@ -430,24 +418,21 @@ void MoveGenerator::initialize_sliders()
   }
 }
 
-u64 MoveGenerator::get_bishop_attacks(const int square, u64 occupancy)
-{
+u64 MoveGenerator::get_bishop_attacks(const int square, u64 occupancy) {
   occupancy &= bishop_attack_masks[square];
   occupancy *= bishop_magics[square];
   occupancy >>= 64 - bishop_occupancy_bits[square];
   return magic_bishop_attacks[square][occupancy];
 }
 
-u64 MoveGenerator::get_rook_attacks(const int square, u64 occupancy)
-{
+u64 MoveGenerator::get_rook_attacks(const int square, u64 occupancy) {
   occupancy &= rook_attack_masks[square];
   occupancy *= rook_magics[square];
   occupancy >>= 64 - rook_occupancy_bits[square];
   return magic_rook_attacks[square][occupancy];
 }
 
-u64 MoveGenerator::get_queen_attacks(const int square, u64 occupancy)
-{
+u64 MoveGenerator::get_queen_attacks(const int square, u64 occupancy) {
   uint64_t occ1 = occupancy;
 
   occ1 &= bishop_attack_masks[square];
@@ -463,8 +448,7 @@ u64 MoveGenerator::get_queen_attacks(const int square, u64 occupancy)
   return magic_rook_attacks[square][occ2] | magic_bishop_attacks[square][occ1];
 }
 
-bool MoveGenerator::is_attacked(int square, const Board& bd, const int attacking_side)
-{
+bool MoveGenerator::is_attacked(int square, const Board& bd, const int attacking_side) {
   if (square == -1) {
     return false;
   } else {
@@ -479,14 +463,12 @@ bool MoveGenerator::is_attacked(int square, const Board& bd, const int attacking
   }
 }
 
-bool MoveGenerator::in_check(const Board& bd, const int side_in_check)
-{
+bool MoveGenerator::in_check(const Board& bd, const int side_in_check) {
   return ((side_in_check == 1) ? is_attacked(utils::LSB_index(bd[5]), bd, -1)
                                : is_attacked(utils::LSB_index(bd[11]), bd, 1));
 }
 
-bool MoveGenerator::check_check(const Board& bd, const Move& move)
-{
+bool MoveGenerator::check_check(const Board& bd, const Move& move) {
   Board tst{bd};
   tst.make_move(move);
   return in_check(tst, -tst.side_to_move());

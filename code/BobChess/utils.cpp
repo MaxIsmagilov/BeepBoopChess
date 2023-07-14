@@ -3,8 +3,7 @@
 namespace BobChess::utils
 {
 
-std::string print_bitboard(const u64& bb)
-{
+std::string print_bitboard(const u64& bb) {
   std::string str = "";
   for (int i = 0; i < 64; i++) {
     str += (get_bit(bb, i)) ? '1' : '0';
@@ -15,8 +14,7 @@ std::string print_bitboard(const u64& bb)
   return str;
 }
 
-unsigned int count_bits(const u64& bitboard)
-{
+unsigned int count_bits(const u64& bitboard) {
   u64 test = bitboard;
   unsigned int bitnumber = 0;
   while (test) {

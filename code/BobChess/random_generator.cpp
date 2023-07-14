@@ -5,8 +5,7 @@
 namespace BobChess
 {
 
-u32 RandomGenerator::get_random()
-{
+u32 RandomGenerator::get_random() {
   u32 number = random_state;
 
   number ^= number >> 13;
@@ -18,8 +17,7 @@ u32 RandomGenerator::get_random()
   return number;
 }
 
-u64 RandomGenerator::random_u64()
-{
+u64 RandomGenerator::random_u64() {
   u64 n1 = get_random() & 0xFFFF, n2 = get_random() & 0xFFFF, n3 = get_random() & 0xFFFF, n4 = get_random() & 0xFFFF;
   return n1 | (n2 << 16) | (n3 << 32) | (n4 << 48);
 }

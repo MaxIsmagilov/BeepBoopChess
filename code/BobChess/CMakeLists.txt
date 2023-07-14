@@ -8,6 +8,9 @@ SET(BobChess_Headers
     magics.hpp
     move_list.hpp
     move_generator.hpp
+    pesto_eval.hpp
+    transposition.hpp
+    algorithm.hpp
     )
 
 SET(BobChess_Impl
@@ -18,6 +21,9 @@ SET(BobChess_Impl
     magics.cpp
     move_list.cpp
     move_generator.cpp
+    pesto_eval.cpp
+    transposition.cpp
+    algorithm.cpp
     )
 
 ADD_LIBRARY(BobChess_objects OBJECT 

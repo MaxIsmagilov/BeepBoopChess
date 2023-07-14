@@ -4,8 +4,7 @@
 namespace BobChess
 {
 
-void Board::make_move(const Move& mv) noexcept
-{
+void Board::make_move(const Move& mv) noexcept {
   m_halfmoves++;
   auto piecemod = (m_side) ? 0 : 6;
 
@@ -75,8 +74,7 @@ void Board::make_move(const Move& mv) noexcept
   }
 }
 
-void Board::import_FEN([[maybe_unused]] const char* FEN)
-{
+void Board::import_FEN([[maybe_unused]] const char* FEN) {
   char arr[64];
   int board_index = 0;
   int str_index;
@@ -181,26 +179,22 @@ void Board::flip_side() noexcept { m_side ^= 1; }
 
 u64 Board::operator[](int index) const noexcept { return m_board[index]; }
 
-u64 Board::white_occ() const noexcept
-{
+u64 Board::white_occ() const noexcept {
   return m_board[0] | m_board[1] | m_board[2] | m_board[3] | m_board[4] | m_board[5];
 }
 
-u64 Board::black_occ() const noexcept
-{
+u64 Board::black_occ() const noexcept {
   return m_board[6] | m_board[7] | m_board[8] | m_board[9] | m_board[10] | m_board[11];
 }
 
-u64 Board::all_occ() const noexcept
-{
+u64 Board::all_occ() const noexcept {
   return m_board[0] | m_board[1] | m_board[2] | m_board[3] | m_board[4] | m_board[5] | m_board[6] | m_board[7] |
          m_board[8] | m_board[9] | m_board[10] | m_board[11];
 }
 
 bool Board::side_to_move() const noexcept { return m_side; }
 
-bool Board::castle_available(int castle) const
-{
+bool Board::castle_available(int castle) const {
   switch (castle) {
     case 0:
       return m_castle_WK;
@@ -216,8 +210,7 @@ bool Board::castle_available(int castle) const
 
 u32 Board::enpassant_square() const { return static_cast<u32>(m_enpassant); }
 
-std::string Board::debug_print() const
-{
+std::string Board::debug_print() const {
   char pieces[13] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', ' '};
   std::string str{""};
   for (int i = 0; i < 64; ++i) {

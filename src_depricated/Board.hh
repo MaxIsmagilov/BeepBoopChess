@@ -174,7 +174,8 @@ static constexpr int rook_occupancy_bits[64] = {12, 11, 11, 11, 11, 11, 11, 12, 
 /*      wrapper struct to store and sort moves      */
 
 /// @brief struct to store moves and their heuristic
-struct move_wrapper {
+struct move_wrapper
+{
   uint32_t _mv;
   u16 _hv;
 
@@ -231,8 +232,7 @@ struct move_wrapper {
 /// @brief prints a bitboard
 /// @param bb
 /// @return a string
-std::string print_bitboard(const uint64_t& bb)
-{
+std::string print_bitboard(const uint64_t& bb) {
   std::string str = "";
   for (int i = 0; i < 64; i++) {
     str += (get_bit(bb, i)) ? '1' : '0';
@@ -248,8 +248,7 @@ std::string print_bitboard(const uint64_t& bb)
 /// @brief counts the bits in a bitboard
 /// @param bitboard
 /// @return the number of bits
-static inline unsigned int count_bits(const uint64_t& bitboard)
-{
+static inline unsigned int count_bits(const uint64_t& bitboard) {
   uint64_t test = bitboard;
   unsigned int bitnumber = 0;
   while (test) {
@@ -281,8 +280,7 @@ static inline move_wrapper pack_move(const unsigned int& start_square, const uns
                                      const unsigned int& moved_piece, const unsigned int& promotion_piece,
                                      const unsigned int& capture, const unsigned int& castle,
                                      const unsigned int& enpassant, const unsigned int& pp_flag,
-                                     const unsigned int& castle_ov)
-{
+                                     const unsigned int& castle_ov) {
   return {((start_square & 0x3FUL) | ((end_square & 0x3FUL) << 6) | ((moved_piece & 0xFUL) << 12) |
            ((promotion_piece & 0xFUL) << 16) | ((capture & 0x1UL) << 20) | ((castle & 0x1UL) << 21) |
            ((enpassant & 0x1UL) << 22) | ((pp_flag & 0x1UL) << 23) | ((castle_ov & 0xFUL) << 24)),
@@ -301,7 +299,8 @@ static constexpr int MAX_DEPTH = 256;
 \*************************************/
 
 /// @brief time managing struct
-struct time_controls {
+struct time_controls
+{
   int _quit = 0;
   int _movestogo = 30;
   int _movetime = -1;
@@ -317,8 +316,7 @@ struct time_controls {
 time_controls pub_time;
 
 /// @brief resets time
-static inline void reset_time()
-{
+static inline void reset_time() {
   pub_time._quit = 0;
   pub_time._movestogo = 30;
   pub_time._movetime = -1;
@@ -394,24 +392,21 @@ class Board
 
   inline uint64_t get_fullmoves() const { return ((board[12] >> 8) & 0xFFFFULL); }
 
-  inline void set_fullmoves(const uint64_t new_value)
-  {
+  inline void set_fullmoves(const uint64_t new_value) {
     board[12] &= ~0xFFFF00ULL;
     board[12] |= (new_value & 0xFFFFULL) << 8;
   }
 
   inline uint64_t get_halfmoves() const { return (board[12] >> 24) & 0xFFULL; }
 
-  inline void set_halfmoves(const uint64_t new_value)
-  {
+  inline void set_halfmoves(const uint64_t new_value) {
     board[12] &= ~0xFF000000ULL;
     board[12] |= (new_value & 0xFFULL) << 24;
   }
 
   inline uint64_t get_castles() const { return (board[12] >> 32) & 0xFFULL; }
 
-  inline void set_castles(const uint64_t new_value)
-  {
+  inline void set_castles(const uint64_t new_value) {
     board[12] &= ~0xFF00000000ULL;
     board[12] |= ((new_value & 0xFFULL) << 32);
   }
@@ -420,15 +415,13 @@ class Board
 
   inline int get_side_to_move() const { return ((board[12] >> 63)) ? 1 : -1; }
 
-  inline void set_side_to_move(const int new_side_to_move)
-  {
+  inline void set_side_to_move(const int new_side_to_move) {
     if (get_side_to_move() != new_side_to_move) flip_side();
   }
 
   inline void flip_side() { board[12] ^= 3ULL << 63; }
 
-  inline void make_move(const move_wrapper& move)
-  {
+  inline void make_move(const move_wrapper& move) {
     set_halfmoves(get_halfmoves() + 1);
 
     const int end = end_square(move);
@@ -488,8 +481,7 @@ class Board
 /// @brief loads a position from a FEN code
 /// @param bd a pointer to a Board
 /// @param FEN
-void import_FEN(Board* bd, const std::string& FEN)
-{
+void import_FEN(Board* bd, const std::string& FEN) {
   char arr[64];
   int index = 0;
   int feni = 0;
@@ -602,8 +594,7 @@ void import_FEN(Board* bd, const std::string& FEN)
 /// @brief nicely formats a board
 /// @param bd a pointer
 /// @return a string of the board
-std::string print_board(Board* bd)
-{
+std::string print_board(Board* bd) {
   std::string boardstr = "--|---|---|---|---|---|---|--\n";
   const char p[12] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k'};
   for (int pos = 0; pos < 64; pos++) {
@@ -635,8 +626,7 @@ std::string print_board(Board* bd)
 /// @brief converts the board to a string
 /// @param bd
 /// @return a string version of the board
-std::string to_string(Board* bd)
-{
+std::string to_string(Board* bd) {
   std::string bdstr = "";
   char p[12] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k'};
   for (int pos = 0; pos < 64; pos++) {
@@ -690,16 +680,14 @@ class BoardManager
   Board* top;
 
  public:
-  BoardManager(const Board& bd)
-  {
+  BoardManager(const Board& bd) {
     history = std::array<Board, MAX_DEPTH>();
     history.fill(Board());
     history[0] = std::move(bd);
     top = &history[0];
   }
 
-  inline void make_move(const move_wrapper& mw)
-  {
+  inline void make_move(const move_wrapper& mw) {
     *(top + 1) = *top;
     top++;
     top->make_move(mw);
@@ -709,8 +697,7 @@ class BoardManager
 
   inline Board& get_top() { return (*top); }
 
-  inline void null_move()
-  {
+  inline void null_move() {
     *(top + 1) = *top;
     top++;
     top->flip_side();
@@ -757,8 +744,7 @@ uint64_t pawn_mask(int square, int side)  // side is 1 for white, -1 for black
 /// @brief find a mask for a knight
 /// @param square
 /// @return a bitboard mask
-uint64_t knight_mask(int square)
-{
+uint64_t knight_mask(int square) {
   uint64_t att = 0ULL;       // attacks
   uint64_t bitboard = 0ULL;  // knight square
   bitboard = push_bit(bitboard, square);
@@ -784,8 +770,7 @@ uint64_t knight_mask(int square)
 /// @brief find a mask for a king
 /// @param square
 /// @return a bitboard mask
-uint64_t king_mask(int square)
-{
+uint64_t king_mask(int square) {
   uint64_t att = 0ULL;       // attacks
   uint64_t bitboard = 0ULL;  // king square
   bitboard = push_bit(bitboard, square);
@@ -802,8 +787,7 @@ uint64_t king_mask(int square)
 /// @brief find a mask for bishop occupancies
 /// @param square
 /// @return a bitboard mask
-uint64_t bishop_mask(int square)
-{
+uint64_t bishop_mask(int square) {
   int rank, file;
   int t_rank = square / 8;
   int t_file = square % 8;
@@ -818,8 +802,7 @@ uint64_t bishop_mask(int square)
 /// @brief find a mask for rook occupancies
 /// @param square
 /// @return a bitboard mask
-uint64_t rook_mask(int square)
-{
+uint64_t rook_mask(int square) {
   int rank, file;
   int t_rank = square / 8;
   int t_file = square % 8;
@@ -835,8 +818,7 @@ uint64_t rook_mask(int square)
 /// @param square
 /// @param side
 /// @return a bitboard mask
-uint64_t silent_pawn_mask(int square, int side)
-{
+uint64_t silent_pawn_mask(int square, int side) {
   uint64_t mv = 0ULL;
   uint64_t bitboard = 0ULL;  // pawn square
   bitboard = push_bit(bitboard, square);
@@ -857,8 +839,7 @@ uint64_t silent_pawn_mask(int square, int side)
 /// @param blockers
 /// @return an attack bitboard
 /// @note for magic generation
-uint64_t otf_bishop_attacks(int square, uint64_t blockers)
-{
+uint64_t otf_bishop_attacks(int square, uint64_t blockers) {
   int rank, file;
   int t_rank = square / 8;
   int t_file = square % 8;
@@ -887,8 +868,7 @@ uint64_t otf_bishop_attacks(int square, uint64_t blockers)
 /// @param blockers
 /// @return an attack bitboard
 /// @note for magic generation
-uint64_t otf_rook_attacks(int square, uint64_t blockers)
-{
+uint64_t otf_rook_attacks(int square, uint64_t blockers) {
   int rank, file;
   int t_rank = square / 8;
   int t_file = square % 8;
@@ -918,8 +898,7 @@ uint64_t otf_rook_attacks(int square, uint64_t blockers)
 /// @param mask
 /// @return a bitboard
 /// @note for magic generation
-uint64_t get_occupancy(int index, int bit_count, uint64_t mask)
-{
+uint64_t get_occupancy(int index, int bit_count, uint64_t mask) {
   uint64_t occupancy = 0ULL;
 
   for (int i = 0; i < bit_count; i++) {
@@ -938,8 +917,7 @@ uint64_t get_occupancy(int index, int bit_count, uint64_t mask)
 /// @param occupancy
 /// @param piece
 /// @return a magic number
-uint64_t find_magic(int square, int occupancy, int piece)
-{
+uint64_t find_magic(int square, int occupancy, int piece) {
   uint64_t occupancies[4096];
   uint64_t attacks[4096];
   uint64_t checked_attacks[4096];
@@ -979,8 +957,7 @@ uint64_t find_magic(int square, int occupancy, int piece)
 
 /// @brief initalizes magic numbers
 /// @note does not do anything, magics are already generated and known at compile-time
-void initialize_magic_numbers()
-{
+void initialize_magic_numbers() {
   for (int i = 0; i < 64; i++) {
     // rook_magics[i] = find_magic(i, rook_occupancy_bits[i], mROOK);
   }
@@ -990,8 +967,7 @@ void initialize_magic_numbers()
 }
 
 /// @brief initialize attack tables for non-slider pieces (pawns, knights, kings)
-void initialize_non_sliders()
-{
+void initialize_non_sliders() {
   for (int i = 0; i < 64; i++) {
     pawn_attacks[0][i] = pawn_mask(i, -1);
     pawn_attacks[1][i] = pawn_mask(i, 1);
@@ -1003,8 +979,7 @@ void initialize_non_sliders()
 }
 
 /// @brief initialize attack tables for slider pieces (bishops, rooks, queens)
-void initialize_sliders()
-{
+void initialize_sliders() {
   for (int i = 0; i < 64; i++) {
     bishop_attack_masks[i] = bishop_mask(i);
     rook_attack_masks[i] = rook_mask(i);
@@ -1042,8 +1017,7 @@ void initialize_sliders()
 /// @param square
 /// @param occupancy
 /// @return an attack bitboard
-static inline uint64_t get_bishop_attacks(const int square, uint64_t occupancy)
-{
+static inline uint64_t get_bishop_attacks(const int square, uint64_t occupancy) {
   occupancy &= bishop_attack_masks[square];
   occupancy *= bishop_magics[square];
   occupancy >>= 64 - bishop_occupancy_bits[square];
@@ -1054,8 +1028,7 @@ static inline uint64_t get_bishop_attacks(const int square, uint64_t occupancy)
 /// @param square
 /// @param occupancy
 /// @return an attack bitboard
-static inline uint64_t get_rook_attacks(const int square, uint64_t occupancy)
-{
+static inline uint64_t get_rook_attacks(const int square, uint64_t occupancy) {
   occupancy &= rook_attack_masks[square];
   occupancy *= rook_magics[square];
   occupancy >>= 64 - rook_occupancy_bits[square];
@@ -1066,8 +1039,7 @@ static inline uint64_t get_rook_attacks(const int square, uint64_t occupancy)
 /// @param square
 /// @param occupancy
 /// @return an attack bitboard
-static inline uint64_t get_queen_attacks(const int square, const uint64_t& occupancy)
-{
+static inline uint64_t get_queen_attacks(const int square, const uint64_t& occupancy) {
   uint64_t occ1 = occupancy;
 
   occ1 &= bishop_attack_masks[square];
@@ -1090,8 +1062,7 @@ static inline uint64_t get_queen_attacks(const int square, const uint64_t& occup
 /// @param bd
 /// @param attacking_side
 /// @return whether the square is attacked or not
-static inline const bool is_attacked(int square, const Board& bd, const int attacking_side)
-{
+static inline const bool is_attacked(int square, const Board& bd, const int attacking_side) {
   return (square == -1)
              ? false
              : ((attacking_side == 1)
@@ -1108,8 +1079,7 @@ static inline const bool is_attacked(int square, const Board& bd, const int atta
 /// @param move
 /// @param tst
 /// @return the heuristic score (currently unused)
-static inline int heuristic_score(const Board& bd, const unsigned int move, Board& tst)
-{
+static inline int heuristic_score(const Board& bd, const unsigned int move, Board& tst) {
   // does nothing
   return 0;
 }
@@ -1118,8 +1088,7 @@ static inline int heuristic_score(const Board& bd, const unsigned int move, Boar
 /// @param bd
 /// @param side_in_check
 /// @return whether the side is in check
-static inline const bool in_check(const Board& bd, const int side_in_check)
-{
+static inline const bool in_check(const Board& bd, const int side_in_check) {
   return ((side_in_check == 1) ? is_attacked(LSB_index(bd[5]), bd, -1) : is_attacked(LSB_index(bd[11]), bd, 1));
 }
 
@@ -1128,8 +1097,7 @@ static inline const bool in_check(const Board& bd, const int side_in_check)
 /// @param move
 /// @param tst
 /// @return boolean value
-static inline const bool check_check(const Board& bd, const unsigned int move, Board& tst)
-{
+static inline const bool check_check(const Board& bd, const unsigned int move, Board& tst) {
   tst = bd;
   ;
   tst.make_move({move, 0});
@@ -1142,8 +1110,7 @@ static inline const bool check_check(const Board& bd, const unsigned int move, B
 /// @param bd
 /// @param start_pointer
 /// @return the size of the array
-static inline unsigned int get_moves(const Board& bd, move_wrapper* start_pointer)
-{
+static inline unsigned int get_moves(const Board& bd, move_wrapper* start_pointer) {
   // clear array
   unsigned int size = 0;
 
@@ -1381,8 +1348,7 @@ static inline unsigned int get_moves(const Board& bd, move_wrapper* start_pointe
 
 /// @brief prints the move and heuristic values for a board
 /// @param bd
-void print_move_values(const Board& bd)
-{
+void print_move_values(const Board& bd) {
   int i = 1;
   printf("\n\t");
   std::array<move_wrapper, 120> arr = std::array<move_wrapper, 120>();
@@ -1407,15 +1373,15 @@ static inline int eval(const Board& bd);
 
 static inline void print_move(const move_wrapper& move, const bool& new_line);
 
-struct move_info {
+struct move_info
+{
   move_wrapper move;
   long long int total_nodes;
   int eval;
   inline bool operator>(const move_info& other) const { return this->eval > other.eval; }
 };
 
-void print_move_info(const move_info& mvif)
-{
+void print_move_info(const move_info& mvif) {
   printf("move_info: ");
   print_move(mvif.move, false);
   printf("\tafter %10lli nodes -> %+4.1f\n", mvif.total_nodes, (float)mvif.eval / 100.0);
@@ -1423,7 +1389,8 @@ void print_move_info(const move_info& mvif)
 
 static inline int quescence_search(int alpha, int beta) { return 0; }
 
-struct get_values {
+struct get_values
+{
  private:
   BoardManager _bm{Board()};
   std::array<move_wrapper, ARRAY_SIZE> _move_arrays[MAX_DEPTH];
@@ -1432,8 +1399,7 @@ struct get_values {
   move_wrapper _mvwr;
   int val{0};
 
-  inline int negamax(const int depth, int alpha, int beta, const int side)
-  {
+  inline int negamax(const int depth, int alpha, int beta, const int side) {
     (*_total_nodes)++;
     // return if done or draw
     if (depth <= 0) {
@@ -1491,8 +1457,7 @@ struct get_values {
   }
 
  public:
-  inline get_values(const move_wrapper& move, const Board& bd) : _mvwr{move}
-  {
+  inline get_values(const move_wrapper& move, const Board& bd) : _mvwr{move} {
     std::for_each(_move_arrays, _move_arrays + MAX_DEPTH,
                   [&](std::array<move_wrapper, ARRAY_SIZE>& arr) { arr = std::array<move_wrapper, ARRAY_SIZE>(); });
     _bm = BoardManager(bd);
@@ -1501,8 +1466,7 @@ struct get_values {
     _ply = new int{0};
   }
 
-  inline move_info operator()(const int& depth)
-  {
+  inline move_info operator()(const int& depth) {
     val = negamax(depth, -infinity, infinity, _bm.get_top().get_side_to_move());
     return {_mvwr, *_total_nodes, val};
   }
@@ -1511,8 +1475,7 @@ struct get_values {
 };
 
 static inline void run_threads(const int depth, const move_wrapper& mv, const Board& bd,
-                               std::vector<move_info>& eval_arr)
-{
+                               std::vector<move_info>& eval_arr) {
   get_values v(mv, bd);
   move_info mvnfo = v(depth);
   array_lock.lock();
@@ -1520,8 +1483,7 @@ static inline void run_threads(const int depth, const move_wrapper& mv, const Bo
   array_lock.unlock();
 }
 
-static inline move_info get_best_move(const Board* bd, int depth)
-{
+static inline move_info get_best_move(const Board* bd, int depth) {
   if (bd->get_halfmoves() >= 50) return {{0, 0}, 0LL, 0};
 
   std::array<move_wrapper, ARRAY_SIZE> arr = std::array<move_wrapper, ARRAY_SIZE>();
@@ -1570,8 +1532,7 @@ static inline move_info get_best_move(const Board* bd, int depth)
   return {eval_arrays[0]};
 }
 
-static inline int get_perft(int depth, int& ply, Board** history, std::array<move_wrapper, ARRAY_SIZE>* move_arrays)
-{
+static inline int get_perft(int depth, int& ply, Board** history, std::array<move_wrapper, ARRAY_SIZE>* move_arrays) {
   if (depth == 0) return 1;
   int sum = 0;
   const int sz = get_moves(*history[ply], move_arrays[ply].begin());
@@ -1593,8 +1554,7 @@ static inline int get_perft(int depth, int& ply, Board** history, std::array<mov
   return sum;
 }
 
-void run_perft(const Board& bd)
-{
+void run_perft(const Board& bd) {
   Board* history[MAX_DEPTH];
   std::for_each(history, history + MAX_DEPTH, [&](Board*& bd) mutable { bd = new Board(); });
   std::array<move_wrapper, ARRAY_SIZE> move_arrays[MAX_DEPTH];
