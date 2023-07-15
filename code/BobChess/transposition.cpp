@@ -52,4 +52,6 @@ void TTable::initialize() noexcept {
   }
 }
 
+u64 TTable::m_keygens[64][12] = {};
+
 }  // namespace BobChess

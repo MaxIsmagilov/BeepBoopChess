@@ -9,8 +9,9 @@ SET(BobChess_Headers
     move_list.hpp
     move_generator.hpp
     pesto_eval.hpp
+    board_stack.hpp
     transposition.hpp
-    algorithm.hpp
+    algorithm_chess.hpp
     )
 
 SET(BobChess_Impl
@@ -22,8 +23,9 @@ SET(BobChess_Impl
     move_list.cpp
     move_generator.cpp
     pesto_eval.cpp
+    board_stack.cpp
     transposition.cpp
-    algorithm.cpp
+    algorithm_chess.cpp
     )
 
 ADD_LIBRARY(BobChess_objects OBJECT 
@@ -31,9 +33,13 @@ ADD_LIBRARY(BobChess_objects OBJECT
     ${BobChess_Impl}
     )
 
+TARGET_LINK_LIBRARIES(BobChess_objects -fconcepts)
+
 TARGET_COMPILE_FEATURES(BobChess_objects
-    PUBLIC cxx_std_20
+    PRIVATE cxx_std_20
     )
+
+TARGET_LINK_LIBRARIES(BobChess_objects -fconcepts)
 
 TARGET_INCLUDE_DIRECTORIES(BobChess_objects
     PUBLIC
@@ -44,6 +50,8 @@ TARGET_INCLUDE_DIRECTORIES(BobChess_objects
 ADD_LIBRARY(BobChess $<TARGET_OBJECTS:BobChess_objects>)
 
 ADD_LIBRARY(BobChess::BobChess ALIAS BobChess)
+
+TARGET_LINK_LIBRARIES(BobChess -fconcepts)
 
 SET_TARGET_PROPERTIES( BobChess
     PROPERTIES
@@ -77,3 +85,14 @@ ADD_EXECUTABLE(test.t test.t.cpp)
 TARGET_LINK_LIBRARIES(test.t BobChess::BobChess)
 
 # tests
+
+include(GoogleTest)
+include(CTest)
+
+ADD_EXECUTABLE(move_list.t move_list.t.cpp)
+TARGET_LINK_LIBRARIES(move_list.t BobChess::BobChess GTest::gtest_main)
+gtest_discover_tests(move_list.t)
+
+ADD_EXECUTABLE(move_generator.t move_generator.t.cpp)
+TARGET_LINK_LIBRARIES(move_generator.t BobChess::BobChess GTest::gtest_main)
+gtest_discover_tests(move_generator.t)

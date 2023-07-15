@@ -1,6 +1,7 @@
 #include "move_list.hpp"
 
 #include <algorithm>
+#include <iostream>
 
 namespace BobChess
 {
@@ -24,17 +25,18 @@ const Move& MoveList::operator[](int index) const noexcept { return m_moves[inde
 
 void MoveList::set_heuristic(int index, int heuristic) noexcept { m_moves[index].set_heuristic(heuristic); }
 
-void MoveList::push_back(const Move& mv) noexcept { m_moves[++m_last_populated] = mv; }
+void MoveList::push_back(const Move& mv) noexcept { m_moves[m_last_populated++] = mv; }
 
-void MoveList::push_back(Move&& mv) noexcept { m_moves[++m_last_populated] = mv; }
+void MoveList::push_back(Move&& mv) noexcept { m_moves[m_last_populated++] = mv; }
 
 void MoveList::remove(int index) noexcept {
   std::rotate(m_moves.begin() + index, m_moves.begin() + index + 1, m_moves.begin() + (m_last_populated--));
+  // std::cerr << "removed " << index << " from " << m_last_populated << "\n";
 }
 
 void MoveList::remove(std::vector<int> indeces) noexcept {
   std::for_each(indeces.begin(), indeces.end(), [&](int i) { this->remove(i); });
 }
 
-int MoveList::get_size() noexcept { return m_last_populated + 1; }
+int MoveList::get_size() noexcept { return m_last_populated; }
 }  // namespace BobChess

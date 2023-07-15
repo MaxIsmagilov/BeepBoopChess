@@ -32,13 +32,13 @@ void Evaluator::initialize_evaluation() noexcept {
 int Evaluator::eval(const Board& bd) noexcept {
   int game_phase = 0;
 
-  uint64_t board_copy[12] = {bd[0], bd[1], bd[2], bd[3], bd[4], bd[5], bd[6], bd[7], bd[8], bd[9], bd[10], bd[11]};
+  u64 board_copy[12] = {bd[0], bd[1], bd[2], bd[3], bd[4], bd[5], bd[6], bd[7], bd[8], bd[9], bd[10], bd[11]};
 
   int mg[2] = {0, 0};
   int eg[2] = {0, 0};
 
   // evaluate white pieces
-  std::for_each(board_copy, board_copy + 6, [&](uint64_t& bb) mutable {
+  std::for_each(board_copy, board_copy + 6, [&](u64& bb) mutable {
     while (bb) {
       const int p = &bb - board_copy;
       const int j = utils::LSB_index(bb);
@@ -50,7 +50,7 @@ int Evaluator::eval(const Board& bd) noexcept {
   });
 
   // evaluate black pieces
-  std::for_each(board_copy + 6, board_copy + 12, [&](uint64_t& bb) mutable {
+  std::for_each(board_copy + 6, board_copy + 12, [&](u64& bb) mutable {
     while (bb) {
       const int p = &bb - (board_copy + 6);
       const int j = utils::LSB_index(bb);

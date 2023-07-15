@@ -31,7 +31,7 @@ Move::Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bo
       m_double_push{is_double} {}
 
 Move::Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bool is_promote, bool enpassant,
-           bool is_double, unsigned int heuristic)
+           bool is_double, int heuristic)
     : m_heuristic{heuristic},
       m_start{start},
       m_end{end},
@@ -43,7 +43,7 @@ Move::Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bo
       m_enpassant{enpassant},
       m_double_push{is_double} {}
 
-void Move::set_heuristic(unsigned int heuristic) noexcept { m_heuristic = heuristic; }
+void Move::set_heuristic(int heuristic) noexcept { m_heuristic = heuristic; }
 
 u8 Move::get_start() const noexcept { return static_cast<u8>(m_start); }
 
@@ -63,16 +63,21 @@ bool Move::is_enpassant() const noexcept { return static_cast<bool>(m_enpassant)
 
 bool Move::is_double_push() const noexcept { return static_cast<bool>(m_double_push); }
 
+int Move::get_heuristic() const noexcept { return m_heuristic; }
+
 bool Move::operator>(const Move& other) const noexcept { return m_heuristic > other.m_heuristic; }
 
 bool Move::operator<(const Move& other) const noexcept { return m_heuristic < other.m_heuristic; }
 
 std::string Move::to_string() const {
+  if (!m_start && !m_end) return "0000";
+  char pieces[] = {'p', 'n', 'b', 'r', 'q'};
   std::string s = "";
   s.push_back('a' + (m_start % 8));
-  s.push_back('1' + (m_start / 8));
+  s.push_back('8' - (m_start / 8));
   s.push_back('a' + (m_end % 8));
-  s.push_back('1' + (m_end / 8));
+  s.push_back('8' - (m_end / 8));
+  if (m_promote) s.push_back(pieces[m_promote]);
   return s;
 }
 

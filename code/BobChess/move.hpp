@@ -18,9 +18,13 @@ class Move
        bool is_double);
 
   Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bool is_promote, bool enpassant,
-       bool is_double, unsigned int heuristic);
+       bool is_double, int heuristic);
 
-  void set_heuristic(unsigned int heuristic) noexcept;
+  Move(Move&& m) = default;
+  Move(const Move& m) = default;
+  Move& operator=(const Move& m) = default;
+
+  void set_heuristic(int heuristic) noexcept;
 
   u8 get_start() const noexcept;
   u8 get_end() const noexcept;
@@ -32,13 +36,15 @@ class Move
   bool is_enpassant() const noexcept;
   bool is_double_push() const noexcept;
 
+  int get_heuristic() const noexcept;
+
   bool operator>(const Move& other) const noexcept;
   bool operator<(const Move& other) const noexcept;
 
   std::string to_string() const;
 
  private:
-  unsigned int m_heuristic : 16;
+  int m_heuristic;
 
   u8 m_start       : 7;
   u8 m_end         : 7;

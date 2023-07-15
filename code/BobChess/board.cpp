@@ -14,7 +14,10 @@ void Board::make_move(const Move& mv) noexcept {
 
   if (m_side ^= 1u) m_fullmoves++;
 
-  if (!mv.get_piece() && mv.is_double_push()) m_enpassant = (mv.get_start() + mv.get_end()) / 2;
+  if (!mv.get_piece() && mv.is_double_push())
+    m_enpassant = (mv.get_start() + mv.get_end()) / 2;
+  else
+    m_enpassant = 255;
 
   m_board[mv.get_piece() + piecemod] &= ~(1ULL << mv.get_start());
 
@@ -33,14 +36,14 @@ void Board::make_move(const Move& mv) noexcept {
     m_board[mv.get_piece() + piecemod] |= (1ULL << mv.get_end());
 
   if (mv.is_castle()) {
-    if (m_side) {
+    if (m_side == 0) {
       m_board[3] |= (1ULL << ((mv.get_end() + mv.get_start()) / 2));
       m_board[3] &= ~(1ULL << ((mv.get_end() > mv.get_start()) ? utils::_H1 : utils::_A1));
     }
 
     else {
       m_board[9] |= (1ULL << ((mv.get_end() + mv.get_start()) / 2));
-      m_board[9] = ~(1ULL << ((mv.get_end() > mv.get_start()) ? utils::_H8 : utils::_A8));
+      m_board[9] &= ~(1ULL << ((mv.get_end() > mv.get_start()) ? utils::_H8 : utils::_A8));
     }
   }
 
@@ -173,9 +176,11 @@ void Board::import_FEN([[maybe_unused]] const char* FEN) {
   } else
     m_enpassant = 255;
   ++str_index;
-  m_fullmoves = std::stoi(FEN + (++str_index));
-  int len = (m_fullmoves / 10) + 1;
-  m_halfmoves = std::stoi(FEN + (++str_index) + len);
+  // std::cerr << FEN + str_index << '\n';
+  m_halfmoves = std::stoi(FEN + (++str_index));
+  int len = (m_halfmoves / 10) + 1;
+  // std::cerr << len << '\n';
+  m_fullmoves = std::stoi(FEN + (++str_index) + len);
 }
 
 void Board::flip_side() noexcept { m_side ^= 1; }
@@ -235,7 +240,7 @@ std::string Board::debug_print() const {
   str += std::to_string(m_fullmoves);
   str += "\nhalfmoves: ";
   str += std::to_string(m_halfmoves);
-  str += (m_side) ? "\nblack to move\n" : "\nwhite to move\n";
+  str += (!m_side) ? "\nblack to move\n" : "\nwhite to move\n";
   str += (m_castle_WK) ? 'y' : 'n';
   str += (m_castle_WQ) ? 'y' : 'n';
   str += (m_castle_BK) ? 'y' : 'n';
