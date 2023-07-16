@@ -54,7 +54,7 @@ TARGET_LINK_LIBRARIES(BobChess -fconcepts)
 
 SET_TARGET_PROPERTIES( BobChess
     PROPERTIES
-    CXX_EXTENSIONS -fconcepts
+    CXX_EXTENSIONS -g3
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED YES
     PUBLIC_HEADER "${BobChess_headers}")
@@ -82,6 +82,7 @@ enable_testing()
 
 ADD_EXECUTABLE(test.t test.t.cpp)
 TARGET_LINK_LIBRARIES(test.t BobChess::BobChess)
+target_compile_options(test.t PRIVATE -g)
 
 # tests
 

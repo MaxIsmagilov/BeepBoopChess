@@ -19,7 +19,7 @@ namespace Macroes
 
 void Evaluator::initialize_evaluation() noexcept {
   int piece, p, square;
-  for (p = utils::PAWN, piece = WHITE_PIECE(utils::PAWN); p <= utils::KING; piece += 2, p++) {
+  for (p = utils::PAWN, piece = BLACK_PIECE(utils::PAWN); p <= utils::KING; piece += 2, p++) {
     for (square = 0; square < 64; square++) {
       mg_table[piece][square] = mg_value[p] + mg_pesto_table[p][square];
       eg_table[piece][square] = eg_value[p] + eg_pesto_table[p][square];
@@ -68,5 +68,8 @@ int Evaluator::eval(const Board& bd) noexcept {
   const int eg_phase = 24 - mg_phase;
   return ((mg_score * mg_phase) + (eg_score * eg_phase)) / 24;
 }
+
+int Evaluator::mg_table[12][64] = {};
+int Evaluator::eg_table[12][64] = {};
 
 }  // namespace BobChess

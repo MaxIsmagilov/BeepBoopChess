@@ -1,6 +1,7 @@
 #pragma once
 
 #include <concepts>
+#include <functional>
 #include <memory>
 #include <tuple>
 
@@ -14,12 +15,6 @@
 namespace BobChess
 {
 
-template <typename T>
-concept evaluator = requires(const Board& bd) {
-  std::is_integral<decltype(T::eval(bd))>();
-};
-
-template <evaluator the_eval>
 class algorithm
 {
  public:
@@ -27,16 +22,18 @@ class algorithm
 
   algorithm(const Board& bd, TTable& tt);
 
-  std::tuple<const Move&, u64, int> get_best_move(int depth);
+  std::tuple<Move, int, int> get_best_move(int depth, std::function<int(Board)> eval);
+
+  int evaluate_move(int depth, std::function<int(Board)> eval);
 
  private:
   TTable& m_tt;
   BoardStack m_bs;
 
-  std::unique_ptr<u64> m_node_count;
+  std::unique_ptr<int> m_count{};
 
-  int quescence(int depth, int alpha, int beta, int color);
-  int negamax(int depth, int alpha, int beta, int color);
+  int quescence(int depth, int alpha, int beta, int color, std::function<int(Board)> eval);
+  int negamax(int depth, int alpha, int beta, int color, std::function<int(Board)> eval);
 
   /// @brief arbitrarily large number to use in place of infinity
   static constexpr int infinity = 1000000;
@@ -44,73 +41,6 @@ class algorithm
   /// @brief checkmate value
   static constexpr int game_over = 100000;
 };
-
-}  // namespace BobChess
-
-namespace BobChess
-{
-
-template <evaluator the_eval>
-algorithm<the_eval>::algorithm(const Board& bd, TTable& tt)
-    : m_bs(bd), m_tt{tt}, m_node_count{std::make_unique<u64>()} {}
-
-template <evaluator the_eval>
-std::tuple<const Move&, u64, int> algorithm<the_eval>::get_best_move(int depth) {
-  MoveList ml = MoveGenerator::generate_all(m_bs.top());
-  if (ml.get_size() == 0) return std::make_tuple(Move{}, 0, 0);
-  for (int i = 0; i < ml.get_size(); ++i) {
-    m_bs.move(ml[i]);
-    ml.set_heuristic(i, negamax(depth, -infinity, infinity, 1));
-    m_bs.pop();
-  }
-  return std::make_tuple(ml[0], 0, 0);
-}
-
-template <evaluator the_eval>
-int algorithm<the_eval>::quescence(int depth, int alpha, int beta, int color) {
-  auto alpha_orig = alpha;
-
-  MoveList ml = MoveGenerator::generate_all(m_bs.top());
-
-  if (ml.get_size() == 0 || depth == 0) return the_eval::eval(m_bs.top()) * color;
-
-  const auto entry = m_tt.get_entry(m_bs.top());
-  const auto entrytype = std::get<1>(entry);
-  const auto entryvalue = std::get<0>(entry);
-  if (entrytype != TTutils::FAIL) {
-    if (entrytype == TTutils::EXACT) return entryvalue;
-    if (entrytype == TTutils::LBOUND) alpha = std::max(alpha, entryvalue);
-    if (entrytype == TTutils::UBOUND) beta = std::min(beta, entryvalue);
-  }
-
-  auto value = -infinity;
-  for (int i = 0; i < ml.get_size(); ++i) {
-    m_bs.move(ml[i]);
-    const auto newval = -negamax(depth - 1, -beta, -alpha, -color);
-    m_bs.pop();
-
-    value = std::max(value, newval);
-    alpha = std::max(value, alpha);
-    if (alpha >= beta) break;
-  }
-
-  auto newtype = TTutils::FAIL;
-  if (value <= alpha_orig)
-    newtype = TTutils::UBOUND;
-  else if (value >= beta)
-    newtype = TTutils::LBOUND;
-  else
-    newtype = TTutils::EXACT;
-
-  m_tt.add(m_bs.top(), value, newtype);
-
-  return value;
-}
-
-template <evaluator the_eval>
-int algorithm<the_eval>::negamax(int depth, int alpha, int beta, int color) {
-  return 0;
-}
 
 }  // namespace BobChess
 
