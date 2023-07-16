@@ -33,7 +33,6 @@ ADD_LIBRARY(BobChess_objects OBJECT
     ${BobChess_Impl}
     )
 
-TARGET_LINK_LIBRARIES(BobChess_objects -fconcepts)
 
 TARGET_COMPILE_FEATURES(BobChess_objects
     PRIVATE cxx_std_20
@@ -55,7 +54,7 @@ TARGET_LINK_LIBRARIES(BobChess -fconcepts)
 
 SET_TARGET_PROPERTIES( BobChess
     PROPERTIES
-    CXX_EXTENSIONS NO
+    CXX_EXTENSIONS -fconcepts
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED YES
     PUBLIC_HEADER "${BobChess_headers}")
