@@ -65,6 +65,8 @@ bool Move::is_double_push() const noexcept { return static_cast<bool>(m_double_p
 
 int Move::get_heuristic() const noexcept { return m_heuristic; }
 
+bool Move::is_reduceable() const noexcept { return !(m_capture || m_is_promote); }
+
 bool Move::operator>(const Move& other) const noexcept { return m_heuristic > other.m_heuristic; }
 
 bool Move::operator<(const Move& other) const noexcept { return m_heuristic < other.m_heuristic; }

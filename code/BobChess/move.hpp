@@ -38,6 +38,8 @@ class Move
 
   int get_heuristic() const noexcept;
 
+  bool is_reduceable() const noexcept;
+
   bool operator>(const Move& other) const noexcept;
   bool operator<(const Move& other) const noexcept;
 

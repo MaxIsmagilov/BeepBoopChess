@@ -7,10 +7,15 @@ namespace BobChess
 {
 
 void Board::make_move(const Move& mv) noexcept {
+  if (!(mv.get_end() || mv.get_start())) [[unlikely]] {
+    m_side ^= 1u;
+  }
+
   m_halfmoves++;
   auto piecemod = (m_side) ? 0 : 6;
+  auto capturemod = (m_side) ? 6 : 0;
 
-  if (mv.is_capture() || mv.is_double_push()) m_halfmoves = 0;
+  if (mv.is_capture() || !mv.get_piece()) m_halfmoves = 0;
 
   if (m_side ^= 1u) m_fullmoves++;
 
@@ -21,13 +26,8 @@ void Board::make_move(const Move& mv) noexcept {
 
   m_board[mv.get_piece() + piecemod] &= ~(1ULL << mv.get_start());
 
-  if (mv.is_capture()) {
-    m_board[0 + piecemod] &= ~(1ULL << mv.get_end());
-    m_board[1 + piecemod] &= ~(1ULL << mv.get_end());
-    m_board[2 + piecemod] &= ~(1ULL << mv.get_end());
-    m_board[3 + piecemod] &= ~(1ULL << mv.get_end());
-    m_board[4 + piecemod] &= ~(1ULL << mv.get_end());
-    m_board[5 + piecemod] &= ~(1ULL << mv.get_end());
+  for (int i = 0; i < 12; ++i) {
+    m_board[i] &= ~(1ULL << mv.get_end());
   }
 
   if (mv.is_promote())
@@ -222,16 +222,21 @@ std::string Board::debug_print() const {
   char pieces[14] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', ' ', '#'};
   std::string str{""};
   for (int i = 0; i < 64; ++i) {
+    bool found = false;
     for (int j = 0; j < 13; ++j) {
-      if (j == 12) {
+      if (j == 12 && !found) {
         str += pieces[12 + (((i / 8) + i) % 2)];
         str += ' ';
-        break;
       }
-      if (utils::get_bit(m_board[j], i)) {
-        str += pieces[j];
-        str += ' ';
-        break;
+      if (utils::get_bit(m_board[j], i) && j < 12) {
+        if (!found) {
+          str += pieces[j];
+          str += ' ';
+          found = true;
+        } else {
+          str += 'X';
+          str += ' ';
+        }
       }
     }
     if (i % 8 == 7) str += '\n';

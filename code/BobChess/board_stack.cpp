@@ -16,4 +16,9 @@ void BoardStack::move(const Move& move) {
   m_array[size++].make_move(move);
 }
 
+void BoardStack::nullmove() {
+  std::copy(m_array.begin() + size - 1, m_array.begin() + size, m_array.begin() + size);
+  m_array[size++].flip_side();
+}
+
 }  // namespace BobChess

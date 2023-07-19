@@ -2,6 +2,7 @@
 #include "pesto_eval.hpp"
 
 #include <algorithm>
+#include <iostream>
 #include <sstream>
 
 #include "board.hpp"
@@ -18,8 +19,8 @@ namespace Macroes
 }  // namespace Macroes
 
 void Evaluator::initialize_evaluation() noexcept {
-  int piece, p, square;
-  for (p = utils::PAWN, piece = BLACK_PIECE(utils::PAWN); p <= utils::KING; piece += 2, p++) {
+  unsigned int piece, p, square;
+  for (p = utils::PAWN, piece = BLACK_PIECE(utils::PAWN); p <= utils::KING; piece += 2, ++p) {
     for (square = 0; square < 64; square++) {
       mg_table[piece][square] = mg_value[p] + mg_pesto_table[p][square];
       eg_table[piece][square] = eg_value[p] + eg_pesto_table[p][square];
@@ -66,7 +67,10 @@ int Evaluator::eval(const Board& bd) noexcept {
   const int eg_score = eg[utils::WHITE] - eg[utils::BLACK];
   const int mg_phase = (game_phase > 24) ? 24 : game_phase;
   const int eg_phase = 24 - mg_phase;
-  return ((mg_score * mg_phase) + (eg_score * eg_phase)) / 24;
+  auto result = ((mg_score * mg_phase) + (eg_score * eg_phase)) / 24;
+  // std::cout << result << '\t' << mg[utils::WHITE] << '\t' << mg[utils::BLACK] << '\t' << eg[utils::WHITE] << '\t'
+  //           << eg[utils::BLACK] << '\n';
+  return result;
 }
 
 int Evaluator::mg_table[12][64] = {};

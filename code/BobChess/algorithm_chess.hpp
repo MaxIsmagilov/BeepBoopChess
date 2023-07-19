@@ -40,6 +40,10 @@ class algorithm
 
   /// @brief checkmate value
   static constexpr int game_over = 100000;
+
+  static constexpr int full_depth = 4;
+
+  static constexpr int LMR_R = 3;
 };
 
 }  // namespace BobChess

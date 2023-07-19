@@ -450,7 +450,7 @@ u64 MoveGenerator::get_queen_attacks(const int square, u64 occupancy) {
 
 bool MoveGenerator::is_attacked(int square, const Board& bd, const int attacking_side) {
   if (square == -1) {
-    return false;
+    return true;
   } else {
     if (attacking_side == 1)
       return ((pawn_attacks[0][square] & bd[0]) || (knight_attacks[square] & bd[1]) ||
