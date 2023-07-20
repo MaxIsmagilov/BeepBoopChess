@@ -25,7 +25,14 @@ u64 TTable::get_key(const Board& bd) noexcept {
       key ^= m_keygens[j][i];
     }
   }
-  key ^= m_keygens[(bd.enpassant_square() == 255) ? 0 : bd.enpassant_square()][(bd.enpassant_square() == 255)];
+  auto ep = bd.enpassant_square() + 1;
+  if (ep == 256) ep = 0;
+  key ^= m_keymods[ep];
+  if (bd.castle_available(0)) key ^= m_keymods[65];
+  if (bd.castle_available(1)) key ^= m_keymods[66];
+  if (bd.castle_available(2)) key ^= m_keymods[67];
+  if (bd.castle_available(3)) key ^= m_keymods[68];
+  if (bd.side_to_move()) key ^= m_keymods[69];
   return key;
 }
 
@@ -53,11 +60,15 @@ void TTable::initialize() noexcept {
   std::uniform_int_distribution<u64> dist(0ULL, 0xFFFFFFFFFFFFFFFFULL);
   for (int i = 0; i < 64; ++i) {
     for (int j = 0; j < 12; ++j) {
-      m_keygens[i][j] = dist(r) ^ dist(r);
+      m_keygens[i][j] = dist(r);
     }
+  }
+  for (int k = 0; k < 70; ++k) {
+    m_keymods[k] = dist(r);
   }
 }
 
 u64 TTable::m_keygens[64][12] = {};
+u64 TTable::m_keymods[70] = {};
 
 }  // namespace BobChess

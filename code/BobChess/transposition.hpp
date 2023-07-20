@@ -45,6 +45,7 @@ class TTable
 
  private:
   static u64 m_keygens[64][12];
+  static u64 m_keymods[70];
   std::array<TTutils::TTEntry, TTutils::ttsize> m_entries;
 };
 

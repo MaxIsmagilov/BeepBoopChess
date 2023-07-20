@@ -217,6 +217,8 @@ bool Board::castle_available(int castle) const {
 }
 
 u32 Board::enpassant_square() const { return static_cast<u32>(m_enpassant); }
+u32 Board::halfmoves() const noexcept { return static_cast<u32>(m_halfmoves); }
+u32 Board::fullmoves() const noexcept { return static_cast<u32>(m_fullmoves); }
 
 std::string Board::debug_print() const {
   char pieces[14] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', ' ', '#'};
@@ -251,7 +253,7 @@ std::string Board::debug_print() const {
   str += (m_castle_BK) ? 'y' : 'n';
   str += (m_castle_BQ) ? 'y' : 'n';
   str += "\nenpassant square: ";
-  str += std::to_string(m_enpassant);
+  str += ((m_enpassant == 255) ? std::to_string(m_enpassant) : "255 (none)");
   str += '\n';
   return str;
 }

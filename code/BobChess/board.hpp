@@ -28,6 +28,8 @@ class Board
   bool castle_available(int castle) const;
 
   u32 enpassant_square() const;
+  u32 halfmoves() const noexcept;
+  u32 fullmoves() const noexcept;
 
   std::string debug_print() const;
   std::string nice_print() const;

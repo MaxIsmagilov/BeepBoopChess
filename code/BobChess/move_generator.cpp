@@ -166,7 +166,7 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
       // verify checks
 
       // calculate heristics
-      u64 heuristic_value = 10ULL;
+      u64 heuristic_value = 8ULL;
 
       move.set_heuristic((heuristic_value + (captureflg * 5)));
       movelist.push_back(move);

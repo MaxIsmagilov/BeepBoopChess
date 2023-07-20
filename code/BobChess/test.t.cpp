@@ -38,7 +38,7 @@ int main() {
 
     algorithm a(bd, t);
 
-    auto z = a.get_best_move(5, Evaluator::eval);
+    auto z = a.get_best_move(7, Evaluator::eval);
 
     std::cout << '\t' << std::get<0>(z).to_string() << '\n';
     std::cout << '\t' << std::get<1>(z) << '\n';

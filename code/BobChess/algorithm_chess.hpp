@@ -36,10 +36,10 @@ class algorithm
   int negamax(int depth, int alpha, int beta, int color, std::function<int(Board)> eval);
 
   /// @brief arbitrarily large number to use in place of infinity
-  static constexpr int infinity = 1000000;
+  static constexpr int infinity = 10000000;
 
   /// @brief checkmate value
-  static constexpr int game_over = 100000;
+  static constexpr int game_over = 1000000;
 
   static constexpr int full_depth = 4;
 

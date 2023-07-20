@@ -32,12 +32,19 @@ std::tuple<Move, int, int> algorithm::get_best_move(int depth, std::function<int
 }
 
 int algorithm::quescence(int depth, int alpha, int beta, int color, std::function<int(Board)> eval) {
+  auto& bd = m_bs.top();
+
+  if (bd.halfmoves() >= 50) return 0;
+
   ++(*m_count);
 
-  MoveList ml = MoveGenerator::generate_all(m_bs.top());
+  MoveList ml = MoveGenerator::generate_all(bd);
 
   if (ml.get_size() == 0) {
-    return -(game_over + depth);
+    if (MoveGenerator::in_check(bd, bd.side_to_move()))
+      return (game_over + depth + 3);
+    else
+      return 0;
   }
 
   std::vector<int> not_captures;
@@ -50,11 +57,11 @@ int algorithm::quescence(int depth, int alpha, int beta, int color, std::functio
   ml.remove(not_captures);
 
   if (ml.get_size() == 0 || depth <= 0) {
-    return eval(m_bs.top()) * color;
+    return eval(bd) * color;
   }
   auto alpha_orig = alpha;
 
-  const auto entry = m_tt.get_entry(m_bs.top());
+  const auto entry = m_tt.get_entry(bd);
   const auto entryvalue = std::get<0>(entry);
   const auto entrytype = std::get<1>(entry);
   const auto entrydepth = std::get<2>(entry);
@@ -100,27 +107,34 @@ int algorithm::quescence(int depth, int alpha, int beta, int color, std::functio
   else
     newtype = TTutils::EXACT;
 
-  m_tt.add(m_bs.top(), value, depth, newtype);
+  m_tt.add(bd, value, depth, newtype);
 
   return value;
 }
 
 int algorithm::negamax(int depth, int alpha, int beta, int color, std::function<int(Board)> eval) {
+  auto& bd = m_bs.top();
+
+  if (bd.halfmoves() >= 50) return 0;
+
   if (depth <= 0) {
     return quescence(2, alpha, beta, color, eval);
   }
 
   ++(*m_count);
 
-  MoveList ml = MoveGenerator::generate_all(m_bs.top());
+  MoveList ml = MoveGenerator::generate_all(bd);
 
   if (ml.get_size() == 0) {
-    return -(game_over + depth + 3);
+    if (MoveGenerator::in_check(bd, bd.side_to_move()))
+      return (game_over + depth + 3);
+    else
+      return 0;
   }
 
   auto alpha_orig = alpha;
 
-  const auto entry = m_tt.get_entry(m_bs.top());
+  const auto entry = m_tt.get_entry(bd);
   const auto entryvalue = std::get<0>(entry);
   const auto entrytype = std::get<1>(entry);
   const auto entrydepth = std::get<2>(entry);
@@ -181,7 +195,7 @@ int algorithm::negamax(int depth, int alpha, int beta, int color, std::function<
   else
     newtype = TTutils::EXACT;
 
-  m_tt.add(m_bs.top(), value, depth, newtype);
+  m_tt.add(bd, value, depth, newtype);
 
   return value;
 }
