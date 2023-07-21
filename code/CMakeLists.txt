@@ -8,15 +8,16 @@ PROJECT( BobChess
 
 ADD_SUBDIRECTORY(BobChess)
 
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-fconcepts" COMPILER_SUPPORTS_CONCEPTS)
+if(NOT WIN32)
+    include(CheckCXXCompilerFlag)
+    CHECK_CXX_COMPILER_FLAG("-lpthread" COMPILER_SUPPORTS_THREADS)
 
-if (COMPILER_SUPPORTS_CONCEPTS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
-else ()
-    message(FATAL_ERROR "Your compiler does not support C++20 concepts.")
+    if (COMPILER_SUPPORTS_THREADS)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lpthread")
+    else ()
+        message(FATAL_ERROR "Your compiler does not support C++20 concepts.")
+    endif ()
 endif ()
-
 
 include(FetchContent)
 FetchContent_Declare(

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <array>
 #include <tuple>
+#include <vector>
 
 #include "board.hpp"
 #include "utils.hpp"
@@ -12,7 +12,7 @@ namespace BobChess
 namespace TTutils
 {
 
-constexpr std::size_t ttsize = (65536 * 4);
+constexpr std::size_t ttsize = (65536);
 
 // @brief entry type enum
 enum TTEntryType : unsigned char { EXACT, LBOUND, UBOUND, FAIL };
@@ -46,7 +46,7 @@ class TTable
  private:
   static u64 m_keygens[64][12];
   static u64 m_keymods[70];
-  std::array<TTutils::TTEntry, TTutils::ttsize> m_entries;
+  std::vector<TTutils::TTEntry> m_entries;
 };
 
 }  // namespace BobChess

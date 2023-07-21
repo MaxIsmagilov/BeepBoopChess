@@ -1,6 +1,7 @@
 
 
 SET(BobChess_Headers
+    thread_pool.hpp
     utils.hpp
     move.hpp
     board.hpp
@@ -11,10 +12,13 @@ SET(BobChess_Headers
     pesto_eval.hpp
     board_stack.hpp
     transposition.hpp
+    timekeeping.hpp
     algorithm_chess.hpp
+    move_finder.hpp
     )
 
 SET(BobChess_Impl
+    thread_pool.cpp
     utils.cpp
     move.cpp
     board.cpp
@@ -25,7 +29,9 @@ SET(BobChess_Impl
     pesto_eval.cpp
     board_stack.cpp
     transposition.cpp
+    timekeeping.cpp
     algorithm_chess.cpp
+    move_finder.cpp
     )
 
 ADD_LIBRARY(BobChess_objects OBJECT 
@@ -38,7 +44,6 @@ TARGET_COMPILE_FEATURES(BobChess_objects
     PRIVATE cxx_std_20
     )
 
-TARGET_LINK_LIBRARIES(BobChess_objects -fconcepts)
 
 TARGET_INCLUDE_DIRECTORIES(BobChess_objects
     PUBLIC
@@ -50,15 +55,23 @@ ADD_LIBRARY(BobChess $<TARGET_OBJECTS:BobChess_objects>)
 
 ADD_LIBRARY(BobChess::BobChess ALIAS BobChess)
 
-TARGET_LINK_LIBRARIES(BobChess -fconcepts)
-
-SET_TARGET_PROPERTIES( BobChess
-    PROPERTIES
-    CXX_EXTENSIONS -g3
-    CXX_STANDARD 20
-    CXX_STANDARD_REQUIRED YES
-    PUBLIC_HEADER "${BobChess_headers}")
-
+if (WIN32)
+    SET_TARGET_PROPERTIES( BobChess
+        PROPERTIES
+        CXX_EXTENSIONS NO
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED YES
+        COMPILE_OPTIONS "-Wall -Wextra -Werror"
+        PUBLIC_HEADER "${BobChess_headers}")
+else ()
+    SET_TARGET_PROPERTIES( BobChess
+        PROPERTIES
+        CXX_EXTENSIONS -lpthread 
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED YES
+        COMPILE_OPTIONS "-Wall -Wextra -Werror"
+        PUBLIC_HEADER "${BobChess_headers}")
+endif()
 
 INCLUDE(GNUInstallDirs)
 

@@ -3,6 +3,7 @@
 #include <string>
 
 #include "algorithm_chess.hpp"
+#include "move_finder.hpp"
 #include "move_generator.hpp"
 #include "move_list.hpp"
 #include "pesto_eval.hpp"
@@ -25,27 +26,23 @@ int perft(const Board& bd, int depth) {
 
 int main() {
   std::cout << "start\n";
-  std::cout << "here?\n";
   TTable::initialize();
   Evaluator::initialize_evaluation();
-  TTable t;
   MoveGenerator::initialize_all();
   Board bd;
   bd.import_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
-  for (int i = 0; i < 256; ++i) {
+  for (int i = 0; i < 7; ++i) {
     std::cout << bd.nice_print() << '\n';
+    auto t = MoveFinder::get_best_move(bd, 4, Evaluator::eval);
 
-    algorithm a(bd, t);
+    auto m = std::get<0>(t);
 
-    auto z = a.get_best_move(7, Evaluator::eval);
+    std::cout << m.to_string() << '\n';
+    std::cout << m.get_heuristic() << '\n';
+    std::cout << std::get<1>(t) << '\n';
 
-    std::cout << '\t' << std::get<0>(z).to_string() << '\n';
-    std::cout << '\t' << std::get<1>(z) << '\n';
-    std::cout << '\t' << std::get<2>(z) << '\n';
-
-    if (std::get<0>(z).get_start() == std::get<0>(z).get_end()) break;
-    bd.make_move(std::get<0>(z));
+    bd.make_move(m);
   }
   std::cout << '\n' << bd.nice_print();
   std::cout << "done\n";

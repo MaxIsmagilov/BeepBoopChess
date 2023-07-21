@@ -185,6 +185,12 @@ void Board::import_FEN([[maybe_unused]] const char* FEN) {
 
 void Board::flip_side() noexcept { m_side ^= 1; }
 
+Board Board::move_copy(Move mv) const noexcept {
+  Board bdnew = *this;
+  bdnew.make_move(mv);
+  return bdnew;
+}
+
 u64 Board::operator[](int index) const noexcept { return m_board[index]; }
 
 u64 Board::white_occ() const noexcept {

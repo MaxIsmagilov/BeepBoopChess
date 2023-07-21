@@ -12,7 +12,8 @@ namespace BobChess
 
 TTable::TTable() {
   TTutils::TTEntry null_entry = {0ULL, 0, 0, TTutils::FAIL};
-  std::fill(m_entries.begin(), m_entries.end(), null_entry);
+  m_entries.reserve(TTutils::ttsize);
+  std::fill(m_entries.begin(), m_entries.begin() + TTutils::ttsize, null_entry);
 }
 
 u64 TTable::get_key(const Board& bd) noexcept {

@@ -15,25 +15,27 @@
 namespace BobChess
 {
 
-class algorithm
+class Algorithm
 {
  public:
-  algorithm() = delete;
+  Algorithm() = delete;
 
-  algorithm(const Board& bd, TTable& tt);
+  Algorithm(Board bd, std::function<int(Board)> eval);
 
-  std::tuple<Move, int, int> get_best_move(int depth, std::function<int(Board)> eval);
-
-  int evaluate_move(int depth, std::function<int(Board)> eval);
+  /// @brief
+  /// @param depth
+  /// @return <value, nodecount>
+  std::tuple<int, int> evaluate_move(int depth);
 
  private:
-  TTable& m_tt;
+  TTable m_tt;
   BoardStack m_bs;
+  std::function<int(Board)> m_eval;
 
   std::unique_ptr<int> m_count{};
 
-  int quescence(int depth, int alpha, int beta, int color, std::function<int(Board)> eval);
-  int negamax(int depth, int alpha, int beta, int color, std::function<int(Board)> eval);
+  int quescence(int depth, int alpha, int beta, int color);
+  int negamax(int depth, int alpha, int beta, int color);
 
   /// @brief arbitrarily large number to use in place of infinity
   static constexpr int infinity = 10000000;
@@ -44,6 +46,8 @@ class algorithm
   static constexpr int full_depth = 4;
 
   static constexpr int LMR_R = 3;
+
+  int current_depth{0};
 };
 
 }  // namespace BobChess

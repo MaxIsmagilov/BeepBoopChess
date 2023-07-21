@@ -19,6 +19,8 @@ class Board
   void import_FEN(const char* FEN);
   void flip_side() noexcept;
 
+  Board move_copy(Move mv) const noexcept;
+
   u64 operator[](int index) const noexcept;
   u64 white_occ() const noexcept;
   u64 black_occ() const noexcept;
