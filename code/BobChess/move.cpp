@@ -16,7 +16,8 @@ Move::Move() noexcept
       m_castle{0},
       m_is_promote{0},
       m_enpassant{0},
-      m_double_push{0} {}
+      m_double_push{0},
+      m_flag{0} {}
 
 Move::Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bool is_promote, bool enpassant,
            bool is_double)
@@ -28,7 +29,8 @@ Move::Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bo
       m_castle{castle},
       m_is_promote{is_promote},
       m_enpassant{enpassant},
-      m_double_push{is_double} {}
+      m_double_push{is_double},
+      m_flag{0} {}
 
 Move::Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bool is_promote, bool enpassant,
            bool is_double, int heuristic)
@@ -41,7 +43,8 @@ Move::Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bo
       m_castle{castle},
       m_is_promote{is_promote},
       m_enpassant{enpassant},
-      m_double_push{is_double} {}
+      m_double_push{is_double},
+      m_flag{0} {}
 
 void Move::set_heuristic(int heuristic) noexcept { m_heuristic = heuristic; }
 
@@ -82,5 +85,8 @@ std::string Move::to_string() const {
   if (m_promote) s.push_back(pieces[m_promote]);
   return s;
 }
+
+void Move::flag() { m_flag = true; }
+bool Move::flagged() { return m_flag; }
 
 }  // namespace BobChess

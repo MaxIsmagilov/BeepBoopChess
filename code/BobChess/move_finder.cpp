@@ -13,6 +13,8 @@ namespace BobChess
 {
 
 std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int depth, std::function<int(Board)> eval) {
+  Clock c;
+  c.start();
   ThreadPool tp;
   MoveList ml = MoveGenerator::generate_all(bd);
   std::vector<Algorithm> algoes;
@@ -38,6 +40,7 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int dep
       if (ml[i].get_heuristic() > 9900000) mate_threat = true;
     }
     tp.cancel_pending();
+    std::cout << i << '\t' << c.elapsed() / 1000.0 << '\t' << nodecount << '\n';
   }
   tp.finish();
 

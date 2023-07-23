@@ -45,6 +45,9 @@ class Move
 
   std::string to_string() const;
 
+  void flag();
+  bool flagged();
+
  private:
   int m_heuristic;
 
@@ -57,6 +60,7 @@ class Move
   u8 m_is_promote  : 1;
   u8 m_enpassant   : 1;
   u8 m_double_push : 1;
+  u8 m_flag        : 1;
 };
 
 }  // namespace BobChess

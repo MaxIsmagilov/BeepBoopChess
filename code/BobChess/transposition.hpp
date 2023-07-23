@@ -12,7 +12,7 @@ namespace BobChess
 namespace TTutils
 {
 
-constexpr std::size_t ttsize = (524288);
+constexpr std::size_t ttsize = (2097152);
 
 // @brief entry type enum
 enum TTEntryType : unsigned char { EXACT, LBOUND, UBOUND, FAIL };
