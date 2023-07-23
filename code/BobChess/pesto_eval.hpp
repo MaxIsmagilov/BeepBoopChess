@@ -89,8 +89,8 @@ class Evaluator
   static constexpr const int* eg_pesto_table[6] = {eg_pawn_table, eg_knight_table, eg_bishop_table,
                                                    eg_rook_table, eg_queen_table,  eg_king_table};
 
-  static constexpr int mg_value[6] = {100, 300, 330, 500, 1000, 100000};
-  static constexpr int eg_value[6] = {100, 300, 330, 500, 1000, 100000};
+  static constexpr int mg_value[6] = {100, 300, 330, 500, 900, 50000};
+  static constexpr int eg_value[6] = {100, 300, 330, 500, 900, 50000};
 
   static int mg_table[12][64];
   static int eg_table[12][64];

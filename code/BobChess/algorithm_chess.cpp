@@ -11,10 +11,10 @@ namespace BobChess
 
 Algorithm::Algorithm(Board&& bd, std::function<int(Board)> eval) : m_tt(), m_bs{bd}, m_eval{eval}, m_count{0} {}
 
-std::tuple<int, std::size_t> Algorithm::evaluate_move(int depth) {
+std::tuple<int, std::size_t> Algorithm::evaluate_move(int depth, int alpha, int beta) {
   current_depth = depth;
   auto startcolor = (m_bs.top().side_to_move()) ? 1 : -1;
-  const auto n = -negamax(depth, -infinity, infinity, startcolor);
+  const auto n = -negamax(depth, alpha, beta, startcolor);
   return std::make_tuple(n, m_count);
 }
 
@@ -30,7 +30,7 @@ int Algorithm::quescence(int depth, int alpha, int beta, int color) {
 
   if (ml.get_size() == 0) {
     if (MoveGenerator::in_check(bd, bd.side_to_move())) {
-      return -(game_over - (current_depth - depth) - 3);
+      return -(game_over - (current_depth - (depth - q_depth)));
     } else {
       return 0;
     }
@@ -53,21 +53,11 @@ int Algorithm::quescence(int depth, int alpha, int beta, int color) {
   auto alpha_orig = alpha;
 
   const auto entry = m_tt.get_entry(bd);
-  const auto entryvalue = std::get<0>(entry);
-  const auto entrytype = std::get<1>(entry);
-  const auto entrydepth = std::get<2>(entry);
-  if (entrytype != TTutils::FAIL && entrydepth >= depth) {
-    if (entrytype == TTutils::EXACT) {
-      return entryvalue;
-    } else if (entrytype == TTutils::UBOUND) {
-      alpha = std::max(alpha, entryvalue);
-    } else if (entrytype == TTutils::LBOUND) {
-      beta = std::min(beta, entryvalue);
-    }
-
-    if (alpha >= beta) {
-      return entryvalue;
-    }
+  if (entry.m_is_valid && entry.depth >= depth) {
+    if (entry.m_lower >= beta) return entry.m_lower;
+    if (entry.m_upper <= alpha) return entry.m_upper;
+    alpha = std::max(alpha, entry.m_lower);
+    beta = std::min(beta, entry.m_upper);
   }
 
   auto value = -infinity;
@@ -94,32 +84,18 @@ int Algorithm::quescence(int depth, int alpha, int beta, int color) {
     if (alpha >= beta) break;
   }
 
-  for (int i = 0; i < ml.get_size(); ++i) {
-    m_bs.move(ml[i]);
-    int newval;
-    if (first) {
-      newval = -quescence(depth - 1, -beta, -alpha, -color);
-      first = false;
-    } else {
-      newval = -quescence(depth - 1, -(alpha + 1), -alpha, -color);
-      if (alpha < value && value < beta) newval = -quescence(depth - 1, -beta, -value, -color);
-    }
-    m_bs.pop();
+  TTutils::TTEntry new_entry = {TTable::get_key(bd), 0, 0, 0, TTutils::VALID};
 
-    value = std::max(value, newval);
-    alpha = std::max(value, alpha);
-    if (alpha >= beta) break;
+  if (value <= alpha)
+    new_entry.m_upper = value;
+  else if (value >= beta)
+    new_entry.m_lower = value;
+  else {
+    new_entry.m_lower = value;
+    new_entry.m_upper = value;
   }
 
-  auto newtype = TTutils::FAIL;
-  if (value <= alpha_orig)
-    newtype = TTutils::UBOUND;
-  else if (value >= beta)
-    newtype = TTutils::LBOUND;
-  else
-    newtype = TTutils::EXACT;
-
-  m_tt.add(bd, value, depth, newtype);
+  m_tt.add(new_entry);
 
   return value;
 }
@@ -131,7 +107,7 @@ int Algorithm::negamax(int depth, int alpha, int beta, int color) {
   if (bd.halfmoves() >= 50) return 0;
 
   if (depth <= 0) {
-    return quescence(3, alpha, beta, color);
+    return quescence(q_depth, alpha, beta, color);
   }
 
   MoveList ml = MoveGenerator::generate_all(bd);
@@ -148,18 +124,11 @@ int Algorithm::negamax(int depth, int alpha, int beta, int color) {
   auto alpha_orig = alpha;
 
   const auto entry = m_tt.get_entry(bd);
-  const auto entryvalue = std::get<0>(entry);
-  const auto entrytype = std::get<1>(entry);
-  const auto entrydepth = std::get<2>(entry);
-  if (entrytype != TTutils::FAIL && entrydepth >= depth) {
-    if (entrytype == TTutils::EXACT)
-      return entryvalue;
-    else if (entrytype == TTutils::UBOUND)
-      alpha = std::max(alpha, entryvalue);
-    else if (entrytype == TTutils::LBOUND)
-      beta = std::min(beta, entryvalue);
-
-    if (alpha >= beta) return entryvalue;
+  if (entry.m_is_valid && entry.depth >= depth) {
+    if (entry.m_lower >= beta) return entry.m_lower;
+    if (entry.m_upper <= alpha) return entry.m_upper;
+    alpha = std::max(alpha, entry.m_lower);
+    beta = std::min(beta, entry.m_upper);
   }
   auto value = -infinity;
   bool first = true;
@@ -167,7 +136,7 @@ int Algorithm::negamax(int depth, int alpha, int beta, int color) {
   ml.sort();
   ml.move_killer(1, 2);
 
-  if (current_depth - depth > full_depth) {
+  if (depth > full_depth && !MoveGenerator::in_check(bd, bd.side_to_move())) {
     m_bs.nullmove();
     value = -negamax(depth - 4, -beta, -(beta - 1), -color);
     m_bs.pop();
@@ -199,16 +168,18 @@ int Algorithm::negamax(int depth, int alpha, int beta, int color) {
     if (alpha >= beta) break;
   }
 
-  auto newtype = TTutils::FAIL;
-  if (value <= alpha_orig)
-    newtype = TTutils::UBOUND;
+  TTutils::TTEntry new_entry = {TTable::get_key(bd), 0, 0, 0, TTutils::VALID};
+
+  if (value <= alpha)
+    new_entry.m_upper = value;
   else if (value >= beta)
-    newtype = TTutils::LBOUND;
-  else
-    newtype = TTutils::EXACT;
+    new_entry.m_lower = value;
+  else {
+    new_entry.m_lower = value;
+    new_entry.m_upper = value;
+  }
 
-  m_tt.add(bd, value, depth, newtype);
-
+  m_tt.add(new_entry);
   return value;
 }
 

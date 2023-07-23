@@ -28,7 +28,7 @@ class Algorithm
   /// @brief
   /// @param depth
   /// @return <value, nodecount>
-  std::tuple<int, std::size_t> evaluate_move(int depth);
+  std::tuple<int, std::size_t> evaluate_move(int depth, int alpha, int beta);
 
  private:
   TTable m_tt;
@@ -41,16 +41,20 @@ class Algorithm
   int negamax(int depth, int alpha, int beta, int color);
 
   /// @brief arbitrarily large number to use in place of infinity
-  static constexpr int infinity = 10000000;
+  static constexpr int infinity = 100000;
 
   /// @brief checkmate value
-  static constexpr int game_over = 1000000;
+  static constexpr int game_over = 100000;
 
   static constexpr int full_depth = 4;
 
   static constexpr int LMR_R = 3;
 
+  static constexpr int q_depth = 3;
+
   int current_depth{0};
+
+  int current_guess{0};
 };
 
 }  // namespace BobChess

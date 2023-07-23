@@ -13,6 +13,8 @@ namespace BobChess
 {
 
 std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int depth, std::function<int(Board)> eval) {
+  //
+
   Clock c;
   c.start();
   ThreadPool tp;
@@ -27,16 +29,24 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int dep
   bool mate_threat = false;
 
   for (int i = 1; i < depth && !mate_threat; ++i) {
+    bool deepen = true;
+
     nodecount = 0;
     std::vector<std::future<std::any>> results;
     results.resize(ml.get_size());
     for (int j = 0; j < ml.get_size(); ++j) {
-      results[j] = tp.queue(&Algorithm::evaluate_move, &(algoes[j]), i);
+      results[j] = tp.queue(&Algorithm::evaluate_move, &(algoes[j]), i, -utils::INFINITY, utils::INFINITY);
     }
     for (int j = 0; j < ml.get_size(); ++j) {
       auto tupl = std::any_cast<std::tuple<int, std::size_t>>(results[j].get());
-      ml.set_heuristic(j, std::get<0>(tupl));
-      nodecount += std::get<1>(tupl);
+
+      auto score = std::get<0>(tupl);
+      auto result = std::get<1>(tupl);
+
+      nodecount += result;
+
+      ml.set_heuristic(j, score);
+
       if (ml[i].get_heuristic() > 9900000) mate_threat = true;
     }
     tp.cancel_pending();
@@ -73,7 +83,7 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move_time(const Board& bd, do
     std::vector<std::future<std::any>> results;
     results.resize(ml.get_size());
     for (int j = 0; j < ml.get_size(); ++j) {
-      results[j] = tp.queue(&Algorithm::evaluate_move, &(algoes[j]), i);
+      results[j] = tp.queue(&Algorithm::evaluate_move, &(algoes[j]), i, -utils::INFINITY, utils::INFINITY);
     }
     for (int j = 0; j < ml.get_size(); ++j) {
       auto tupl = std::any_cast<std::tuple<int, std::size_t>>(results[j].get());

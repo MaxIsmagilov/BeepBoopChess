@@ -37,24 +37,24 @@ u64 TTable::get_key(const Board& bd) noexcept {
   return key;
 }
 
-std::tuple<int, TTutils::TTEntryType, int> TTable::get_entry(u64 key) const noexcept {
-  key %= TTutils::ttsize;
-  auto entry = m_entries[key];
-  if (entry.m_key != key) return std::make_tuple(entry.m_value, TTutils::FAIL, 0);
-  return std::make_tuple(entry.m_value, entry.m_type, entry.depth);
-}
-
-std::tuple<int, TTutils::TTEntryType, int> TTable::get_entry(const Board& bd) const noexcept {
-  auto key = get_key(bd);
+TTutils::TTEntry TTable::get_entry(u64 key) const noexcept {
   auto entry = m_entries[key % TTutils::ttsize];
-  if (entry.m_key != key) return std::make_tuple(entry.m_value, TTutils::FAIL, 0);
-  return std::make_tuple(entry.m_value, entry.m_type, entry.depth);
+  if (entry.m_key != key)
+    return TTutils::FAILED_ENTRY;
+  else
+    return entry;
 }
 
-void TTable::add(const Board& bd, int value, unsigned char depth, TTutils::TTEntryType type) noexcept {
-  auto key = get_key(bd);
-  m_entries[key % TTutils::ttsize] = {key, value, depth, type};
+TTutils::TTEntry TTable::get_entry(const Board& bd) const noexcept {
+  const auto key = get_key(bd);
+  auto entry = m_entries[key % TTutils::ttsize];
+  if (entry.m_key != key)
+    return TTutils::FAILED_ENTRY;
+  else
+    return entry;
 }
+
+void TTable::add(TTutils::TTEntry entry) noexcept { m_entries[entry.m_key % TTutils::ttsize] = entry; }
 
 void TTable::initialize() noexcept {
   std::random_device r;

@@ -15,16 +15,19 @@ namespace TTutils
 constexpr std::size_t ttsize = (2097152);
 
 // @brief entry type enum
-enum TTEntryType : unsigned char { EXACT, LBOUND, UBOUND, FAIL };
+enum TTEntryType : bool { FAIL, VALID };
 
 /// @brief transposition table structure
 struct TTEntry
 {
   u64 m_key{0ULL};
-  int m_value{0};
-  unsigned char depth{0};
-  TTEntryType m_type{FAIL};
+  int m_lower{0};
+  int m_upper{0};
+  int depth{0};
+  TTEntryType m_is_valid{FAIL};
 };
+
+constexpr TTEntry FAILED_ENTRY = {0, 0, 0, 0, FAIL};
 
 }  // namespace TTutils
 
@@ -35,11 +38,14 @@ class TTable
 
   static u64 get_key(const Board& bd) noexcept;
 
-  std::tuple<int, TTutils::TTEntryType, int> get_entry(u64 key) const noexcept;
+  /// @brief
+  /// @param key
+  /// @return
+  TTutils::TTEntry get_entry(u64 key) const noexcept;
 
-  std::tuple<int, TTutils::TTEntryType, int> get_entry(const Board& bd) const noexcept;
+  TTutils::TTEntry get_entry(const Board& bd) const noexcept;
 
-  void add(const Board& bd, int value, unsigned char depth, TTutils::TTEntryType type) noexcept;
+  void add(TTutils::TTEntry entry) noexcept;
 
   static void initialize() noexcept;
 
