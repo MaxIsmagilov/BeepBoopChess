@@ -12,8 +12,6 @@ namespace BobChess
 class ThreadPool
 {
  private:
-  std::atomic_bool isdone{false};
-
   std::mutex m;
   std::condition_variable v;
   std::deque<std::packaged_task<void()>> pending;
@@ -31,7 +29,6 @@ class ThreadPool
         pending.pop_front();
       }
       if (!f.valid()) {
-        isdone = true;
         return;
       }
       f();
@@ -41,8 +38,6 @@ class ThreadPool
  public:
   template <typename F, typename... Params>
   std::future<std::any> queue(F&& f, Params&&... args) {
-    isdone = false;
-
     std::packaged_task<std::any()> p(std::bind(std::forward<F>(f), std::forward<Params>(args)...));
 
     auto r = p.get_future();
@@ -59,15 +54,12 @@ class ThreadPool
     for (std::size_t i = 0; i < N; ++i) {
       finished.push_back(std::async(policy, [this] { thread_task(); }));
     }
-    isdone = true;
   }
 
   void abort() {
     cancel_pending();
     finish();
   }
-
-  bool completed() { return isdone; }
 
   // cancel_pending() merely cancels all non-started tasks:
   void cancel_pending() {

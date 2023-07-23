@@ -9,30 +9,34 @@
 namespace BobChess
 {
 
-Algorithm::Algorithm(Board bd, std::function<int(Board)> eval)
-    : m_bs{bd}, m_tt(), m_eval{eval}, m_count{std::make_unique<int>(0)} {}
+Algorithm::Algorithm(Board&& bd, std::function<int(Board)> eval) : m_tt(), m_bs{bd}, m_eval{eval}, m_count{0} {}
 
-std::tuple<int, int> Algorithm::evaluate_move(int depth) {
+std::tuple<int, std::size_t> Algorithm::evaluate_move(int depth) {
   current_depth = depth;
   auto startcolor = (m_bs.top().side_to_move()) ? 1 : -1;
   const auto n = -negamax(depth, -infinity, infinity, startcolor);
-  return std::make_tuple(n, *m_count);
+  return std::make_tuple(n, m_count);
 }
 
 int Algorithm::quescence(int depth, int alpha, int beta, int color) {
-  ++(*m_count);
+  ++m_count;
   auto& bd = m_bs.top();
 
-  if (bd.halfmoves() >= 50) return 0;
+  if (bd.halfmoves() >= 50) {
+    return 0;
+  }
 
   MoveList ml = MoveGenerator::generate_all(bd);
 
   if (ml.get_size() == 0) {
-    if (MoveGenerator::in_check(bd, bd.side_to_move()))
-      return (game_over + depth + 3);
-    else
+    if (MoveGenerator::in_check(bd, bd.side_to_move())) {
+      return -(game_over - (current_depth - depth) - 3);
+    } else {
       return 0;
+    }
   }
+
+  ml.score_all(bd);
 
   std::vector<int> not_captures;
   not_captures.reserve(ml.get_size());
@@ -52,22 +56,43 @@ int Algorithm::quescence(int depth, int alpha, int beta, int color) {
   const auto entryvalue = std::get<0>(entry);
   const auto entrytype = std::get<1>(entry);
   const auto entrydepth = std::get<2>(entry);
-  if (entrytype != TTutils::FAIL) {
-    if (entrytype == TTutils::EXACT)
+  if (entrytype != TTutils::FAIL && entrydepth >= depth) {
+    if (entrytype == TTutils::EXACT) {
       return entryvalue;
-    else if (entrytype == TTutils::UBOUND)
+    } else if (entrytype == TTutils::UBOUND) {
       alpha = std::max(alpha, entryvalue);
-    else if (entrytype == TTutils::LBOUND)
+    } else if (entrytype == TTutils::LBOUND) {
       beta = std::min(beta, entryvalue);
+    }
 
-    if (alpha >= beta) return entryvalue;
+    if (alpha >= beta) {
+      return entryvalue;
+    }
   }
 
   auto value = -infinity;
   bool first = true;
 
   ml.sort();
-  ml.move_killer(2, 2);
+  ml.move_killer(1, 2);
+
+  for (int i = 0; i < ml.get_size(); ++i) {
+    m_bs.move(ml[i]);
+    const int oldval = value;
+    if (first) {
+      value = -quescence(depth - 1, -beta, -alpha, -color);
+      first = false;
+
+    } else {
+      value = -quescence(depth - 1, -(alpha + 1), -alpha, -color);
+      if (alpha < value && value < beta) value = -quescence(depth - 1, -beta, -value, -color);
+    }
+    m_bs.pop();
+
+    value = std::max(value, oldval);
+    alpha = std::max(value, alpha);
+    if (alpha >= beta) break;
+  }
 
   for (int i = 0; i < ml.get_size(); ++i) {
     m_bs.move(ml[i]);
@@ -100,34 +125,33 @@ int Algorithm::quescence(int depth, int alpha, int beta, int color) {
 }
 
 int Algorithm::negamax(int depth, int alpha, int beta, int color) {
-  ++(*m_count);
-  // std::string s = std::to_string(*m_count) + " at ";
-  // s += std::to_string(depth);
-  // s += " here\n";
-  // std::cout << s;
+  ++m_count;
   auto& bd = m_bs.top();
 
   if (bd.halfmoves() >= 50) return 0;
 
   if (depth <= 0) {
-    return quescence(2, alpha, beta, color);
+    return quescence(3, alpha, beta, color);
   }
 
   MoveList ml = MoveGenerator::generate_all(bd);
 
   if (ml.get_size() == 0) {
     if (MoveGenerator::in_check(bd, bd.side_to_move()))
-      return (game_over + depth + 3);
+      return -(game_over - (current_depth - depth));
     else
       return 0;
   }
+
+  ml.score_all(bd);
+
   auto alpha_orig = alpha;
 
   const auto entry = m_tt.get_entry(bd);
   const auto entryvalue = std::get<0>(entry);
   const auto entrytype = std::get<1>(entry);
   const auto entrydepth = std::get<2>(entry);
-  if (entrytype != TTutils::FAIL) {
+  if (entrytype != TTutils::FAIL && entrydepth >= depth) {
     if (entrytype == TTutils::EXACT)
       return entryvalue;
     else if (entrytype == TTutils::UBOUND)
@@ -141,7 +165,7 @@ int Algorithm::negamax(int depth, int alpha, int beta, int color) {
   bool first = true;
 
   ml.sort();
-  ml.move_killer(2, 2);
+  ml.move_killer(1, 2);
 
   if (current_depth - depth > full_depth) {
     m_bs.nullmove();
@@ -158,14 +182,13 @@ int Algorithm::negamax(int depth, int alpha, int beta, int color) {
       first = false;
 
     } else {
-      if (depth >= LMR_R && ml[i].is_reduceable()) {
+      if ((current_depth - depth) >= full_depth && ml[i].is_reduceable()) {
         value = -negamax(depth - 2, -(alpha + 1), -alpha, -color);
       } else
         value = alpha + 1;
 
       if (value > alpha) {
         value = -negamax(depth - 1, -(alpha + 1), -alpha, -color);
-        value = std::max(value, value);
         if (alpha < value && value < beta) value = -negamax(depth - 1, -beta, -value, -color);
       }
     }

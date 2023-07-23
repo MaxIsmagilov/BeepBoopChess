@@ -13,7 +13,6 @@ void Board::make_move(const Move& mv) noexcept {
 
   m_halfmoves++;
   auto piecemod = (m_side) ? 0 : 6;
-  auto capturemod = (m_side) ? 6 : 0;
 
   if (mv.is_capture() || !mv.get_piece()) m_halfmoves = 0;
 
@@ -235,8 +234,9 @@ std::string Board::debug_print() const {
       if (j == 12 && !found) {
         str += pieces[12 + (((i / 8) + i) % 2)];
         str += ' ';
-      }
-      if (utils::get_bit(m_board[j], i) && j < 12) {
+      } else if (j == 12)
+        continue;
+      else if (utils::get_bit(m_board[j], i)) {
         if (!found) {
           str += pieces[j];
           str += ' ';

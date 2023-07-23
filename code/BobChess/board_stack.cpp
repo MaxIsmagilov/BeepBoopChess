@@ -5,7 +5,7 @@
 namespace BobChess
 {
 
-BoardStack::BoardStack(const Board& bd) : size{1}, m_array{bd} {}
+BoardStack::BoardStack(const Board& bd) : m_array{bd}, size{1} {}
 
 const Board& BoardStack::top() const { return m_array[size - 1]; }
 

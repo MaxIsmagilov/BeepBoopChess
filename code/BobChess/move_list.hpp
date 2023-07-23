@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "move.hpp"
+#include "move_score.hpp"
 #include "utils.hpp"
 
 namespace BobChess
@@ -34,6 +35,8 @@ class MoveList
   void remove(std::vector<int> indeces) noexcept;
 
   int get_size() noexcept;
+
+  void score_all(const Board& bd) noexcept;
 
  private:
   std::array<Move, 256> m_moves{Move{}};

@@ -35,8 +35,15 @@ void MoveList::remove(int index) noexcept {
 }
 
 void MoveList::remove(std::vector<int> indeces) noexcept {
-  std::for_each(indeces.begin(), indeces.end(), [&](int i) { this->remove(i); });
+  for (u32 i = 0; i < indeces.size(); ++i) {
+    this->remove(indeces[i] - i);
+  }
 }
 
 int MoveList::get_size() noexcept { return m_last_populated; }
+
+void MoveList::score_all(const Board& bd) noexcept {
+  std::for_each(m_moves.begin(), m_moves.begin() + m_last_populated,
+                [&](Move& m) mutable { m.set_heuristic(MoveScorer::score(bd, m)); });
+}
 }  // namespace BobChess

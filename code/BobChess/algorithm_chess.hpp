@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <concepts>
 #include <functional>
 #include <memory>
@@ -20,19 +21,21 @@ class Algorithm
  public:
   Algorithm() = delete;
 
-  Algorithm(Board bd, std::function<int(Board)> eval);
+  ~Algorithm() = default;
+
+  Algorithm(Board&& bd, std::function<int(Board)> eval);
 
   /// @brief
   /// @param depth
   /// @return <value, nodecount>
-  std::tuple<int, int> evaluate_move(int depth);
+  std::tuple<int, std::size_t> evaluate_move(int depth);
 
  private:
   TTable m_tt;
   BoardStack m_bs;
-  std::function<int(Board)> m_eval;
+  std::function<int(Board)>& m_eval;
 
-  std::unique_ptr<int> m_count{};
+  std::size_t m_count{};
 
   int quescence(int depth, int alpha, int beta, int color);
   int negamax(int depth, int alpha, int beta, int color);

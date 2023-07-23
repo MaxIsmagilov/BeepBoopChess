@@ -4,6 +4,7 @@ SET(BobChess_Headers
     thread_pool.hpp
     utils.hpp
     move.hpp
+    move_score.hpp
     board.hpp
     random_generator.hpp
     magics.hpp
@@ -21,6 +22,7 @@ SET(BobChess_Impl
     thread_pool.cpp
     utils.cpp
     move.cpp
+    move_score.cpp
     board.cpp
     random_generator.cpp
     magics.cpp
@@ -45,15 +47,16 @@ TARGET_COMPILE_FEATURES(BobChess_objects
     )
 
 
-TARGET_INCLUDE_DIRECTORIES(BobChess_objects
+target_include_directories(BobChess_objects
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:include>
-    )
+)
 
 ADD_LIBRARY(BobChess $<TARGET_OBJECTS:BobChess_objects>)
 
 ADD_LIBRARY(BobChess::BobChess ALIAS BobChess)
+
 
 if (WIN32)
     SET_TARGET_PROPERTIES( BobChess
@@ -80,7 +83,7 @@ INSTALL(TARGETS BobChess BobChess_objects
     RUNTIME DESTINATION ${CMAKE_INSTAL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTAL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTAL_LIBDIR}
-    INCLUDES DESTINATION ${CMAKE_INSTAL_INCLUDEDIR}/BobChess
+    INCLUDES DESTINATION ${CMAKE_INSTAL_INCLUDEDIR}/third_party
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTAL_INCLUDEDIR}/BobChess
     )
 

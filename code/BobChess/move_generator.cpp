@@ -42,18 +42,13 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
       u16 enpassantflg = (static_cast<decltype(bd.enpassant_square())>(j) == bd.enpassant_square()) ? 1 : 0;
       Move move(square, j, utils::PAWN, 0, captureflg, 0, 0, enpassantflg, pp_flag);
 
-      // calculate heristics
-      u16 heuristic_value = 10U;
-
       // check for promotions
       if ((j / 8 == 0) || (j / 8 == 7)) {
         for (u32 promotee = 1UL; promotee < 5UL; promotee++) {
           move = Move(square, j, utils::PAWN, promotee, captureflg, 0, 0, enpassantflg, pp_flag);
-          move.set_heuristic((heuristic_value + (captureflg * 2) + (promotee * 4)));
           movelist.push_back(move);
         }
       } else {
-        move.set_heuristic((heuristic_value + (enpassantflg) + (captureflg * 5)));
         movelist.push_back(move);
       }
     }
@@ -73,10 +68,6 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
       u32 captureflg = ((1ULL << j) & defending_occ) ? 1U : 0U;
       Move move(square, j, utils::KNIGHT, 0, captureflg, 0, 0, 0, 0);
 
-      // calculate heristics
-      u16 heuristic_value = 10U;
-
-      move.set_heuristic(heuristic_value + (captureflg * 5));
       movelist.push_back(move);
     }
   }
@@ -95,10 +86,6 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
       u32 captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
       Move move(square, j, utils::BISHOP, 0, captureflg, 0, 0, 0, 0);
 
-      // calculate heristics
-      u16 heuristic_value = 10U;
-
-      move.set_heuristic(heuristic_value + (captureflg * 5));
       movelist.push_back(move);
     }
   }
@@ -118,10 +105,6 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
       u32 captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
       Move move(square, j, utils::ROOK, 0, captureflg, 0, 0, 0, 0);
 
-      // calculate heristics
-      u16 heuristic_value = 10U;
-
-      move.set_heuristic(heuristic_value + (captureflg * 5));
       movelist.push_back(move);
     }
   }
@@ -140,10 +123,6 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
       u32 captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
       Move move(square, j, utils::QUEEN, 0, captureflg, 0, 0, 0, 0);
 
-      // calculate heristics
-      u16 heuristic_value = 10ULL;
-
-      move.set_heuristic(heuristic_value + (captureflg * 5));
       movelist.push_back(move);
     }
   }
@@ -163,12 +142,6 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
       u32 captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
       Move move(square, j, utils::KING, 0, captureflg, 0, 0, 0, 0);
 
-      // verify checks
-
-      // calculate heristics
-      u64 heuristic_value = 8ULL;
-
-      move.set_heuristic((heuristic_value + (captureflg * 5)));
       movelist.push_back(move);
     }
   }
@@ -453,11 +426,11 @@ bool MoveGenerator::is_attacked(int square, const Board& bd, const int attacking
     return true;
   } else {
     if (attacking_side == 1)
-      return ((pawn_attacks[0][square] & bd[0]) || (knight_attacks[square] & bd[1]) ||
+      return ((pawn_attacks[1][square] & bd[0]) || (knight_attacks[square] & bd[1]) ||
               (get_bishop_attacks(square, bd.all_occ()) & (bd[2] | bd[4])) ||
               (get_rook_attacks(square, bd.all_occ()) & (bd[3] | bd[4])) || (king_attacks[square] & bd[5]));
     else
-      return ((pawn_attacks[1][square] & bd[6]) || (knight_attacks[square] & bd[7]) ||
+      return ((pawn_attacks[0][square] & bd[6]) || (knight_attacks[square] & bd[7]) ||
               (get_bishop_attacks(square, bd.all_occ()) & (bd[8] | bd[10])) ||
               (get_rook_attacks(square, bd.all_occ()) & (bd[9] | bd[10])) || (king_attacks[square] & bd[11]));
   }
@@ -469,9 +442,7 @@ bool MoveGenerator::in_check(const Board& bd, const int side_in_check) {
 }
 
 bool MoveGenerator::check_check(const Board& bd, const Move& move) {
-  Board tst{bd};
-  tst.make_move(move);
-  return in_check(tst, bd.side_to_move());
+  return in_check(bd.move_copy(move), bd.side_to_move());
 }
 
 u64 MoveGenerator::pawn_attacks[2][64] = {0};

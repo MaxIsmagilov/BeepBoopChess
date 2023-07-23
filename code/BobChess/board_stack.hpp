@@ -26,7 +26,7 @@ class BoardStack
   void nullmove();
 
  private:
-  std::array<Board, 512> m_array;
+  std::array<Board, 1024> m_array;
   int size{0};
 };
 

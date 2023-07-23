@@ -4,7 +4,9 @@ BraceWrapping:
   AfterNamespace: true
   AfterClass: true
   AfterStruct: true
+DerivePointerAlignment: false
 PointerAlignment: Left
+ReferenceAlignment: Pointer
 ColumnLimit: 120
 AlignConsecutiveMacros: AcrossEmptyLines
 AlignConsecutiveBitFields: Consecutive

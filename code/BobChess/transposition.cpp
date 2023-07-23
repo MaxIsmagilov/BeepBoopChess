@@ -12,7 +12,7 @@ namespace BobChess
 
 TTable::TTable() {
   TTutils::TTEntry null_entry = {0ULL, 0, 0, TTutils::FAIL};
-  m_entries.reserve(TTutils::ttsize);
+  m_entries.resize(TTutils::ttsize);
   std::fill(m_entries.begin(), m_entries.begin() + TTutils::ttsize, null_entry);
 }
 

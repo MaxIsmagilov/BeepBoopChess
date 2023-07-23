@@ -8,6 +8,8 @@ PROJECT( BobChess
 
 ADD_SUBDIRECTORY(BobChess)
 
+ADD_SUBDIRECTORY(third_party)
+
 if(NOT WIN32)
     include(CheckCXXCompilerFlag)
     CHECK_CXX_COMPILER_FLAG("-lpthread" COMPILER_SUPPORTS_THREADS)
@@ -27,6 +29,7 @@ FetchContent_Declare(
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
+
 
 
 enable_testing()
