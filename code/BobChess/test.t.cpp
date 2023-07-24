@@ -3,10 +3,10 @@
 #include <string>
 
 #include "algorithm_chess.hpp"
+#include "eval.hpp"
 #include "move_finder.hpp"
 #include "move_generator.hpp"
 #include "move_list.hpp"
-#include "pesto_eval.hpp"
 #include "timekeeping.hpp"
 #include "transposition.hpp"
 
@@ -45,7 +45,7 @@ int main() {
 
     auto el = c.elapsed();
 
-    auto m = std::get<0>(t);
+    auto m = dynamic_cast<Move&>(std::get<0>(t));
 
     std::cout << m.to_string() << '\n';
     std::cout << m.get_heuristic() / (100.0) << '\n';

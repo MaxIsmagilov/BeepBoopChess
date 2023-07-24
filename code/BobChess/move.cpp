@@ -87,6 +87,6 @@ std::string Move::to_string() const {
 }
 
 void Move::flag() { m_flag = true; }
-bool Move::flagged() { return m_flag; }
+bool Move::flagged() const { return m_flag; }
 
 }  // namespace BobChess

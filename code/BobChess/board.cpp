@@ -184,7 +184,7 @@ void Board::import_FEN([[maybe_unused]] const char* FEN) {
 
 void Board::flip_side() noexcept { m_side ^= 1; }
 
-Board Board::move_copy(Move mv) const noexcept {
+Board Board::move_copy(const Move& mv) const noexcept {
   Board bdnew = *this;
   bdnew.make_move(mv);
   return bdnew;
@@ -207,15 +207,15 @@ u64 Board::all_occ() const noexcept {
 
 bool Board::side_to_move() const noexcept { return m_side; }
 
-bool Board::castle_available(int castle) const {
+bool Board::castle_available(Castle castle) const {
   switch (castle) {
-    case 0:
+    case WHITE_SHORT:
       return m_castle_WK;
-    case 1:
+    case WHITE_LONG:
       return m_castle_WQ;
-    case 2:
+    case BLACK_SHORT:
       return m_castle_BK;
-    case 3:
+    case BLACK_LONG:
       return m_castle_BQ;
   }
   return false;

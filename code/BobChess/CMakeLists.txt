@@ -4,13 +4,12 @@ SET(BobChess_Headers
     thread_pool.hpp
     utils.hpp
     move.hpp
-    move_score.hpp
     board.hpp
     random_generator.hpp
     magics.hpp
     move_list.hpp
     move_generator.hpp
-    pesto_eval.hpp
+    eval.hpp
     board_stack.hpp
     transposition.hpp
     timekeeping.hpp
@@ -22,13 +21,12 @@ SET(BobChess_Impl
     thread_pool.cpp
     utils.cpp
     move.cpp
-    move_score.cpp
     board.cpp
     random_generator.cpp
     magics.cpp
     move_list.cpp
     move_generator.cpp
-    pesto_eval.cpp
+    eval.cpp
     board_stack.cpp
     transposition.cpp
     timekeeping.cpp

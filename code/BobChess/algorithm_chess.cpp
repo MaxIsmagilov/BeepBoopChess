@@ -138,8 +138,6 @@ int Algorithm::negamax(int depth, int alpha, int beta, int color) {
       return 0;
   }
 
-  ml.score_all(bd);
-
   auto alpha_orig = alpha;
 
   const auto entry = m_tt.get_entry(bd);
@@ -152,34 +150,16 @@ int Algorithm::negamax(int depth, int alpha, int beta, int color) {
   auto value = -infinity;
   bool first = true;
 
+  ml.score_all(bd);
   ml.sort();
   ml.move_killer(1, 2);
-
-  /*if (depth > full_depth && !MoveGenerator::in_check(bd, bd.side_to_move())) {
-    m_bs.nullmove();
-    value = -negamax(depth - 4, -beta, -(beta - 1), -color);
-    m_bs.pop();
-    if (value >= beta) return value;
-  }*/
 
   for (int i = 0; i < ml.get_size(); ++i) {
     m_bs.move(ml[i]);
     const int oldval = value;
-    // if (first) {
+
     value = -negamax(depth - 1, -beta, -alpha, -color);
-    /*  first = false;
 
-    } else {
-      if ((current_depth - depth) >= full_depth && ml[i].is_reduceable()) {
-        value = -negamax(depth - 2, -(alpha + 1), -alpha, -color);
-      } else
-        value = alpha + 1;
-
-      if (value > alpha) {
-        value = -negamax(depth - 1, -(alpha + 1), -alpha, -color);
-        if (alpha < value && value < beta) value = -negamax(depth - 1, -beta, -value, -color);
-      }
-    }*/
     m_bs.pop();
 
     value = std::max(value, oldval);

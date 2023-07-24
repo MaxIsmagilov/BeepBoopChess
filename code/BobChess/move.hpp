@@ -46,7 +46,7 @@ class Move
   std::string to_string() const;
 
   void flag();
-  bool flagged();
+  bool flagged() const;
 
  private:
   int m_heuristic;

@@ -3,8 +3,8 @@
 #include <array>
 #include <vector>
 
+#include "eval.hpp"
 #include "move.hpp"
-#include "move_score.hpp"
 #include "utils.hpp"
 
 namespace BobChess

@@ -22,8 +22,11 @@ class BoardStack
   /// @brief pop a board off the top
   void pop();
 
+  /// @brief excecute a move
+  /// @param move
   void move(const Move& move);
 
+  /// @brief make a nullmove (side change)
   void nullmove();
 
  private:

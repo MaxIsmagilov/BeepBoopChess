@@ -29,10 +29,10 @@ u64 TTable::get_key(const Board& bd) noexcept {
   auto ep = bd.enpassant_square() + 1;
   if (ep == 256) ep = 0;
   key ^= m_keymods[ep];
-  if (bd.castle_available(0)) key ^= m_keymods[65];
-  if (bd.castle_available(1)) key ^= m_keymods[66];
-  if (bd.castle_available(2)) key ^= m_keymods[67];
-  if (bd.castle_available(3)) key ^= m_keymods[68];
+  if (bd.castle_available(Board::Castle::WHITE_SHORT)) key ^= m_keymods[65];
+  if (bd.castle_available(Board::Castle::WHITE_LONG)) key ^= m_keymods[66];
+  if (bd.castle_available(Board::Castle::BLACK_SHORT)) key ^= m_keymods[67];
+  if (bd.castle_available(Board::Castle::BLACK_LONG)) key ^= m_keymods[68];
   if (bd.side_to_move()) key ^= m_keymods[69];
   return key;
 }

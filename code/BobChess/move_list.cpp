@@ -31,7 +31,6 @@ void MoveList::push_back(Move&& mv) noexcept { m_moves[m_last_populated++] = mv;
 
 void MoveList::remove(int index) noexcept {
   std::rotate(m_moves.begin() + index, m_moves.begin() + index + 1, m_moves.begin() + (m_last_populated--));
-  // std::cerr << "removed " << index << " from " << m_last_populated << "\n";
 }
 
 void MoveList::remove(std::vector<int> indeces) noexcept {
