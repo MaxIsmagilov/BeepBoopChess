@@ -8,10 +8,20 @@ I made this to win my school's unofficial computer chess tournament.
 
 # Features
 
-Includes NegaMax, a-b pruning, and Magic Bitboards. 
-PeSTO is the current eval system.
+Includes:
 
-# Akgnowlegements (hard word to spell w/o autocorrect)
+- The highly efficient MTD(f) algorithm
+- Magic Bitboard move generation
+- Transposition tables
+- Hand-tuned evaluation
+- Tuneable and high-power multithreading (Ported from [Rippir](https://github.com/MaxIsmagilov/Rippir))
+
+To be added:
+
+- UCI interface
+- Neural network evaluation
+
+# Acknowledgments
 
 - Maksim Korzh a.k.a. Code Monkey King, author of BBC
-- GlaurungChess for their LMR algorithm
+- Aske Plaat for his MTD(f) algorithm
