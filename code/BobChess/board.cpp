@@ -259,7 +259,7 @@ std::string Board::debug_print() const {
   str += (m_castle_BK) ? 'y' : 'n';
   str += (m_castle_BQ) ? 'y' : 'n';
   str += "\nenpassant square: ";
-  str += ((m_enpassant == 255) ? std::to_string(m_enpassant) : "255 (none)");
+  str += ((m_enpassant != 255) ? std::to_string(m_enpassant) : "255 (none)");
   str += '\n';
   return str;
 }

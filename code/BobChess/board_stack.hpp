@@ -19,6 +19,7 @@ class BoardStack
   /// @return a const reference
   const Board& top() const;
 
+  /// @brief pop a board off the top
   void pop();
 
   void move(const Move& move);

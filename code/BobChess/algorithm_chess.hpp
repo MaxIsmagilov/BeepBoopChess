@@ -25,10 +25,10 @@ class Algorithm
 
   Algorithm(Board&& bd, std::function<int(Board)> eval);
 
-  /// @brief
+  /// @brief evaluate a move
   /// @param depth
   /// @return <value, nodecount>
-  std::tuple<int, std::size_t> evaluate_move(int depth, int alpha, int beta);
+  std::tuple<int, std::size_t> evaluate_move(int depth);
 
  private:
   TTable m_tt;
@@ -41,7 +41,7 @@ class Algorithm
   int negamax(int depth, int alpha, int beta, int color);
 
   /// @brief arbitrarily large number to use in place of infinity
-  static constexpr int infinity = 100000;
+  static constexpr int infinity = 500000;
 
   /// @brief checkmate value
   static constexpr int game_over = 100000;

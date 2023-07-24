@@ -35,7 +35,7 @@ int main() {
   // bd.import_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
   // bd.import_FEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0");
 
-  for (int i = 0; i < 1; ++i) {
+  for (int i = 0; i < 4; ++i) {
     std::cout << bd.nice_print() << '\n';
 
     Clock c;
