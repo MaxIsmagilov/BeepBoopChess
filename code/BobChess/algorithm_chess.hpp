@@ -37,8 +37,8 @@ class Algorithm
 
   std::size_t m_count{};
 
-  int quescence(int depth, int alpha, int beta, int color);
-  int negamax(int depth, int alpha, int beta, int color);
+  int quescence(int depth, int alpha, int beta);
+  int negamax(int depth, int alpha, int beta);
 
   /// @brief arbitrarily large number to use in place of infinity
   static constexpr int infinity = 500000;

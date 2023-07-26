@@ -25,7 +25,7 @@ std::tuple<int, std::size_t> Algorithm::evaluate_move(int depth) {
         return n;
     }();
     // auto startcolor = (m_bs.top().side_to_move()) ? 1 : 1;
-    n = -negamax(depth, beta - 1, beta, -1);
+    n = negamax(depth, beta, beta + 1);
     if (n < beta)
       upperbound = n;
     else
@@ -34,10 +34,10 @@ std::tuple<int, std::size_t> Algorithm::evaluate_move(int depth) {
 
   current_guess = n;
 
-  return std::make_tuple(n, m_count);
+  return std::make_tuple(-n, m_count);
 }
 
-int Algorithm::quescence(int depth, int alpha, int beta, int color) {
+int Algorithm::quescence(int depth, int alpha, int beta) {
   ++m_count;
   auto& bd = m_bs.top();
 
@@ -67,9 +67,8 @@ int Algorithm::quescence(int depth, int alpha, int beta, int color) {
   ml.remove(not_captures);
 
   if (ml.get_size() == 0 || depth <= 0) {
-    return m_eval(bd) * color;
+    return m_eval(bd);
   }
-  auto alpha_orig = alpha;
 
   const auto entry = m_tt.get_entry(bd);
   if (entry.m_is_valid && entry.depth >= depth) {
@@ -80,7 +79,6 @@ int Algorithm::quescence(int depth, int alpha, int beta, int color) {
   }
 
   auto value = -infinity;
-  bool first = true;
 
   ml.sort();
   ml.move_killer(1, 2);
@@ -89,7 +87,7 @@ int Algorithm::quescence(int depth, int alpha, int beta, int color) {
     m_bs.move(ml[i]);
     const int oldval = value;
     // if (first) {
-    value = -quescence(depth - 1, -beta, -alpha, -color);
+    value = -quescence(depth - 1, -beta, -alpha);
     /*  first = false;
 
     } else {
@@ -119,14 +117,14 @@ int Algorithm::quescence(int depth, int alpha, int beta, int color) {
   return value;
 }
 
-int Algorithm::negamax(int depth, int alpha, int beta, int color) {
+int Algorithm::negamax(int depth, int alpha, int beta) {
   ++m_count;
   auto& bd = m_bs.top();
 
   if (bd.halfmoves() >= 50) return 0;
 
   if (depth <= 0) {
-    return quescence(q_depth, alpha, beta, color);
+    return quescence(q_depth, alpha, beta);
   }
 
   MoveList ml = MoveGenerator::generate_all(bd);
@@ -138,8 +136,6 @@ int Algorithm::negamax(int depth, int alpha, int beta, int color) {
       return 0;
   }
 
-  auto alpha_orig = alpha;
-
   const auto entry = m_tt.get_entry(bd);
   if (entry.m_is_valid && entry.depth >= depth) {
     if (entry.m_lower >= beta) return entry.m_lower;
@@ -147,8 +143,8 @@ int Algorithm::negamax(int depth, int alpha, int beta, int color) {
     alpha = std::max(alpha, entry.m_lower);
     beta = std::min(beta, entry.m_upper);
   }
+
   auto value = -infinity;
-  bool first = true;
 
   ml.score_all(bd);
   ml.sort();
@@ -158,7 +154,7 @@ int Algorithm::negamax(int depth, int alpha, int beta, int color) {
     m_bs.move(ml[i]);
     const int oldval = value;
 
-    value = -negamax(depth - 1, -beta, -alpha, -color);
+    value = -negamax(depth - 1, -beta, -alpha);
 
     m_bs.pop();
 

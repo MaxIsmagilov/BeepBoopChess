@@ -68,10 +68,10 @@ int Evaluator::eval(const Board& bd) noexcept {
   const int eg_score = eg[utils::WHITE] - eg[utils::BLACK];
   const int mg_phase = (game_phase > 24) ? 24 : game_phase;
   const int eg_phase = 24 - mg_phase;
-  auto result = ((mg_score * mg_phase) + (eg_score * eg_phase)) / 24;
+  const auto result = ((mg_score * mg_phase) + (eg_score * eg_phase)) / 24;
   // std::cout << result << '\t' << mg[utils::WHITE] << '\t' << mg[utils::BLACK] << '\t' << eg[utils::WHITE] << '\t'
   //           << eg[utils::BLACK] << '\n';
-  return result;
+  return result * ((bd.side_to_move() ? 1 : -1));
 }
 
 int Evaluator::mg_table[12][64] = {};
@@ -85,7 +85,7 @@ int MoveScorer::score(const Board& bd, const Move& move) {
     else {
       int movedpiece = move.get_piece();
       int endsquare = move.get_end();
-      int capturedpiece;
+      int capturedpiece{0};
       int scan = (bd.side_to_move()) ? 0 : 6;
       for (int i = 0; i < 6; ++i) {
         if (bd[i + scan] & utils::set_bit_true(0ULL, endsquare)) {

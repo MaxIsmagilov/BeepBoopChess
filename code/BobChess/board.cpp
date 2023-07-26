@@ -9,6 +9,7 @@ namespace BobChess
 void Board::make_move(const Move& mv) noexcept {
   if (!(mv.get_end() || mv.get_start())) [[unlikely]] {
     m_side ^= 1u;
+    return;
   }
 
   m_halfmoves++;
@@ -25,8 +26,10 @@ void Board::make_move(const Move& mv) noexcept {
 
   m_board[mv.get_piece() + piecemod] &= ~(1ULL << mv.get_start());
 
-  for (int i = 0; i < 12; ++i) {
-    m_board[i] &= ~(1ULL << mv.get_end());
+  if (mv.is_capture()) {
+    for (int i = 0; i < 12; ++i) {
+      m_board[i] &= ~(1ULL << mv.get_end());
+    }
   }
 
   if (mv.is_promote())
@@ -78,7 +81,7 @@ void Board::make_move(const Move& mv) noexcept {
   }
 }
 
-void Board::import_FEN([[maybe_unused]] const char* FEN) {
+void Board::import_FEN(const char* FEN) {
   char arr[64];
   int board_index = 0;
   int str_index;

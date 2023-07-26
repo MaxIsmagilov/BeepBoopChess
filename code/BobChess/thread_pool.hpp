@@ -1,3 +1,4 @@
+#include <any>
 #include <atomic>
 #include <condition_variable>
 #include <deque>
@@ -71,7 +72,7 @@ class ThreadPool
   void finish() {
     {
       std::unique_lock<std::mutex> l(m);
-      for (auto&& unused : finished) {
+      for ([[maybe_unused]] auto&& unused : finished) {
         pending.push_back({});
       }
     }

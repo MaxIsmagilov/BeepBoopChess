@@ -49,7 +49,7 @@ class Board
   u64 all_occ() const noexcept;
 
   /// @brief get the side to move
-  /// @return bool
+  /// @return bool, true if white
   bool side_to_move() const noexcept;
 
   /// @brief checks whether a castle is available

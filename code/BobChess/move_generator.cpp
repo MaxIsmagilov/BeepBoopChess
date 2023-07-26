@@ -13,12 +13,12 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
 
   // initiallize constants
   const u64 all_pieces = bd.all_occ();
-  const int side = bd.side_to_move();
-  const u64 attacking_occ = (side == 1) ? bd.white_occ() : bd.black_occ();
-  const u64 defending_occ = (side == 1) ? bd.black_occ() : bd.white_occ();
+  const bool side = bd.side_to_move();
+  const u64 attacking_occ = (side) ? bd.white_occ() : bd.black_occ();
+  const u64 defending_occ = (side) ? bd.black_occ() : bd.white_occ();
 
   // set pointers for attacking and defending pieces
-  const int attacking_pieces = (side == 0) * 6;
+  const int attacking_pieces = (!side) * 6;
 
   // generate pawn moves
   u64 piece_board = bd[utils::PAWN + attacking_pieces];
@@ -37,15 +37,15 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
     while (att) {
       const int j = utils::LSB_index(att);
       att = utils::set_bit_false(att, j);
-      const int pp_flag = (abs(square - j) == 16) ? 1 : 0;
-      u32 captureflg = ((1ULL << j) & defending_occ) ? 1 : 0;
-      u16 enpassantflg = (static_cast<decltype(bd.enpassant_square())>(j) == bd.enpassant_square()) ? 1 : 0;
-      Move move(square, j, utils::PAWN, 0, captureflg, 0, 0, enpassantflg, pp_flag);
+      const bool pp_flag = (abs(square - j) == 16);
+      const bool captureflg = ((1ULL << j) & defending_occ);
+      const bool enpassantflg = (static_cast<decltype(bd.enpassant_square())>(j) == bd.enpassant_square());
+      Move move(square, j, utils::PAWN, 0, captureflg || enpassantflg, 0, 0, enpassantflg, pp_flag);
 
       // check for promotions
       if ((j / 8 == 0) || (j / 8 == 7)) {
         for (u32 promotee = 1UL; promotee < 5UL; promotee++) {
-          move = Move(square, j, utils::PAWN, promotee, captureflg, 0, 0, enpassantflg, pp_flag);
+          move = Move(square, j, utils::PAWN, promotee, captureflg, 0, 1, 0, pp_flag);
           movelist.push_back(move);
         }
       } else {
@@ -65,7 +65,7 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
     while (att) {
       const int j = utils::LSB_index(att);
       att = utils::set_bit_false(att, j);
-      u32 captureflg = ((1ULL << j) & defending_occ) ? 1U : 0U;
+      bool captureflg = ((1ULL << j) & defending_occ);
       Move move(square, j, utils::KNIGHT, 0, captureflg, 0, 0, 0, 0);
 
       movelist.push_back(move);
@@ -83,7 +83,7 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
     while (att) {
       const int j = utils::LSB_index(att);
       att = utils::set_bit_false(att, j);
-      u32 captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
+      bool captureflg = ((1ULL << j) & defending_occ);
       Move move(square, j, utils::BISHOP, 0, captureflg, 0, 0, 0, 0);
 
       movelist.push_back(move);
@@ -102,7 +102,7 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
     while (att) {
       const int j = utils::LSB_index(att);
       att = utils::set_bit_false(att, j);
-      u32 captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
+      bool captureflg = ((1ULL << j) & defending_occ);
       Move move(square, j, utils::ROOK, 0, captureflg, 0, 0, 0, 0);
 
       movelist.push_back(move);
@@ -120,7 +120,7 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
     while (att) {
       const int j = utils::LSB_index(att);
       att = utils::set_bit_false(att, j);
-      u32 captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
+      bool captureflg = ((1ULL << j) & defending_occ);
       Move move(square, j, utils::QUEEN, 0, captureflg, 0, 0, 0, 0);
 
       movelist.push_back(move);
@@ -139,7 +139,7 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
     while (att) {
       const int j = utils::LSB_index(att);
       att = utils::set_bit_false(att, j);
-      u32 captureflg = ((1ULL << j) & defending_occ) ? 0b1 : 0;
+      bool captureflg = ((1ULL << j) & defending_occ);
       Move move(square, j, utils::KING, 0, captureflg, 0, 0, 0, 0);
 
       movelist.push_back(move);
@@ -147,29 +147,31 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
   }
 
   // castling routine
-  if (side == 1) {
+  if (side) {
     if (bd.castle_available(Board::WHITE_SHORT)) {
       if (!(is_attacked(utils::_E1, bd, 0) || is_attacked(utils::_F1, bd, 0) || is_attacked(utils::_G1, bd, 0)) &&
-          !(all_pieces & ((1ULL << utils::_F1) | (1ULL << utils::_G1)))) {
+          !(all_pieces & ((1ULL << utils::_F1) | (1ULL << utils::_G1))) && (utils::LSB_index(bd[5]) == utils::_E1)) {
         movelist.push_back(Move(utils::_E1, utils::_G1, utils::KING, 0, 0, 1, 0, 0, 0));
       }
     }
     if (bd.castle_available(Board::WHITE_LONG)) {
       if (!(is_attacked(utils::_E1, bd, 0) || is_attacked(utils::_D1, bd, 0) || is_attacked(utils::_C1, bd, 0)) &&
-          !(all_pieces & ((1ULL << utils::_D1) | (1ULL << utils::_C1) | (1ULL << utils::_B1)))) {
+          !(all_pieces & ((1ULL << utils::_D1) | (1ULL << utils::_C1) | (1ULL << utils::_B1))) &&
+          (utils::LSB_index(bd[5]) == utils::_E1)) {
         movelist.push_back(Move(utils::_E1, utils::_C1, utils::KING, 0, 0, 1, 0, 0, 0));
       }
     }
   } else {
     if (bd.castle_available(Board::BLACK_SHORT)) {
       if (!(is_attacked(utils::_E8, bd, 1) || is_attacked(utils::_F8, bd, 1) || is_attacked(utils::_G8, bd, 1)) &&
-          !(all_pieces & ((1ULL << utils::_F8) | (1ULL << utils::_G8)))) {
+          !(all_pieces & ((1ULL << utils::_F8) | (1ULL << utils::_G8))) && (utils::LSB_index(bd[11]) == utils::_E8)) {
         movelist.push_back(Move(utils::_E8, utils::_G8, utils::KING, 0, 0, 1, 0, 0, 0));
       }
     }
     if (bd.castle_available(Board::BLACK_LONG)) {
-      if (!(is_attacked(utils::_E8, bd, 1) || is_attacked(utils::_D8, bd, 1) || is_attacked(utils::_C1, bd, 1)) &&
-          !(all_pieces & ((1ULL << utils::_D8) | (1ULL << utils::_C8) | (1ULL << utils::_B8)))) {
+      if (!(is_attacked(utils::_E8, bd, 1) || is_attacked(utils::_D8, bd, 1) || is_attacked(utils::_C8, bd, 1)) &&
+          !(all_pieces & ((1ULL << utils::_D8) | (1ULL << utils::_C8) | (1ULL << utils::_B8))) &&
+          (utils::LSB_index(bd[11]) == utils::_E8)) {
         movelist.push_back(Move(utils::_E8, utils::_C8, utils::KING, 0, 0, 1, 0, 0, 0));
       }
     }
@@ -426,11 +428,11 @@ bool MoveGenerator::is_attacked(int square, const Board& bd, const int attacking
     return true;
   } else {
     if (attacking_side == 1)
-      return ((pawn_attacks[1][square] & bd[0]) || (knight_attacks[square] & bd[1]) ||
+      return ((pawn_attacks[0][square] & bd[0]) || (knight_attacks[square] & bd[1]) ||
               (get_bishop_attacks(square, bd.all_occ()) & (bd[2] | bd[4])) ||
               (get_rook_attacks(square, bd.all_occ()) & (bd[3] | bd[4])) || (king_attacks[square] & bd[5]));
     else
-      return ((pawn_attacks[0][square] & bd[6]) || (knight_attacks[square] & bd[7]) ||
+      return ((pawn_attacks[1][square] & bd[6]) || (knight_attacks[square] & bd[7]) ||
               (get_bishop_attacks(square, bd.all_occ()) & (bd[8] | bd[10])) ||
               (get_rook_attacks(square, bd.all_occ()) & (bd[9] | bd[10])) || (king_attacks[square] & bd[11]));
   }
