@@ -44,6 +44,7 @@ class Move
   bool operator<(const Move& other) const noexcept;
 
   std::string to_string() const;
+  std::string print_value() const;
 
   void flag();
   bool flagged() const;

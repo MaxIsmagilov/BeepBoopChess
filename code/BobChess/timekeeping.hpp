@@ -9,7 +9,8 @@ class Clock
 {
  public:
   bool time_up(double milliseconds) const;
-  double elapsed() const;
+  double elapsed_ms() const;
+  double elapsed_ns() const;
   void start();
   void stop();
 

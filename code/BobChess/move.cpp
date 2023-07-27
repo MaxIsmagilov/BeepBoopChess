@@ -1,6 +1,7 @@
 #include "move.hpp"
 
 // C++ standard library:
+#include <cmath>
 
 // BobChess headers:
 #include "utils.hpp"
@@ -84,6 +85,16 @@ std::string Move::to_string() const {
   s.push_back('8' - (m_end / 8));
   if (m_promote) s.push_back(pieces[m_promote]);
   return s;
+}
+
+std::string Move::print_value() const {
+  if (std::abs(m_heuristic) >= 10000) {
+    const auto absval = std::abs(m_heuristic);
+    const auto mate_in = (100000 - absval) * (absval / m_heuristic);
+    return ("Mate in" + std::to_string(mate_in));
+  } else {
+    return std::to_string(m_heuristic / 100.0);
+  }
 }
 
 void Move::flag() { m_flag = true; }

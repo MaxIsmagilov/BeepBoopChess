@@ -1,5 +1,8 @@
+#include <array>
+#include <bit>
 #include <chrono>
 #include <iostream>
+#include <random>
 #include <string>
 
 #include "algorithm_chess.hpp"
@@ -28,6 +31,7 @@ int perft(const Board& bd, int depth) {
 
 int main() {
   std::cout << "start\n";
+
   TTable::initialize();
   Evaluator::initialize_evaluation();
   MoveGenerator::initialize_all();
@@ -36,7 +40,7 @@ int main() {
   // bd.import_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
   // bd.import_FEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0");
 
-  for (int i = 0; i < 16; ++i) {
+  for (int i = 0; i < 5; ++i) {
     std::cout << bd.nice_print() << '\n';
 
     Clock c;
@@ -44,7 +48,7 @@ int main() {
 
     auto t = MoveFinder::get_best_move_time(bd, 5000, Evaluator::eval);
 
-    auto el = c.elapsed();
+    auto el = c.elapsed_ms();
 
     auto m = dynamic_cast<Move&>(std::get<0>(t));
 

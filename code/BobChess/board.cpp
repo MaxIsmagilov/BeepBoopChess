@@ -50,8 +50,11 @@ void Board::make_move(const Move& mv) noexcept {
   }
 
   if (mv.is_enpassant()) {
-    m_board[0] &= ~(1ULL << (mv.get_end() + ((m_side) ? 8 : -8)));
-    m_board[6] &= ~(1ULL << (mv.get_end() + ((m_side) ? 8 : -8)));
+    if (m_side) {
+      m_board[0] &= ~(1ULL << (mv.get_end() - 8));
+    } else {
+      m_board[6] &= ~(1ULL << (mv.get_end() + 8));
+    }
   }
 
   if (mv.get_start() == utils::_A1) {

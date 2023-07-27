@@ -59,7 +59,7 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int dep
       ml.set_heuristic(j, score);
     }
     tp.cancel_pending();
-    std::cout << i + 1 << '\t' << c.elapsed() / 1000.0 << '\t' << nodecount << '\n';
+    std::cout << i + 1 << '\t' << c.elapsed_ms() / 1000.0 << '\t' << nodecount << '\n';
   }
   tp.finish();
 
@@ -109,7 +109,7 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move_time(const Board& bd, do
       ml.set_heuristic(j, score);
     }
     tp.cancel_pending();
-    std::cout << i + 1 << '\t' << c.elapsed() / 1000.0 << '\t' << nodecount << '\n';
+    std::cout << i + 1 << '\t' << c.elapsed_ms() / 1000.0 << '\t' << nodecount << '\n';
   }
   tp.finish();
 

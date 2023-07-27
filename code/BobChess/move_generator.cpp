@@ -44,7 +44,7 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
 
       // check for promotions
       if ((j / 8 == 0) || (j / 8 == 7)) {
-        for (u32 promotee = 1UL; promotee < 5UL; promotee++) {
+        for (u32 promotee = utils::KNIGHT; promotee < utils::KING; ++promotee) {
           move = Move(square, j, utils::PAWN, promotee, captureflg, 0, 1, 0, pp_flag);
           movelist.push_back(move);
         }

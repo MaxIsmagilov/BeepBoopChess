@@ -111,7 +111,7 @@ unsigned int count_bits(const u64& bitboard);
 /// @return the index
 int LSB_index(const u64& test);
 
-static constexpr int INFINITY = 100000;
+constexpr int BC_INFINITY = 100000;
 
 }  // namespace utils
 
