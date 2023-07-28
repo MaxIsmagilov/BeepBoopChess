@@ -56,6 +56,17 @@ TTutils::TTEntry TTable::get_entry(const Board& bd) const noexcept {
 
 void TTable::add(TTutils::TTEntry entry) noexcept { m_entries[entry.m_key % TTutils::ttsize] = entry; }
 
+void TTable::combine(std::vector<const TTable*> tables) {
+  std::random_device r;
+  std::uniform_int_distribution<decltype(tables.size())> dist(0, tables.size());
+  for (std::size_t i = 0; i < TTutils::ttsize; ++i) {
+    const auto from = dist(r);
+    m_entries[i] = tables[from]->m_entries.at(i);
+  }
+}
+
+void TTable::set_as(TTable* table) { m_entries = std::move(table->m_entries); }
+
 void TTable::initialize() noexcept {
   std::random_device r;
   std::uniform_int_distribution<u64> dist(0ULL, 0xFFFFFFFFFFFFFFFFULL);

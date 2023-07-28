@@ -12,7 +12,7 @@ namespace BobChess
 namespace TTutils
 {
 
-constexpr std::size_t ttsize = (2097152);
+constexpr std::size_t ttsize = (2097152 * 2);
 
 // @brief entry type enum
 enum TTEntryType : bool { FAIL, VALID };
@@ -47,12 +47,16 @@ class TTable
 
   void add(TTutils::TTEntry entry) noexcept;
 
+  void combine(std::vector<const TTable*> tables);
+
+  void set_as(TTable* table);
+
   static void initialize() noexcept;
 
  private:
   static u64 m_keygens[64][12];
   static u64 m_keymods[70];
-  std::vector<TTutils::TTEntry> m_entries;
+  mutable std::vector<TTutils::TTEntry> m_entries;
 };
 
 }  // namespace BobChess
