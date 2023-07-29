@@ -34,6 +34,8 @@ class MoveList
 
   void remove(std::vector<int> indeces) noexcept;
 
+  void remove_non_captures() noexcept;
+
   int get_size() noexcept;
 
   void score_all(const Board& bd) noexcept;

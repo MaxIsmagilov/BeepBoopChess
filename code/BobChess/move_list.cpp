@@ -39,6 +39,16 @@ void MoveList::remove(std::vector<int> indeces) noexcept {
   }
 }
 
+void MoveList::remove_non_captures() noexcept {
+  for (int i = 0; i < m_last_populated;) {
+    if (m_moves.at(i).is_capture())
+      ++i;
+    else {
+      this->remove(i);
+    }
+  }
+}
+
 int MoveList::get_size() noexcept { return m_last_populated; }
 
 void MoveList::score_all(const Board& bd) noexcept {

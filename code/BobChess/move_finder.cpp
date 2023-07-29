@@ -41,7 +41,7 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int dep
   std::size_t nodecount{0};
   bool mate_threat = false;
 
-  for (int i = 0; i < depth && !mate_threat; ++i) {
+  for (int i = 1; i < depth && !mate_threat; ++i) {
     nodecount = 0;
     std::vector<std::future<std::any>> results;
     results.resize(ml.get_size());
@@ -91,7 +91,7 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move_time(const Board& bd, do
   tp.go(15);
   bool mate_threat = false;
 
-  for (int i = 0; i <= 64 && !mate_threat && !c.time_up(milliseconds); ++i) {
+  for (int i = 1; i <= 64 && !mate_threat && !c.time_up(milliseconds); ++i) {
     nodecount = 0;
     std::vector<std::future<std::any>> results;
     results.resize(ml.get_size());

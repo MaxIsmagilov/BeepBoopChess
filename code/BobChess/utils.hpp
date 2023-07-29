@@ -17,7 +17,7 @@ namespace utils
 {
 
 /// @brief piece enums
-enum piece_numbers : u8 { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
+enum piece : u8 { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
 
 /// @brief color enums
 enum colors { BLACK, WHITE };

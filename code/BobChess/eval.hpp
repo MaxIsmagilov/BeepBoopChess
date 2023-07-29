@@ -11,6 +11,8 @@ class Evaluator
   static void initialize_evaluation() noexcept;
   static int eval(const Board& bd) noexcept;
 
+  static constexpr int get_piece(utils::piece p) noexcept;
+
  private:
   static constexpr int mg_pawn_table[64] = {0,   0,   0,   0,   0,   0,   0,  0,    //
                                             98,  134, 61,  95,  68,  126, 34, -11,  //
@@ -152,5 +154,7 @@ class MoveScorer
                                        {84, 83, 82, 81, 80, 79},  //
                                        {95, 94, 93, 92, 91, 90}};
 };
+
+constexpr int Evaluator::get_piece(utils::piece p) noexcept { return mg_value[p]; }
 
 }  // namespace BobChess

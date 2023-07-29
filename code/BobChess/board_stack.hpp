@@ -19,6 +19,10 @@ class BoardStack
   /// @return a const reference
   const Board& top() const;
 
+  /// @brief gets last move made
+  /// @return a const reference
+  const Move& lastmove() const;
+
   /// @brief pop a board off the top
   void pop();
 
@@ -30,7 +34,8 @@ class BoardStack
   void nullmove();
 
  private:
-  std::array<Board, 1024> m_array;
+  std::array<Board, 1024> m_boards;
+  std::array<Move, 1024> m_moves;
   int size{0};
 };
 

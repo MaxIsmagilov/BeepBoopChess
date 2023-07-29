@@ -42,15 +42,19 @@ int Algorithm::quescence(int depth, int alpha, int beta) {
   ++m_count;
   auto&& bd = m_bs.top();
 
-  if (depth <= 0) {
-    return -m_eval(bd);
-  }
+  auto delta = Evaluator::get_piece(utils::QUEEN);
+  static constexpr auto delta_change = Evaluator::get_piece(utils::QUEEN) - Evaluator::get_piece(utils::PAWN) * 2;
 
-  if (bd.halfmoves() >= 50) {
-    return 0;
-  }
+  if (m_bs.lastmove().is_promote()) delta += delta_change;
 
-  MoveList ml = MoveGenerator::generate_all(bd);
+  const auto stand_pat = -m_eval(bd);
+  if (stand_pat >= beta || depth == 0) return beta;
+  if (stand_pat < alpha - delta)
+    return alpha;
+  else if (alpha < stand_pat)
+    alpha = stand_pat;
+
+  auto ml = MoveGenerator::generate_all(bd);
 
   if (ml.get_size() == 0) {
     if (MoveGenerator::in_check(bd, bd.side_to_move())) {
@@ -60,59 +64,13 @@ int Algorithm::quescence(int depth, int alpha, int beta) {
     }
   }
 
-  ml.score_all(bd);
-
-  std::vector<int> not_captures;
-  not_captures.reserve(ml.get_size());
-
   for (int i = 0; i < ml.get_size(); ++i) {
-    if (!ml[i].is_capture()) not_captures.emplace_back(i);
+    auto score = -quescence(depth - 1, -beta, -alpha);
+
+    if (score >= beta) return beta;
+    if (score > alpha) alpha = score;
   }
-
-  ml.remove(not_captures);
-
-  if (ml.get_size() == 0) {
-    return m_eval(bd);
-  }
-
-  const auto entry = m_tt.get_entry(bd);
-  if (entry.m_is_valid && entry.depth >= depth) {
-    if (entry.m_lower >= beta) return entry.m_lower;
-    if (entry.m_upper <= alpha) return entry.m_upper;
-    alpha = std::max(alpha, entry.m_lower);
-    beta = std::min(beta, entry.m_upper);
-  }
-
-  auto value = -infinity;
-
-  ml.sort();
-  ml.move_killer(1, 1);
-
-  for (int i = 0; i < ml.get_size(); ++i) {
-    m_bs.move(ml[i]);
-    const int oldval = value;
-    value = -quescence(depth - 1, -beta, -alpha);
-    m_bs.pop();
-
-    value = std::max(value, oldval);
-    alpha = std::max(value, alpha);
-    if (alpha >= beta) break;
-  }
-
-  TTutils::TTEntry new_entry = {TTable::get_key(bd), 0, 0, 0, TTutils::VALID};
-
-  if (value <= alpha)
-    new_entry.m_upper = value;
-  else if (value >= beta)
-    new_entry.m_lower = value;
-  else {
-    new_entry.m_lower = value;
-    new_entry.m_upper = value;
-  }
-
-  m_tt.add(new_entry);
-
-  return value;
+  return alpha;
 }
 
 int Algorithm::negamax(int depth, int alpha, int beta) {
