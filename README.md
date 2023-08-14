@@ -1,10 +1,10 @@
-# BobChess
+# BeepBoop Chess
 
-BobChess is the (not really) official chess engine of Bob created by Blooop.
+BeepBoop is the (not really) official chess engine of Bob created by Blooop.
 This engine is not better than any other but I think its kinda cool.
 I made this to win my school's unofficial computer chess tournament.
 
-[oficial repo](https://github.com/MaxIsmagilov/BobChess)
+[oficial repo](https://github.com/MaxIsmagilov/BeepBoop)
 
 # Features
 

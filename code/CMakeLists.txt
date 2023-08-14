@@ -1,12 +1,12 @@
 
 cmake_minimum_required(VERSION 3.25)
 
-PROJECT( BobChess
+PROJECT( BeepBoop
     VERSION 0.0.0
     LANGUAGES C CXX
     )
 
-ADD_SUBDIRECTORY(BobChess)
+ADD_SUBDIRECTORY(BeepBoop)
 
 ADD_SUBDIRECTORY(third_party)
 

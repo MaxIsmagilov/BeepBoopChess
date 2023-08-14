@@ -189,7 +189,7 @@ static inline int parse_input(const std::string& input_string)
   else if (input_string.substr(0, 4) == "quit") {
     return 1;
   } else if (input_string.substr(0, 3) == "uci") {
-    std::cout << "id name BobChess\n"
+    std::cout << "id name BeepBoop\n"
               << "id author BL0OOP\n"
               << "uciok" << std::endl;
   }
@@ -209,7 +209,7 @@ static inline std::string trim(const char* word, int size)
 
 static inline void uci_loop()
 {
-  std::cout << "id name BobChess\n"
+  std::cout << "id name BeepBoop\n"
             << "id author BL0OOP\n"
             << "uciok" << std::endl;
   char input[BUFFER_SIZE];
