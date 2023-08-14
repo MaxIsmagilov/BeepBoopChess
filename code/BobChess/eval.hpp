@@ -1,6 +1,7 @@
 #pragma once
 
 #include "board.hpp"
+#include "transposition.hpp"
 
 namespace BobChess
 {
@@ -141,9 +142,11 @@ class MoveScorer
 {
  public:
   static int score(const Board& bd, const Move& move);
+  static int score(const Board& bd, const Move& move, const TTable& table);
 
  private:
   static constexpr int capture_weight = 2;
+  static constexpr int PV_bonus = 200000;
   static constexpr int check_bias = 2000;
   static constexpr int castle_bias = 200;
   static constexpr int promotion_bias[6] = {0, 400, 500, 600, 700, 0};

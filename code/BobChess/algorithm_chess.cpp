@@ -9,14 +9,16 @@
 namespace BobChess
 {
 
-Algorithm::Algorithm(Board&& bd, std::function<int(Board)> eval, TTable&& table)
-    : m_tt(), m_bs{bd}, m_eval{eval}, m_count{0}, current_guess{0} {
-  m_tt.set_as(&table);
-}
+Algorithm::Algorithm(Board&& bd, std::function<int(Board)> eval, TTable& table)
+    : m_tt{table}, m_bs{bd}, m_eval{eval}, m_count{0}, current_guess{0} {}
 
 std::tuple<int, std::size_t> Algorithm::evaluate_move(int depth) {
   current_depth = depth;
   auto n = current_guess;
+
+  n = negamax(depth, -infinity, infinity);
+
+  /*
   auto upperbound = game_over + 1, lowerbound = -game_over - 1;
   do {
     const auto beta = [&]() -> int {
@@ -26,16 +28,17 @@ std::tuple<int, std::size_t> Algorithm::evaluate_move(int depth) {
         return n;
     }();
     // auto startcolor = (m_bs.top().side_to_move()) ? 1 : 1;
-    n = negamax(depth, beta - 2, beta);
+    n = negamax(depth, beta - 1, beta);
     if (n < beta)
       upperbound = n;
     else
       lowerbound = n;
+    // std::cout << (std::to_string(beta) + "\n");
   } while (lowerbound < upperbound);
 
-  current_guess = n;
+  current_guess = n;*/
 
-  return std::make_tuple(-n, m_count);
+  return std::make_tuple(n, m_count);
 }
 
 int Algorithm::quescence(int depth, int alpha, int beta) {
@@ -48,7 +51,7 @@ int Algorithm::quescence(int depth, int alpha, int beta) {
   if (m_bs.lastmove().is_promote()) delta += delta_change;
 
   const auto stand_pat = -m_eval(bd);
-  if (stand_pat >= beta || depth == 0) return beta;
+  if (stand_pat >= beta || depth == 0) return stand_pat;
   if (stand_pat < alpha - delta)
     return alpha;
   else if (alpha < stand_pat)
@@ -64,12 +67,19 @@ int Algorithm::quescence(int depth, int alpha, int beta) {
     }
   }
 
+  ml.remove_non_captures();
+
+  ml.score_all(bd);
+  ml.sort();
+  ml.move_killer(1, 1);
+
   for (int i = 0; i < ml.get_size(); ++i) {
     auto score = -quescence(depth - 1, -beta, -alpha);
 
     if (score >= beta) return beta;
     if (score > alpha) alpha = score;
   }
+
   return alpha;
 }
 
@@ -102,7 +112,7 @@ int Algorithm::negamax(int depth, int alpha, int beta) {
 
   auto value = -infinity;
 
-  ml.score_all(bd);
+  ml.score_all(bd, m_tt);
   ml.sort();
   ml.move_killer(1, 1);
 
@@ -143,9 +153,5 @@ int Algorithm::negamax(int depth, int alpha, int beta) {
   m_tt.add(new_entry);
   return value;
 }
-
-const TTable* Algorithm::transposition_ptr() const noexcept { return &m_tt; }
-
-void Algorithm::set_transposition(TTable* table) noexcept { m_tt.set_as(table); }
 
 }  // namespace BobChess

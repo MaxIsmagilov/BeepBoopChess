@@ -5,6 +5,7 @@
 
 #include "eval.hpp"
 #include "move.hpp"
+#include "transposition.hpp"
 #include "utils.hpp"
 
 namespace BobChess
@@ -39,6 +40,8 @@ class MoveList
   int get_size() noexcept;
 
   void score_all(const Board& bd) noexcept;
+
+  void score_all(const Board& bd, const TTable& tt) noexcept;
 
  private:
   std::array<Move, 256> m_moves{Move{}};

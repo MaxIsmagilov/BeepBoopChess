@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <mutex>
 #include <random>
 
 #include "random_generator.hpp"
@@ -38,7 +39,11 @@ u64 TTable::get_key(const Board& bd) noexcept {
 }
 
 TTutils::TTEntry TTable::get_entry(u64 key) const noexcept {
-  auto entry = m_entries[key % TTutils::ttsize];
+  TTutils::TTEntry entry;
+  {
+    std::unique_lock<std::mutex> l(m_lock);
+    entry = {m_entries[key % TTutils::ttsize]};
+  }
   if (entry.m_key != key)
     return TTutils::FAILED_ENTRY;
   else
@@ -47,14 +52,21 @@ TTutils::TTEntry TTable::get_entry(u64 key) const noexcept {
 
 TTutils::TTEntry TTable::get_entry(const Board& bd) const noexcept {
   const auto key = get_key(bd);
-  auto entry = m_entries[key % TTutils::ttsize];
+  TTutils::TTEntry entry;
+  {
+    std::unique_lock<std::mutex> l(m_lock);
+    entry = {m_entries[key % TTutils::ttsize]};
+  }
   if (entry.m_key != key)
     return TTutils::FAILED_ENTRY;
   else
     return entry;
 }
 
-void TTable::add(TTutils::TTEntry entry) noexcept { m_entries[entry.m_key % TTutils::ttsize] = entry; }
+void TTable::add(TTutils::TTEntry entry) noexcept {
+  std::unique_lock<std::mutex> l(m_lock);
+  m_entries[entry.m_key % TTutils::ttsize] = entry;
+}
 
 void TTable::combine(std::vector<const TTable*> tables) {
   std::random_device r;

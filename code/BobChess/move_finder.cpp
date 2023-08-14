@@ -12,7 +12,8 @@
 namespace BobChess
 {
 
-std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int depth, std::function<int(Board)> eval) {
+std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int depth, std::function<int(Board)> eval,
+                                                        TTable& table) {
   //
 
   // declare and start a clock
@@ -35,23 +36,27 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int dep
   // add agloes to the vector
   for (int current_loc = 0; current_loc < ml.get_size(); ++current_loc) {
     // emplace an algorithm with the targeted eval and moved-copied board
-    algoes.emplace_back(Algorithm(bd.move_copy(ml[current_loc]), eval));
+    algoes.emplace_back(Algorithm(bd.move_copy(ml[current_loc]), eval, table));
   }
 
   std::size_t nodecount{0};
   bool mate_threat = false;
 
-  for (int i = 1; i < depth && !mate_threat; ++i) {
+  for (int i = 0; i < depth && !mate_threat; ++i) {
+    // inside a depth, call MTD(f)
+
     nodecount = 0;
     std::vector<std::future<std::any>> results;
     results.resize(ml.get_size());
+
     for (int j = 0; j < ml.get_size(); ++j) {
       results[j] = tp.queue(&Algorithm::evaluate_move, &(algoes[j]), i);
     }
+
     for (int j = 0; j < ml.get_size(); ++j) {
       auto tupl = std::any_cast<std::tuple<int, std::size_t>>(results[j].get());
 
-      auto score = std::get<0>(tupl);
+      auto score = -std::get<0>(tupl);
       auto result = std::get<1>(tupl);
 
       nodecount += result;
@@ -72,7 +77,7 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int dep
 }
 
 std::tuple<Move, std::size_t> MoveFinder::get_best_move_time(const Board& bd, double milliseconds,
-                                                             std::function<int(Board)> eval) {
+                                                             std::function<int(Board)> eval, TTable& table) {
   Clock c;
   c.start();
   ThreadPool tp;
@@ -84,14 +89,14 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move_time(const Board& bd, do
   std::vector<Algorithm> algoes;
 
   for (int current_loc = 0; current_loc < ml.get_size(); ++current_loc) {
-    algoes.emplace_back(Algorithm(bd.move_copy(ml[current_loc]), eval));
+    algoes.emplace_back(Algorithm(bd.move_copy(ml[current_loc]), eval, table));
   }
 
   std::size_t nodecount{0};
   tp.go(15);
   bool mate_threat = false;
 
-  for (int i = 1; i <= 64 && !mate_threat && !c.time_up(milliseconds); ++i) {
+  for (int i = 0; i <= 64 && !mate_threat && !c.time_up(milliseconds); ++i) {
     nodecount = 0;
     std::vector<std::future<std::any>> results;
     results.resize(ml.get_size());
@@ -101,7 +106,7 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move_time(const Board& bd, do
     for (int j = 0; j < ml.get_size(); ++j) {
       auto tupl = std::any_cast<std::tuple<int, std::size_t>>(results[j].get());
 
-      auto score = std::get<0>(tupl);
+      auto score = -std::get<0>(tupl);
       auto result = std::get<1>(tupl);
 
       nodecount += result;
@@ -120,4 +125,5 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move_time(const Board& bd, do
   }
   return std::make_tuple(ml[0], nodecount);
 }
+
 }  // namespace BobChess

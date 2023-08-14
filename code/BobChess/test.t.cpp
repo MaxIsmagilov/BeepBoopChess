@@ -7,6 +7,7 @@
 
 #include "algorithm_chess.hpp"
 #include "eval.hpp"
+#include "game.hpp"
 #include "move_finder.hpp"
 #include "move_generator.hpp"
 #include "move_list.hpp"
@@ -35,18 +36,22 @@ int main() {
   TTable::initialize();
   Evaluator::initialize_evaluation();
   MoveGenerator::initialize_all();
-  Board bd;
-  bd.import_FEN("r3r1k1/pppb1Npp/2np4/4b3/4P1nq/2N1B3/QPP2PPP/R3R1K1 w p - 0 1");
-  // bd.import_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-  // bd.import_FEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0");
 
-  for (int i = 0; i < 5; ++i) {
-    std::cout << bd.nice_print() << '\n';
+  Game g;
+  g.set_pos();
+
+  g.set_pos("r3r1k1/pppb1Npp/2np4/4b3/4P1nq/2N1B3/QPP2PPP/R3R1K1 w p - 0 1");
+  //  g.set_pos("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0");
+
+  TTable ttt;
+
+  for (int i = 0; i < 1; ++i) {
+    g.print();
 
     Clock c;
     c.start();
 
-    auto t = MoveFinder::get_best_move_time(bd, 5000, Evaluator::eval);
+    auto t = g.go_depth(8);
 
     auto el = c.elapsed_ms();
 
@@ -57,10 +62,10 @@ int main() {
     std::cout << m.get_heuristic() / (100.0) << '\n';
     std::cout << std::get<1>(t) << " nodes @ ";
     std::cout << std::get<1>(t) / (el) << " k nodes/s\n";
-
-    bd.make_move(m);
   }
-  std::cout << '\n' << bd.nice_print();
+
+  g.print();
+
   std::cout << "done\n";
 
   return 0;

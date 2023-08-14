@@ -23,26 +23,24 @@ class Algorithm
 
   ~Algorithm() = default;
 
-  Algorithm(Board&& bd, std::function<int(Board)> eval, TTable&& table = TTable{});
+  Algorithm(Board&& bd, std::function<int(Board)> eval, TTable& table);
 
   /// @brief evaluate a move
   /// @param depth
   /// @return <value, nodecount>
   std::tuple<int, std::size_t> evaluate_move(int depth);
 
-  const TTable* transposition_ptr() const noexcept;
+  int quescence(int depth, int alpha, int beta);
+  int negamax(int depth, int alpha, int beta);
 
-  void set_transposition(TTable* table) noexcept;
+  std::size_t get_size() const noexcept;
 
  private:
-  TTable m_tt;
+  TTable& m_tt;
   BoardStack m_bs;
   std::function<int(Board)>& m_eval;
 
   std::size_t m_count{};
-
-  int quescence(int depth, int alpha, int beta);
-  int negamax(int depth, int alpha, int beta);
 
   /// @brief arbitrarily large number to use in place of infinity
   static constexpr int infinity = 500000;
@@ -54,7 +52,7 @@ class Algorithm
 
   static constexpr int LMR_R = 3;
 
-  static constexpr int q_depth = 2;
+  static constexpr int q_depth = 3;
 
   int current_depth{0};
 

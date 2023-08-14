@@ -55,4 +55,9 @@ void MoveList::score_all(const Board& bd) noexcept {
   std::for_each(m_moves.begin(), m_moves.begin() + m_last_populated,
                 [&](Move& m) mutable { m.set_heuristic(MoveScorer::score(bd, m)); });
 }
+
+void MoveList::score_all(const Board& bd, const TTable& tt) noexcept {
+  std::for_each(m_moves.begin(), m_moves.begin() + m_last_populated,
+                [&](Move& m) mutable { m.set_heuristic(MoveScorer::score(bd, m, tt)); });
+}
 }  // namespace BobChess

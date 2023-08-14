@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mutex>
 #include <tuple>
 #include <vector>
 
@@ -12,7 +13,7 @@ namespace BobChess
 namespace TTutils
 {
 
-constexpr std::size_t ttsize = (2097152 * 2);
+constexpr std::size_t ttsize = (2097152);
 
 // @brief entry type enum
 enum TTEntryType : bool { FAIL, VALID };
@@ -54,6 +55,7 @@ class TTable
   static void initialize() noexcept;
 
  private:
+  mutable std::mutex m_lock{};
   static u64 m_keygens[64][12];
   static u64 m_keymods[70];
   mutable std::vector<TTutils::TTEntry> m_entries;

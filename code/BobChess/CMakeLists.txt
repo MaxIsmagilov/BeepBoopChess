@@ -15,6 +15,7 @@ SET(BobChess_Headers
     timekeeping.hpp
     algorithm_chess.hpp
     move_finder.hpp
+    game.hpp
     )
 
 SET(BobChess_Impl
@@ -32,6 +33,7 @@ SET(BobChess_Impl
     timekeeping.cpp
     algorithm_chess.cpp
     move_finder.cpp
+    game.cpp
     )
 
 ADD_LIBRARY(BobChess_objects OBJECT 
