@@ -8,6 +8,8 @@ PROJECT( BeepBoop
 
 ADD_SUBDIRECTORY(BeepBoop)
 
+ADD_SUBDIRECTORY(exec)
+
 ADD_SUBDIRECTORY(third_party)
 
 if(NOT WIN32)
@@ -17,7 +19,7 @@ if(NOT WIN32)
     if (COMPILER_SUPPORTS_THREADS)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lpthread")
     else ()
-        message(FATAL_ERROR "Your compiler does not support C++20 concepts.")
+        message(FATAL_ERROR "Your compiler does not support C++ threads")
     endif ()
 endif ()
 
@@ -30,8 +32,6 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 target_compile_options(gtest PRIVATE "-Wno-error=restrict")
-
-
 
 enable_testing()
 include(GoogleTest)

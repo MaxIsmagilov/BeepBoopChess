@@ -94,12 +94,6 @@ INSTALL( EXPORT BeepBoopTargets
     
 enable_testing()
 
-# test file
-
-ADD_EXECUTABLE(test.t test.t.cpp)
-TARGET_LINK_LIBRARIES(test.t BeepBoop::BeepBoop)
-target_compile_options(test.t PRIVATE -g)
-
 # tests
 
 include(GoogleTest)
