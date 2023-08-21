@@ -51,7 +51,7 @@ int main() {
     Clock c;
     c.start();
 
-    auto t = g.go_depth(8);
+    auto t = g.go_depth(8, 8);
 
     auto el = c.elapsed_ms();
 

@@ -13,16 +13,16 @@ namespace BeepBoop
 {
 
 std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int depth, std::function<int(Board)> eval,
-                                                        TTable& table) {
+                                                        TTable& table, std::size_t thread_count) {
   //
 
   // declare and start a clock
   Clock c;
   c.start();
 
-  // create a threadpool and start it with 15 threads
+  // create a threadpool and start it with thread_count threads
   ThreadPool tp;
-  tp.go(15);
+  tp.go(thread_count);
 
   // generate moves
   MoveList ml = MoveGenerator::generate_all(bd);
@@ -77,7 +77,8 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int dep
 }
 
 std::tuple<Move, std::size_t> MoveFinder::get_best_move_time(const Board& bd, double milliseconds,
-                                                             std::function<int(Board)> eval, TTable& table) {
+                                                             std::function<int(Board)> eval, TTable& table,
+                                                             std::size_t thread_count) {
   Clock c;
   c.start();
   ThreadPool tp;
@@ -93,7 +94,7 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move_time(const Board& bd, do
   }
 
   std::size_t nodecount{0};
-  tp.go(15);
+  tp.go(thread_count);
   bool mate_threat = false;
 
   for (int i = 0; i <= 64 && !mate_threat && !c.time_up(milliseconds); ++i) {
