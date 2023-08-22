@@ -22,8 +22,8 @@ class Algorithm
   /// @brief constructor (do not allow default construction)
   Algorithm() = delete;
 
-  /// @brief constructor (do not allow move construction)
-  Algorithm(Algorithm&& other) = delete;
+  /// @brief constructor (default move construction)
+  Algorithm(Algorithm&& other) = default;
 
   /// @brief constructor (do not allow copy construction)
   Algorithm(const Algorithm& other) = delete;
