@@ -45,7 +45,7 @@ class MoveList
 
  private:
   std::array<Move, 256> m_moves{Move{}};
-  int m_last_populated{0};
+  int                   m_last_populated{0};
 };
 
 }  // namespace BeepBoop

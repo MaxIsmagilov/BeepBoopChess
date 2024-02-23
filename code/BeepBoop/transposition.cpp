@@ -1,11 +1,10 @@
-#include "transposition.hpp"
-
 #include <algorithm>
 #include <iostream>
 #include <mutex>
 #include <random>
 
 #include "random_generator.hpp"
+#include "transposition.hpp"
 #include "utils.hpp"
 
 namespace BeepBoop
@@ -23,7 +22,7 @@ u64 TTable::get_key(const Board& bd) noexcept {
     auto bb = bd[i];
     while (bb) {
       auto j = utils::LSB_index(bb);
-      bb = utils::set_bit_false(bb, j);
+      bb     = utils::set_bit_false(bb, j);
       key ^= m_keygens[j][i];
     }
   }
@@ -51,7 +50,7 @@ TTutils::TTEntry TTable::get_entry(u64 key) const noexcept {
 }
 
 TTutils::TTEntry TTable::get_entry(const Board& bd) const noexcept {
-  const auto key = get_key(bd);
+  const auto       key = get_key(bd);
   TTutils::TTEntry entry;
   {
     std::unique_lock<std::mutex> l(m_lock);
@@ -69,18 +68,18 @@ void TTable::add(TTutils::TTEntry entry) noexcept {
 }
 
 void TTable::combine(std::vector<const TTable*> tables) {
-  std::random_device r;
+  std::random_device                                     r;
   std::uniform_int_distribution<decltype(tables.size())> dist(0, tables.size());
   for (std::size_t i = 0; i < TTutils::ttsize; ++i) {
     const auto from = dist(r);
-    m_entries[i] = tables[from]->m_entries.at(i);
+    m_entries[i]    = tables[from]->m_entries.at(i);
   }
 }
 
 void TTable::set_as(TTable* table) { m_entries = std::move(table->m_entries); }
 
 void TTable::initialize() noexcept {
-  std::random_device r;
+  std::random_device                 r;
   std::uniform_int_distribution<u64> dist(0ULL, 0xFFFFFFFFFFFFFFFFULL);
   for (int i = 0; i < 64; ++i) {
     for (int j = 0; j < 12; ++j) {
@@ -93,6 +92,6 @@ void TTable::initialize() noexcept {
 }
 
 u64 TTable::m_keygens[64][12] = {};
-u64 TTable::m_keymods[70] = {};
+u64 TTable::m_keymods[70]     = {};
 
 }  // namespace BeepBoop

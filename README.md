@@ -14,10 +14,11 @@ Includes:
 - Magic Bitboard move generation
 - Transposition tables
 - Hand-tuned evaluation
-- Tuneable and high-power multithreading (Ported from [Rippir](https://github.com/MaxIsmagilov/Rippir))
+- Tuneable and high-power multithreading 
 
 To be added:
 
+- Intelligent multithreading
 - UCI interface
 - Neural network evaluation
 

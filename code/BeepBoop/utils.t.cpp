@@ -1,11 +1,11 @@
-#include "utils.hpp"
-
 #include <gtest/gtest.h>
+
+#include "utils.hpp"
 
 struct kv
 {
   BeepBoop::u64 num;
-  int count;
+  int           count;
 } tests[6] = {{0x1ULL, 1}, {0xFULL, 4}, {0x0ULL, 0}, {0xF0000ULL, 4}, {0x3ULL, 2}, {0x5000ULL, 2}};
 
 TEST(Utils, Count) {

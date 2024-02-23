@@ -8,11 +8,11 @@ namespace BeepBoop
 class Clock
 {
  public:
-  bool time_up(double milliseconds) const;
+  bool   time_up(double milliseconds) const;
   double elapsed_ms() const;
   double elapsed_ns() const;
-  void start();
-  void stop();
+  void   start();
+  void   stop();
 
  private:
   std::chrono::_V2::system_clock::time_point m_start_time;

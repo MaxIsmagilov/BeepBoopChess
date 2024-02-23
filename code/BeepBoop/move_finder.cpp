@@ -1,9 +1,8 @@
-#include "move_finder.hpp"
-
 #include <any>
 #include <future>
 #include <iostream>
 
+#include "move_finder.hpp"
 #include "move_generator.hpp"
 #include "thread_pool.hpp"
 #include "timekeeping.hpp"
@@ -40,7 +39,7 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int dep
   }
 
   std::size_t nodecount{0};
-  bool mate_threat = false;
+  bool        mate_threat = false;
 
   for (int i = 0; i < depth && !mate_threat; ++i) {
     // inside a depth, call MTD(f)
@@ -56,7 +55,7 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int dep
     for (int j = 0; j < ml.get_size(); ++j) {
       auto tupl = std::any_cast<std::tuple<int, std::size_t>>(results[j].get());
 
-      auto score = -std::get<0>(tupl);
+      auto score  = -std::get<0>(tupl);
       auto result = std::get<1>(tupl);
 
       nodecount += result;
@@ -82,7 +81,7 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move_time(const Board& bd, do
   Clock c;
   c.start();
   ThreadPool tp;
-  MoveList ml = MoveGenerator::generate_all(bd);
+  MoveList   ml = MoveGenerator::generate_all(bd);
 
   // check if movelist is empty
   if (!ml.get_size()) return std::make_tuple(Move{}, 0);
@@ -107,7 +106,7 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move_time(const Board& bd, do
     for (int j = 0; j < ml.get_size(); ++j) {
       auto tupl = std::any_cast<std::tuple<int, std::size_t>>(results[j].get());
 
-      auto score = -std::get<0>(tupl);
+      auto score  = -std::get<0>(tupl);
       auto result = std::get<1>(tupl);
 
       nodecount += result;

@@ -20,16 +20,16 @@ class Move
   Move(u8 start, u8 end, u8 piece, u8 promote, bool capture, bool castle, bool is_promote, bool enpassant,
        bool is_double, int heuristic);
 
-  Move(Move&& m) = default;
-  Move(const Move& m) = default;
+  Move(Move&& m)                 = default;
+  Move(const Move& m)            = default;
   Move& operator=(const Move& m) = default;
 
   void set_heuristic(int heuristic) noexcept;
 
-  u8 get_start() const noexcept;
-  u8 get_end() const noexcept;
-  u8 get_piece() const noexcept;
-  u8 get_promote() const noexcept;
+  u8   get_start() const noexcept;
+  u8   get_end() const noexcept;
+  u8   get_piece() const noexcept;
+  u8   get_promote() const noexcept;
   bool is_capture() const noexcept;
   bool is_castle() const noexcept;
   bool is_promote() const noexcept;

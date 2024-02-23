@@ -1,6 +1,6 @@
-#include "random_generator.hpp"
-
 #include <cstdlib>
+
+#include "random_generator.hpp"
 
 namespace BeepBoop
 {

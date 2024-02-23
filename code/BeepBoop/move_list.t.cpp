@@ -1,6 +1,6 @@
-#include "move_list.hpp"
-
 #include <gtest/gtest.h>
+
+#include "move_list.hpp"
 
 using namespace BeepBoop;
 

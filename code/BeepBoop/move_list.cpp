@@ -1,7 +1,7 @@
-#include "move_list.hpp"
-
 #include <algorithm>
 #include <iostream>
+
+#include "move_list.hpp"
 
 namespace BeepBoop
 {

@@ -1,8 +1,8 @@
-#include "move_generator.hpp"
-
 #include <gtest/gtest.h>
 
 #include <string>
+
+#include "move_generator.hpp"
 
 using namespace BeepBoop;
 
@@ -23,16 +23,23 @@ TEST(Generator, Castleable) {
 }
 
 int castle{0};
+int checkmates{0};
+int promotions{0};
+int enpassant{0};
+int capture{0};
 
 int perft(const Board& bd, int depth, bool verbose = false) {
+  int nodes{0};
   if (depth == 0) return 1;
   MoveList m = MoveGenerator::generate_all(bd);
-  int nodes{0};
-  // if (MoveGenerator::in_check(bd, bd.side_to_move()) && !m.get_size()) ++::castle;
+  if (MoveGenerator::in_check(bd, bd.side_to_move()) && !m.get_size()) ++::checkmates;
   for (int i = 0; i < m.get_size(); ++i) {
     Board bnew = bd;
     bnew.make_move(m[i]);
-    if (m[i].is_promote()) ++::castle;
+    if (m[i].is_promote()) ++::promotions;
+    if (m[i].is_castle()) ++::castle;
+    if (m[i].is_enpassant()) ++::enpassant;
+    if (m[i].is_capture()) ++::capture;
     auto n = perft(bnew, depth - 1, verbose);
     // if (verbose && m[i].is_capture()) [[unlikely]]
     //   std::cerr << bd.debug_print() << "\tmove:" << m[i].to_string() << "\n\n";
@@ -60,10 +67,27 @@ TEST(Generator, PerftKiwipete) {
   Board bd;
   bd.import_FEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0");
   int results[6] = {1, 48, 2039, 97862, 4085603};
-  for (int i = 0; i < 4; ++i) {
-    ::castle = 0;
-    int test = perft(bd, i);
-    std::cerr << ::castle << '\n';
+  struct r
+  {
+    int a, b, c, d;
+  };
+
+  r leaves[6] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
+  for (int i = 1; i < 5; ++i) {
+    ::capture    = 0;
+    ::promotions = 0;
+    ::castle     = 0;
+    ::enpassant  = 0;
+    int test     = perft(bd, i);
+    leaves[i].a  = ::capture;
+    leaves[i].b  = ::promotions;
+    leaves[i].c  = ::castle;
+    leaves[i].d  = ::enpassant;
+    std::cerr << leaves[i].a - leaves[i - 1].a << '\t';
+    std::cerr << leaves[i].b - leaves[i - 1].b << '\t';
+    std::cerr << leaves[i].c - leaves[i - 1].c << '\t';
+    std::cerr << leaves[i].d - leaves[i - 1].d << '\n';
+    std::cerr << "\t" << test - results[i] << '\n';
     ASSERT_EQ(test, results[i]);
   }
 }
@@ -99,7 +123,7 @@ TEST(Generator, PerftCPW5) {
   Board bd;
   bd.import_FEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
   int results[6] = {1, 44, 1486, 62379, 2103487};
-  for (int i = 0; i < 2; ++i) {
+  for (int i = 0; i < 4; ++i) {
     ::castle = 0;
     int test = perft(bd, i, true);
     std::cerr << ::castle << '\n';

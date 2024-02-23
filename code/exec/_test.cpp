@@ -39,7 +39,6 @@ int main() {
 
   Game g;
   g.set_pos();
-
   g.set_pos("r3r1k1/pppb1Npp/2np4/4b3/4P1nq/2N1B3/QPP2PPP/R3R1K1 w p - 0 1");
   //  g.set_pos("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0");
 

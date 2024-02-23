@@ -1,9 +1,8 @@
-#include "move_generator.hpp"
-
 #include <algorithm>
 #include <iostream>
 
 #include "magics.hpp"
+#include "move_generator.hpp"
 
 namespace BeepBoop
 {
@@ -12,21 +11,22 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
   MoveList movelist;
 
   // initiallize constants
-  const u64 all_pieces = bd.all_occ();
-  const bool side = bd.side_to_move();
-  const u64 attacking_occ = (side) ? bd.white_occ() : bd.black_occ();
-  const u64 defending_occ = (side) ? bd.black_occ() : bd.white_occ();
+  const u64  all_pieces    = bd.all_occ();
+  const bool side          = bd.side_to_move();
+  const u64  attacking_occ = (side) ? bd.white_occ() : bd.black_occ();
+  const u64  defending_occ = (side) ? bd.black_occ() : bd.white_occ();
 
   // set pointers for attacking and defending pieces
   const int attacking_pieces = (!side) * 6;
 
   // generate pawn moves
   u64 piece_board = bd[utils::PAWN + attacking_pieces];
-  u64 att = 0ULL;
+  u64 att         = 0ULL;
   while (piece_board) {
     const int square = utils::LSB_index(piece_board);
-    piece_board = utils::set_bit_false(piece_board, square);
-    u64 t_enpassant = (bd.enpassant_square() == 255) ? 0ULL : (1ULL << bd.enpassant_square());
+    piece_board      = utils::set_bit_false(piece_board, square);
+    u32 ep_square    = bd.enpassant_square();
+    u64 t_enpassant  = (ep_square == 255) ? 0ULL : (1ULL << ep_square);
     att |= (pawn_attacks[side][square] & (defending_occ | t_enpassant));
     att &= ~attacking_occ;
     if (side && !((1ULL << (square - 8)) & all_pieces)) {
@@ -34,13 +34,15 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
     } else if ((!side) && !((1ULL << (square + 8)) & all_pieces)) {
       att |= (silent_pawn_moves[side][square] & ~all_pieces);
     }
+
     while (att) {
-      const int j = utils::LSB_index(att);
-      att = utils::set_bit_false(att, j);
-      const bool pp_flag = (abs(square - j) == 16);
-      const bool captureflg = ((1ULL << j) & defending_occ);
+      const int j             = utils::LSB_index(att);
+      att                     = utils::set_bit_false(att, j);
+      const bool pp_flag      = (abs(square - j) == 16) ? 0b1 : 0b0;
+      const bool captureflg   = ((1ULL << j) & defending_occ);
       const bool enpassantflg = (static_cast<decltype(bd.enpassant_square())>(j) == bd.enpassant_square());
-      Move move(square, j, utils::PAWN, 0, captureflg || enpassantflg, 0, 0, enpassantflg, pp_flag);
+
+      Move move(square, j, utils::PAWN, utils::PAWN, captureflg || enpassantflg, 0, 0, enpassantflg, pp_flag);
 
       // check for promotions
       if ((j / 8 == 0) || (j / 8 == 7)) {
@@ -56,15 +58,15 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
 
   // generate knight moves
   piece_board = bd[utils::KNIGHT + attacking_pieces];
-  att = 0ULL;
+  att         = 0ULL;
   while (piece_board) {
     const int square = utils::LSB_index(piece_board);
-    piece_board = utils::set_bit_false(piece_board, square);
+    piece_board      = utils::set_bit_false(piece_board, square);
     att |= knight_attacks[square];
     att &= ~attacking_occ;
     while (att) {
-      const int j = utils::LSB_index(att);
-      att = utils::set_bit_false(att, j);
+      const int j     = utils::LSB_index(att);
+      att             = utils::set_bit_false(att, j);
       bool captureflg = ((1ULL << j) & defending_occ);
       Move move(square, j, utils::KNIGHT, 0, captureflg, 0, 0, 0, 0);
 
@@ -74,15 +76,15 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
 
   // generate bishop moves
   piece_board = bd[utils::BISHOP + attacking_pieces];
-  att = 0ULL;
+  att         = 0ULL;
   while (piece_board) {
     const int square = utils::LSB_index(piece_board);
-    piece_board = utils::set_bit_false(piece_board, square);
+    piece_board      = utils::set_bit_false(piece_board, square);
     att |= get_bishop_attacks(square, all_pieces);
     att &= ~attacking_occ;
     while (att) {
-      const int j = utils::LSB_index(att);
-      att = utils::set_bit_false(att, j);
+      const int j     = utils::LSB_index(att);
+      att             = utils::set_bit_false(att, j);
       bool captureflg = ((1ULL << j) & defending_occ);
       Move move(square, j, utils::BISHOP, 0, captureflg, 0, 0, 0, 0);
 
@@ -92,16 +94,16 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
 
   // generate rook moves
   piece_board = bd[utils::ROOK + attacking_pieces];
-  att = 0ULL;
+  att         = 0ULL;
   while (piece_board) {
     const int square = utils::LSB_index(piece_board);
-    piece_board = utils::set_bit_false(piece_board, square);
+    piece_board      = utils::set_bit_false(piece_board, square);
     att |= get_rook_attacks(square, all_pieces);
     att &= ~attacking_occ;
 
     while (att) {
-      const int j = utils::LSB_index(att);
-      att = utils::set_bit_false(att, j);
+      const int j     = utils::LSB_index(att);
+      att             = utils::set_bit_false(att, j);
       bool captureflg = ((1ULL << j) & defending_occ);
       Move move(square, j, utils::ROOK, 0, captureflg, 0, 0, 0, 0);
 
@@ -111,15 +113,15 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
 
   // generate queen moves
   piece_board = bd[utils::QUEEN + attacking_pieces];
-  att = 0ULL;
+  att         = 0ULL;
   while (piece_board) {
     const int square = utils::LSB_index(piece_board);
-    piece_board = utils::set_bit_false(piece_board, square);
+    piece_board      = utils::set_bit_false(piece_board, square);
     att |= get_queen_attacks(square, all_pieces);
     att &= ~attacking_occ;
     while (att) {
-      const int j = utils::LSB_index(att);
-      att = utils::set_bit_false(att, j);
+      const int j     = utils::LSB_index(att);
+      att             = utils::set_bit_false(att, j);
       bool captureflg = ((1ULL << j) & defending_occ);
       Move move(square, j, utils::QUEEN, 0, captureflg, 0, 0, 0, 0);
 
@@ -129,16 +131,16 @@ MoveList MoveGenerator::generate_all(const Board& bd) noexcept {
 
   // generate king moves
   piece_board = bd[utils::KING + attacking_pieces];
-  att = 0ULL;
+  att         = 0ULL;
   while (piece_board) {
     const int square = utils::LSB_index(piece_board);
-    piece_board = utils::set_bit_false(piece_board, square);
+    piece_board      = utils::set_bit_false(piece_board, square);
     att |= king_attacks[square];
     att &= ~attacking_occ;
 
     while (att) {
-      const int j = utils::LSB_index(att);
-      att = utils::set_bit_false(att, j);
+      const int j     = utils::LSB_index(att);
+      att             = utils::set_bit_false(att, j);
       bool captureflg = ((1ULL << j) & defending_occ);
       Move move(square, j, utils::KING, 0, captureflg, 0, 0, 0, 0);
 
@@ -201,9 +203,9 @@ void MoveGenerator::initialize_all() noexcept {
 }
 
 u64 MoveGenerator::pawn_mask(int square, int side) {
-  u64 att = 0ULL;       // attacks
+  u64 att      = 0ULL;  // attacks
   u64 bitboard = 0ULL;  // pawn square
-  bitboard = utils::set_bit_true(bitboard, square);
+  bitboard     = utils::set_bit_true(bitboard, square);
   if (side == 1)  // white's attacks
   {
     att |= ((bitboard & A_FILE) ? 0ULL : (bitboard >> 9)) | ((bitboard & H_FILE) ? 0ULL : (bitboard >> 7));
@@ -215,9 +217,9 @@ u64 MoveGenerator::pawn_mask(int square, int side) {
 }
 
 u64 MoveGenerator::knight_mask(int square) {
-  u64 att = 0ULL;       // attacks
+  u64 att      = 0ULL;  // attacks
   u64 bitboard = 0ULL;  // knight square
-  bitboard = utils::set_bit_true(bitboard, square);
+  bitboard     = utils::set_bit_true(bitboard, square);
   // generate 17 and -15 attacks
   if (!(bitboard & A_FILE)) {
     att |= (bitboard >> 17) | (bitboard << 15);
@@ -238,9 +240,9 @@ u64 MoveGenerator::knight_mask(int square) {
 }
 
 u64 MoveGenerator::king_mask(int square) {
-  u64 att = 0ULL;       // attacks
+  u64 att      = 0ULL;  // attacks
   u64 bitboard = 0ULL;  // king square
-  bitboard = utils::set_bit_true(bitboard, square);
+  bitboard     = utils::set_bit_true(bitboard, square);
   if (!(bitboard & H_FILE)) {
     att |= (bitboard << 9) | (bitboard << 1) | (bitboard >> 7);
   }
@@ -255,7 +257,7 @@ u64 MoveGenerator::bishop_mask(int square) {
   int rank, file;
   int t_rank = square / 8;
   int t_file = square % 8;
-  u64 att = 0ULL;
+  u64 att    = 0ULL;
   for (rank = t_rank + 1, file = t_file + 1; rank <= 6 && file <= 6; rank++, file++) att |= 1ULL << (rank * 8 + file);
   for (rank = t_rank - 1, file = t_file + 1; rank >= 1 && file <= 6; rank--, file++) att |= 1ULL << (rank * 8 + file);
   for (rank = t_rank + 1, file = t_file - 1; rank <= 6 && file >= 1; rank++, file--) att |= 1ULL << (rank * 8 + file);
@@ -267,7 +269,7 @@ u64 MoveGenerator::rook_mask(int square) {
   int rank, file;
   int t_rank = square / 8;
   int t_file = square % 8;
-  u64 att = 0ULL;
+  u64 att    = 0ULL;
   for (rank = t_rank + 1; rank <= 6; rank++) att |= (1ULL << (rank * 8 + t_file));
   for (rank = t_rank - 1; rank >= 1; rank--) att |= (1ULL << (rank * 8 + t_file));
   for (file = t_file + 1; file <= 6; file++) att |= (1ULL << (t_rank * 8 + file));
@@ -276,9 +278,9 @@ u64 MoveGenerator::rook_mask(int square) {
 }
 
 u64 MoveGenerator::silent_pawn_mask(int square, int side) {
-  u64 mv = 0ULL;
+  u64 mv       = 0ULL;
   u64 bitboard = 0ULL;  // pawn square
-  bitboard = utils::set_bit_true(bitboard, square);
+  bitboard     = utils::set_bit_true(bitboard, square);
   if (side == 1) {
     mv |= (bitboard >> 8);
     if (square / 8 == 6) mv |= (bitboard >> 16);
@@ -293,7 +295,7 @@ u64 MoveGenerator::otf_bishop_attacks(int square, u64 blockers) {
   int rank, file;
   int t_rank = square / 8;
   int t_file = square % 8;
-  u64 att = 0ULL;
+  u64 att    = 0ULL;
   for (rank = t_rank + 1, file = t_file + 1; rank <= 7 && file <= 7; rank++, file++) {
     att |= 1ULL << (rank * 8 + file);
     if ((1ULL << (rank * 8 + file)) & blockers) break;
@@ -317,7 +319,7 @@ u64 MoveGenerator::otf_rook_attacks(int square, u64 blockers) {
   int rank, file;
   int t_rank = square / 8;
   int t_file = square % 8;
-  u64 att = 0ULL;
+  u64 att    = 0ULL;
   for (rank = t_rank + 1, file = t_file; rank <= 7; rank++) {
     att |= 1ULL << (rank * 8 + file);
     if ((1ULL << (rank * 8 + file)) & blockers) break;
@@ -342,7 +344,7 @@ u64 MoveGenerator::get_occupancy(int index, int bit_count, u64 mask) {
 
   for (int i = 0; i < bit_count; i++) {
     const int square = utils::LSB_index(mask);
-    mask = utils::set_bit_false(mask, square);
+    mask             = utils::set_bit_false(mask, square);
     if (index & (1ULL << i)) {
       occupancy |= (1ULL << square);
     }
@@ -353,19 +355,20 @@ u64 MoveGenerator::get_occupancy(int index, int bit_count, u64 mask) {
 
 void MoveGenerator::initialize_non_sliders() {
   for (int i = 0; i < 64; i++) {
-    pawn_attacks[0][i] = pawn_mask(i, -1);
-    pawn_attacks[1][i] = pawn_mask(i, 1);
-    knight_attacks[i] = knight_mask(i);
-    king_attacks[i] = king_mask(i);
-    silent_pawn_moves[0][i] = silent_pawn_mask(i, -1);
+    pawn_attacks[0][i]      = pawn_mask(i, 0);
+    pawn_attacks[1][i]      = pawn_mask(i, 1);
+    knight_attacks[i]       = knight_mask(i);
+    king_attacks[i]         = king_mask(i);
+    silent_pawn_moves[0][i] = silent_pawn_mask(i, 0);
     silent_pawn_moves[1][i] = silent_pawn_mask(i, 1);
+    // std::cout << utils::print_bitboard(silent_pawn_moves[0][i] | (1ULL << i)) << '\n';
   }
 }
 
 void MoveGenerator::initialize_sliders() {
   for (int i = 0; i < 64; i++) {
     bishop_attack_masks[i] = bishop_mask(i);
-    rook_attack_masks[i] = rook_mask(i);
+    rook_attack_masks[i]   = rook_mask(i);
 
     u64 b_attack_mask = bishop_attack_masks[i];
     u64 r_attack_mask = rook_attack_masks[i];

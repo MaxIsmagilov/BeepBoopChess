@@ -13,10 +13,10 @@ namespace BeepBoop
 class ThreadPool
 {
  private:
-  std::mutex m;
-  std::condition_variable v;
+  std::mutex                             m;
+  std::condition_variable                v;
   std::deque<std::packaged_task<void()>> pending;
-  std::vector<std::future<void>> finished;
+  std::vector<std::future<void>>         finished;
 
   void thread_task() {
     while (true) {

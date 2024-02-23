@@ -10,3 +10,5 @@ ReferenceAlignment: Pointer
 ColumnLimit: 120
 AlignConsecutiveMacros: AcrossEmptyLines
 AlignConsecutiveBitFields: Consecutive
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true

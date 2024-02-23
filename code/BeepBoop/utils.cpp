@@ -15,7 +15,7 @@ std::string print_bitboard(const u64& bb) {
 }
 
 unsigned int count_bits(const u64& bitboard) {
-  u64 test = bitboard;
+  u64          test      = bitboard;
   unsigned int bitnumber = 0;
   while (test) {
     test &= test - 1;

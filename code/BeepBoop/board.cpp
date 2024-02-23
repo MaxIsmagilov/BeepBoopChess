@@ -1,8 +1,7 @@
-#include "board.hpp"
-
 #include <iostream>
 
-//
+#include "board.hpp"
+
 namespace BeepBoop
 {
 
@@ -19,7 +18,7 @@ void Board::make_move(const Move& mv) noexcept {
 
   if (m_side ^= 1u) m_fullmoves++;
 
-  if (!mv.get_piece() && mv.is_double_push())
+  if (mv.get_piece() == utils::PAWN && mv.is_double_push())
     m_enpassant = (mv.get_start() + mv.get_end()) / 2;
   else
     m_enpassant = 255;
@@ -57,19 +56,19 @@ void Board::make_move(const Move& mv) noexcept {
     }
   }
 
-  if (mv.get_start() == utils::_A1) {
+  if (mv.get_start() == utils::_A1 || mv.get_end() == utils::_A1) {
     m_castle_WQ = false;
   }
 
-  if (mv.get_start() == utils::_A8) {
+  if (mv.get_start() == utils::_A8 || mv.get_end() == utils::_A8) {
     m_castle_BQ = false;
   }
 
-  if (mv.get_start() == utils::_H1) {
+  if (mv.get_start() == utils::_H1 || mv.get_end() == utils::_H1) {
     m_castle_WK = false;
   }
 
-  if (mv.get_start() == utils::_H8) {
+  if (mv.get_start() == utils::_H8 || mv.get_end() == utils::_H8) {
     m_castle_BK = false;
   }
 
@@ -86,8 +85,8 @@ void Board::make_move(const Move& mv) noexcept {
 
 void Board::import_FEN(const char* FEN) {
   char arr[64];
-  int board_index = 0;
-  int str_index;
+  int  board_index = 0;
+  int  str_index;
 
   for (str_index = 0; FEN[str_index] != ' '; ++str_index) {
     if (FEN[str_index] == '/')
@@ -183,7 +182,7 @@ void Board::import_FEN(const char* FEN) {
   ++str_index;
   // std::cerr << FEN + str_index << '\n';
   m_halfmoves = std::stoi(FEN + (++str_index));
-  int len = (m_halfmoves / 10) + 1;
+  int len     = (m_halfmoves / 10) + 1;
   // std::cerr << len << '\n';
   m_fullmoves = std::stoi(FEN + (++str_index) + len);
 }
@@ -232,7 +231,7 @@ u32 Board::halfmoves() const noexcept { return static_cast<u32>(m_halfmoves); }
 u32 Board::fullmoves() const noexcept { return static_cast<u32>(m_fullmoves); }
 
 std::string Board::debug_print() const {
-  char pieces[14] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', ' ', '#'};
+  char        pieces[14] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', ' ', '#'};
   std::string str{""};
   for (int i = 0; i < 64; ++i) {
     bool found = false;

@@ -21,10 +21,10 @@ enum TTEntryType : bool { FAIL, VALID };
 /// @brief transposition table structure
 struct TTEntry
 {
-  u64 m_key{0ULL};
-  int m_lower{0};
-  int m_upper{0};
-  int depth{0};
+  u64         m_key{0ULL};
+  int         m_lower{0};
+  int         m_upper{0};
+  int         depth{0};
   TTEntryType m_is_valid{FAIL};
 };
 
@@ -55,9 +55,9 @@ class TTable
   static void initialize() noexcept;
 
  private:
-  mutable std::mutex m_lock{};
-  static u64 m_keygens[64][12];
-  static u64 m_keymods[70];
+  mutable std::mutex                    m_lock{};
+  static u64                            m_keygens[64][12];
+  static u64                            m_keymods[70];
   mutable std::vector<TTutils::TTEntry> m_entries;
 };
 

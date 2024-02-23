@@ -77,8 +77,8 @@ bool Move::operator<(const Move& other) const noexcept { return m_heuristic < ot
 
 std::string Move::to_string() const {
   if (!m_start && !m_end) return "0000";
-  char pieces[] = {'p', 'n', 'b', 'r', 'q'};
-  std::string s = "";
+  char        pieces[] = {'p', 'n', 'b', 'r', 'q'};
+  std::string s        = "";
   s.push_back('a' + (m_start % 8));
   s.push_back('8' - (m_start / 8));
   s.push_back('a' + (m_end % 8));
@@ -89,7 +89,7 @@ std::string Move::to_string() const {
 
 std::string Move::print_value() const {
   if (std::abs(m_heuristic) >= 10000) {
-    const auto absval = std::abs(m_heuristic);
+    const auto absval  = std::abs(m_heuristic);
     const auto mate_in = (100000 - absval) * (absval / m_heuristic);
     return ("Mate in" + std::to_string(mate_in));
   } else {
