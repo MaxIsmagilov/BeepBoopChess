@@ -1,7 +1,7 @@
+#include "move_list.hpp"
+
 #include <algorithm>
 #include <iostream>
-
-#include "move_list.hpp"
 
 namespace BeepBoop
 {
@@ -60,4 +60,5 @@ void MoveList::score_all(const Board& bd, const TTable& tt) noexcept {
   std::for_each(m_moves.begin(), m_moves.begin() + m_last_populated,
                 [&](Move& m) mutable { m.set_heuristic(MoveScorer::score(bd, m, tt)); });
 }
+
 }  // namespace BeepBoop

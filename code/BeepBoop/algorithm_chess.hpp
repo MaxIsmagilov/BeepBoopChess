@@ -40,7 +40,7 @@ class Algorithm
   /// @brief evaluate a move
   /// @param depth
   /// @return <value, nodecount>
-  std::tuple<int, std::size_t> evaluate_move(int depth);
+  std::tuple<MoveList, std::size_t> evaluate_position(int depth);
 
   /// @brief quiescence search
   /// @param depth the max depth
@@ -61,8 +61,8 @@ class Algorithm
   std::size_t get_size() const noexcept;
 
  private:
-  TTable& m_tt;
-  BoardStack m_bs;
+  TTable&                    m_tt;
+  BoardStack                 m_bs;
   std::function<int(Board)>& m_eval;
 
   std::size_t m_count{};

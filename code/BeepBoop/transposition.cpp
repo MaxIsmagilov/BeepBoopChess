@@ -1,10 +1,11 @@
+#include "transposition.hpp"
+
 #include <algorithm>
 #include <iostream>
 #include <mutex>
 #include <random>
 
 #include "random_generator.hpp"
-#include "transposition.hpp"
 #include "utils.hpp"
 
 namespace BeepBoop
@@ -35,6 +36,28 @@ u64 TTable::get_key(const Board& bd) noexcept {
   if (bd.castle_available(Board::Castle::BLACK_LONG)) key ^= m_keymods[68];
   if (bd.side_to_move()) key ^= m_keymods[69];
   return key;
+}
+
+u8 TTable::get_visited(u64 key) const noexcept {
+  TTutils::TTEntry entry;
+  {
+    std::unique_lock<std::mutex> l(m_lock);
+    entry = {m_entries[key % TTutils::ttsize]};
+  }
+  if (entry.m_key != key)
+    return 0;
+  else
+    return entry.refcount;
+}
+
+void TTable::visit(u64 key) noexcept {
+  std::unique_lock<std::mutex> l(m_lock);
+  ++(m_entries[key % TTutils::ttsize].refcount);
+}
+
+void TTable::leave(u64 key) noexcept {
+  std::unique_lock<std::mutex> l(m_lock);
+  --(m_entries[key % TTutils::ttsize].refcount);
 }
 
 TTutils::TTEntry TTable::get_entry(u64 key) const noexcept {

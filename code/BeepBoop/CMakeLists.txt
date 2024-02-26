@@ -42,8 +42,8 @@ ADD_LIBRARY(BeepBoop_objects OBJECT
     )
 
 
-TARGET_COMPILE_FEATURES(BeepBoop_objects
-    PRIVATE cxx_std_20
+TARGET_COMPILE_OPTIONS(
+    BeepBoop_objects PUBLIC "-std=c++20"
     )
 
 
@@ -64,7 +64,7 @@ if (WIN32)
         CXX_EXTENSIONS NO
         CXX_STANDARD 20
         CXX_STANDARD_REQUIRED YES
-        COMPILE_OPTIONS "-Wall -Wextra -Werror"
+        COMPILE_OPTIONS "-Wall -Wextra -Wpedantic -Werror -std=c++20"
         PUBLIC_HEADER "${BeepBoop_headers}")
 else ()
     SET_TARGET_PROPERTIES( BeepBoop
@@ -72,7 +72,7 @@ else ()
         CXX_EXTENSIONS -lpthread 
         CXX_STANDARD 20
         CXX_STANDARD_REQUIRED YES
-        COMPILE_OPTIONS "-Wall -Wextra -Werror"
+        COMPILE_OPTIONS "-Wall -Wextra -Wpedantic -Werror -std=c++20"
         PUBLIC_HEADER "${BeepBoop_headers}")
 endif()
 

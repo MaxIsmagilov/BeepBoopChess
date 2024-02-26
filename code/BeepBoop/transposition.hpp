@@ -18,14 +18,15 @@ constexpr std::size_t ttsize = (2097152);
 // @brief entry type enum
 enum TTEntryType : bool { FAIL, VALID };
 
-/// @brief transposition table structure
+/// @brief transposition table structure, includes reference count for ABDADA
 struct TTEntry
 {
   u64         m_key{0ULL};
   int         m_lower{0};
   int         m_upper{0};
   int         depth{0};
-  TTEntryType m_is_valid{FAIL};
+  u8          refcount   : 8 {0};
+  TTEntryType m_is_valid : 8 {FAIL};
 };
 
 constexpr TTEntry FAILED_ENTRY = {0, 0, 0, 0, FAIL};
@@ -37,7 +38,15 @@ class TTable
  public:
   TTable();
 
+  TTable(TTable&&) = delete;
+
   static u64 get_key(const Board& bd) noexcept;
+
+  u8 get_visited(u64 key) const noexcept;
+
+  void visit(u64 key) noexcept;
+
+  void leave(u64 key) noexcept;
 
   /// @brief
   /// @param key

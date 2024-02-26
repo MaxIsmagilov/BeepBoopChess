@@ -17,7 +17,7 @@ if(NOT WIN32)
     CHECK_CXX_COMPILER_FLAG("-lpthread" COMPILER_SUPPORTS_THREADS)
 
     if (COMPILER_SUPPORTS_THREADS)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lpthread")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lpthread -std=c++20")
     else ()
         message(FATAL_ERROR "Your compiler does not support C++ threads")
     endif ()
@@ -31,7 +31,7 @@ FetchContent_Declare(
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
-target_compile_options(gtest PRIVATE "-Wno-error=restrict")
+target_compile_options(gtest PRIVATE "-Wno-restrict")
 
 enable_testing()
 include(GoogleTest)

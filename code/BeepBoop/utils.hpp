@@ -13,6 +13,8 @@ typedef unsigned int       u32;
 typedef unsigned short     u16;
 typedef unsigned char      u8;
 
+constexpr int infinity = 500000;
+
 namespace utils
 {
 

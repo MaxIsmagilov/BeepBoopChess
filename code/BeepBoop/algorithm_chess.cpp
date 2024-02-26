@@ -12,12 +12,11 @@ namespace BeepBoop
 Algorithm::Algorithm(Board&& bd, std::function<int(Board)> eval, TTable& table)
     : m_tt{table}, m_bs{bd}, m_eval{eval}, m_count{0}, current_guess{0} {}
 
-std::tuple<int, std::size_t> Algorithm::evaluate_move(int depth) {
+std::tuple<MoveList, std::size_t> Algorithm::evaluate_position(int depth) {
   current_depth = depth;
-  auto n = current_guess;
+  auto n        = current_guess;
 
   n = negamax(depth, -infinity, infinity);
-
   /*
   auto upperbound = game_over + 1, lowerbound = -game_over - 1;
   do {
@@ -38,14 +37,14 @@ std::tuple<int, std::size_t> Algorithm::evaluate_move(int depth) {
 
   current_guess = n;*/
 
-  return std::make_tuple(n, m_count);
+  return std::make_tuple(MoveList(), m_count);
 }
 
 int Algorithm::quescence(int depth, int alpha, int beta) {
   ++m_count;
   auto&& bd = m_bs.top();
 
-  auto delta = Evaluator::get_piece(utils::QUEEN);
+  auto                  delta        = Evaluator::get_piece(utils::QUEEN);
   static constexpr auto delta_change = Evaluator::get_piece(utils::QUEEN) - Evaluator::get_piece(utils::PAWN) * 2;
 
   if (m_bs.lastmove().is_promote()) delta += delta_change;
@@ -107,7 +106,7 @@ int Algorithm::negamax(int depth, int alpha, int beta) {
     if (entry.m_lower >= beta) return entry.m_lower;
     if (entry.m_upper <= alpha) return entry.m_upper;
     alpha = std::max(alpha, entry.m_lower);
-    beta = std::min(beta, entry.m_upper);
+    beta  = std::min(beta, entry.m_upper);
   }
 
   auto value = -infinity;
@@ -136,6 +135,7 @@ int Algorithm::negamax(int depth, int alpha, int beta) {
 
     value = std::max(value, oldval);
     alpha = std::max(value, alpha);
+
     if (alpha >= beta) break;
   }
 

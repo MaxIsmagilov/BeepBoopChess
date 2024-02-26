@@ -1,8 +1,9 @@
+#include "move_finder.hpp"
+
 #include <any>
 #include <future>
 #include <iostream>
 
-#include "move_finder.hpp"
 #include "move_generator.hpp"
 #include "thread_pool.hpp"
 #include "timekeeping.hpp"
@@ -35,7 +36,7 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int dep
   // add agloes to the vector
   for (int current_loc = 0; current_loc < ml.get_size(); ++current_loc) {
     // emplace an algorithm with the targeted eval and moved-copied board
-    algoes.emplace_back(Algorithm(bd.move_copy(ml[current_loc]), eval, table));
+    algoes.emplace_back(Algorithm(Board(bd), eval, table));
   }
 
   std::size_t nodecount{0};
@@ -49,13 +50,13 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int dep
     results.resize(ml.get_size());
 
     for (int j = 0; j < ml.get_size(); ++j) {
-      results[j] = tp.queue(&Algorithm::evaluate_move, &(algoes[j]), i);
+      results[j] = tp.queue(&Algorithm::evaluate_position, &(algoes[j]), i, ml);
     }
 
     for (int j = 0; j < ml.get_size(); ++j) {
-      auto tupl = std::any_cast<std::tuple<int, std::size_t>>(results[j].get());
+      auto tupl = std::any_cast<std::tuple<MoveList, std::size_t>>(results[j].get());
 
-      auto score  = -std::get<0>(tupl);
+      auto score  = 0;
       auto result = std::get<1>(tupl);
 
       nodecount += result;
@@ -101,7 +102,7 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move_time(const Board& bd, do
     std::vector<std::future<std::any>> results;
     results.resize(ml.get_size());
     for (int j = 0; j < ml.get_size(); ++j) {
-      results[j] = tp.queue(&Algorithm::evaluate_move, &(algoes[j]), i);
+      results[j] = tp.queue(&Algorithm::evaluate_position, &(algoes[j]), i, ml);
     }
     for (int j = 0; j < ml.get_size(); ++j) {
       auto tupl = std::any_cast<std::tuple<int, std::size_t>>(results[j].get());
