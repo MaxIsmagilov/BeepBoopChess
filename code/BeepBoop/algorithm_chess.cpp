@@ -1,7 +1,6 @@
-#include "algorithm_chess.hpp"
-
 #include <iostream>
 
+#include "algorithm_chess.hpp"
 #include "move_generator.hpp"
 #include "move_list.hpp"
 #include "timekeeping.hpp"
@@ -14,7 +13,7 @@ Algorithm::Algorithm(Board&& bd, std::function<int(Board)> eval, TTable& table)
 
 std::tuple<MoveList, std::size_t> Algorithm::evaluate_position(int depth) {
   current_depth = depth;
-  auto n        = current_guess;
+  // auto n        = current_guess;
 
   n = negamax(depth, -infinity, infinity);
   /*
