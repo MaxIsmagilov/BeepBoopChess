@@ -40,7 +40,7 @@ class Algorithm
   /// @brief evaluate a move
   /// @param depth
   /// @return <value, nodecount>
-  std::tuple<MoveList, std::size_t> evaluate_position(int depth);
+  std::tuple<int, std::size_t> evaluate_position(int depth);
 
   /// @brief quiescence search
   /// @param depth the max depth

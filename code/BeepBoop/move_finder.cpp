@@ -1,9 +1,8 @@
-#include "move_finder.hpp"
-
 #include <any>
 #include <future>
 #include <iostream>
 
+#include "move_finder.hpp"
 #include "move_generator.hpp"
 #include "thread_pool.hpp"
 #include "timekeeping.hpp"
@@ -50,11 +49,11 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move(const Board& bd, int dep
     results.resize(ml.get_size());
 
     for (int j = 0; j < ml.get_size(); ++j) {
-      results[j] = tp.queue(&Algorithm::evaluate_position, &(algoes[j]), i, ml);
+      results[j] = tp.queue(&Algorithm::evaluate_position, &(algoes[j]), i);
     }
 
     for (int j = 0; j < ml.get_size(); ++j) {
-      auto tupl = std::any_cast<std::tuple<MoveList, std::size_t>>(results[j].get());
+      auto tupl = std::any_cast<std::tuple<int, std::size_t>>(results[j].get());
 
       auto score  = 0;
       auto result = std::get<1>(tupl);
@@ -102,7 +101,7 @@ std::tuple<Move, std::size_t> MoveFinder::get_best_move_time(const Board& bd, do
     std::vector<std::future<std::any>> results;
     results.resize(ml.get_size());
     for (int j = 0; j < ml.get_size(); ++j) {
-      results[j] = tp.queue(&Algorithm::evaluate_position, &(algoes[j]), i, ml);
+      results[j] = tp.queue(&Algorithm::evaluate_position, &(algoes[j]), i);
     }
     for (int j = 0; j < ml.get_size(); ++j) {
       auto tupl = std::any_cast<std::tuple<int, std::size_t>>(results[j].get());

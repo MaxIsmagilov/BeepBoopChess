@@ -11,11 +11,12 @@ namespace BeepBoop
 Algorithm::Algorithm(Board&& bd, std::function<int(Board)> eval, TTable& table)
     : m_tt{table}, m_bs{bd}, m_eval{eval}, m_count{0}, current_guess{0} {}
 
-std::tuple<MoveList, std::size_t> Algorithm::evaluate_position(int depth) {
+std::tuple<int, std::size_t> Algorithm::evaluate_position(int depth) {
   current_depth = depth;
-  // auto n        = current_guess;
 
-  // n = negamax(depth, -infinity, infinity);
+  auto n = current_guess;
+
+  n = negamax(depth, -infinity, infinity);
   /*
   auto upperbound = game_over + 1, lowerbound = -game_over - 1;
   do {
@@ -36,7 +37,7 @@ std::tuple<MoveList, std::size_t> Algorithm::evaluate_position(int depth) {
 
   current_guess = n;*/
 
-  return std::make_tuple(MoveList(), m_count);
+  return std::make_tuple(n, m_count);
 }
 
 int Algorithm::quescence(int depth, int alpha, int beta) {

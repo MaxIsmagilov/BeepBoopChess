@@ -25,8 +25,8 @@ struct TTEntry
   int         m_lower{0};
   int         m_upper{0};
   int         depth{0};
-  u8          refcount   : 8 {0};
-  TTEntryType m_is_valid : 8 {FAIL};
+  u8          refcount{0};
+  TTEntryType m_is_valid{FAIL};
 };
 
 constexpr TTEntry FAILED_ENTRY = {0, 0, 0, 0, FAIL};
