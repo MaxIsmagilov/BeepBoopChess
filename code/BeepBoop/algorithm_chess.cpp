@@ -15,7 +15,7 @@ std::tuple<MoveList, std::size_t> Algorithm::evaluate_position(int depth) {
   current_depth = depth;
   // auto n        = current_guess;
 
-  n = negamax(depth, -infinity, infinity);
+  // n = negamax(depth, -infinity, infinity);
   /*
   auto upperbound = game_over + 1, lowerbound = -game_over - 1;
   do {
